@@ -12,8 +12,8 @@ export async function GET(req) {
   const sort = searchParams.get("sort") === "oldest" ? 1 : -1;
 
   let filter = {};
-  if (author) filter.author = author;
-  if (tag) filter.tags = tag;
+ if (author) filter.author = { $regex: author, $options: "i" };
+if (tag) filter.tags = { $regex: tag, $options: "i" };
 
   const posts = await Post.find(filter)
     .sort({ createdAt: sort })
