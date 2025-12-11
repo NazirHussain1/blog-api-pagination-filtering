@@ -18,14 +18,12 @@ export default function Home() {
     const fetchPosts = async () => {
       try {
         setLoading(true);
-
         let url = `/api/posts?limit=${limit}&page=${page}&sort=${sort}`;
         if (author) url += `&author=${author}`;
         if (tag) url += `&tag=${tag}`;
 
         const res = await fetch(url);
         const data = await res.json();
-
         setPosts(data);
       } catch (error) {
         console.error("Error fetching posts:", error);
@@ -38,36 +36,34 @@ export default function Home() {
   }, [page, author, tag, sort]);
 
   return (
-    <div>
-      <main className="container mx-auto p-4">
-        <h1 className="text-3xl font-bold mb-6">All Posts</h1>
+    <main className="container mx-auto p-4">
+      <h1 className="text-3xl font-bold mb-6">All Posts</h1>
 
-        {/* Filter Bar */}
-        <FilterBar
-          author={author}
-          setAuthor={setAuthor}
-          tag={tag}
-          setTag={setTag}
-          sort={sort}
-          setSort={setSort}
-        />
+      {/* Filter Bar */}
+      <FilterBar
+        author={author}
+        setAuthor={setAuthor}
+        tag={tag}
+        setTag={setTag}
+        sort={sort}
+        setSort={setSort}
+      />
 
-        {/* Posts List */}
-        {loading ? (
-          <p>Loading...</p>
-        ) : posts.length === 0 ? (
-          <p>No posts found</p>
-        ) : (
-          posts.map((post) => <PostCard key={post._id} post={post} />)
-        )}
+      {/* Posts List */}
+      {loading ? (
+        <p>Loading...</p>
+      ) : posts.length === 0 ? (
+        <p>No posts found</p>
+      ) : (
+        posts.map((post) => <PostCard key={post._id} post={post} />)
+      )}
 
-        {/* Pagination */}
-        <Pagination
-          page={page}
-          setPage={setPage}
-          hasNext={posts.length === limit}
-        />
-      </main>
-    </div>
+      {/* Pagination */}
+      <Pagination
+        page={page}
+        setPage={setPage}
+        hasNext={posts.length === limit}
+      />
+    </main>
   );
 }

@@ -9,13 +9,11 @@ export default function PostCard({ post }) {
       <p className="text-gray-700 mb-2">{post.body.slice(0, 100)}...</p>
       <p className="text-sm text-gray-500 mb-1">Author: {post.author}</p>
       <p className="text-sm text-gray-500 mb-1">
-        Tags: {post.tags.join(", ")}
+        Tags: {post.tags?.join(", ") || "No tags"}
       </p>
-
-     <Link href={`/posts/${post._id.toString()}`} className="text-blue-600 hover:underline">
-  Read More
-</Link>
-
+      <Link href={`/posts/${post.slug}`} className="text-blue-600 hover:underline">
+        Read More
+      </Link>
     </div>
   );
 }

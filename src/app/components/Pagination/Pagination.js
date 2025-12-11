@@ -2,19 +2,19 @@
 
 export default function Pagination({ page, setPage, hasNext }) {
   return (
-    <div className="flex justify-center gap-2 mt-6">
+    <div className="flex gap-2 mt-4">
       <button
-        className="bg-gray-300 px-3 py-1 rounded disabled:opacity-50"
+        onClick={() => setPage((p) => Math.max(p - 1, 1))}
         disabled={page === 1}
-        onClick={() => setPage(page - 1)}
+        className="px-3 py-1 border rounded disabled:opacity-50"
       >
         Prev
       </button>
-      <span className="px-2 py-1">{page}</span>
+      <span className="px-3 py-1 border rounded">{page}</span>
       <button
-        className="bg-gray-300 px-3 py-1 rounded"
+        onClick={() => setPage((p) => p + 1)}
         disabled={!hasNext}
-        onClick={() => setPage(page + 1)}
+        className="px-3 py-1 border rounded disabled:opacity-50"
       >
         Next
       </button>
