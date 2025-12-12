@@ -1,25 +1,29 @@
 import { NextResponse } from "next/server";
-import { verify } from "jsonwebtoken";
+import { jwtVerify } from "jose";
 
 export async function middleware(req) {
   const token = req.cookies.get("token")?.value;
   const url = req.nextUrl.clone();
 
-  // Only protect /posts/manage
+  // Protect /posts/manage → admin only
   if (url.pathname.startsWith("/posts/manage")) {
     if (!token) {
-      url.pathname = "/auth/login"; // redirect non-authenticated
+      url.pathname = "/login"; // aapke login route ke saath match kare
       return NextResponse.redirect(url);
     }
 
     try {
-      const user = verify(token, process.env.JWT_SECRET);
-      if (user.role !== "admin") {
-        url.pathname = "/"; // redirect non-admin
+      const secret = new TextEncoder().encode(process.env.JWT_SECRET);
+      const { payload } = await jwtVerify(token, secret);
+
+      // Admin check
+      if (payload.role !== "admin") {
+        url.pathname = "/"; // redirect normal users to home
         return NextResponse.redirect(url);
       }
-    } catch (err) {
-      url.pathname = "/auth/login";
+
+    } catch {
+      url.pathname = "/login"; // invalid token → login
       return NextResponse.redirect(url);
     }
   }

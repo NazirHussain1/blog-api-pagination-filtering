@@ -9,15 +9,15 @@ export default function CreatePost() {
   const [tags, setTags] = useState("");
 
   const [loading, setLoading] = useState(false);
-  const [toast, setToast] = useState(""); // For success/error message
-  const [errors, setErrors] = useState({}); // Inline validation errors
+  const [toast, setToast] = useState("");
+  const [errors, setErrors] = useState({});
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setToast("");
     setErrors({});
 
-    // Inline validation
+    // Validation
     const newErrors = {};
     if (!title.trim()) newErrors.title = "Title is required";
     if (!body.trim()) newErrors.body = "Body is required";
@@ -34,7 +34,10 @@ export default function CreatePost() {
       title,
       body,
       author,
-      tags: tags.split(",").map(tag => tag.trim()),
+      tags: tags
+        .split(",")
+        .map((tag) => tag.trim())
+        .filter((tag) => tag),
     };
 
     try {
@@ -44,34 +47,32 @@ export default function CreatePost() {
         body: JSON.stringify(postData),
       });
 
-      const data = await res.json();
+      const data = await res.json().catch(() => null);
 
       if (res.ok) {
         setToast("✅ Post successfully created!");
-        // Clear form
         setTitle("");
         setBody("");
         setAuthor("");
         setTags("");
       } else {
-        setToast(`❌ Error: ${data.message}`);
+        setToast(`❌ Error: ${data?.message || "Failed to create post"}`);
       }
     } catch (error) {
       setToast(`❌ Error: ${error.message}`);
     } finally {
       setLoading(false);
-      // Auto-hide toast after 2 seconds
-      setTimeout(() => setToast(""), 2000);
+      setTimeout(() => setToast(""), 3000);
     }
   };
 
   return (
-    <div className="max-w-xl mx-auto">
-      <h1 className="text-2xl font-bold mb-4">Create New Post</h1>
+    <div className="max-w-xl mx-auto my-8 p-4 bg-white rounded shadow">
+      <h1 className="text-2xl font-bold mb-6 text-center">Create New Post</h1>
 
-      {/* Toast message */}
+      {/* Toast */}
       {toast && (
-        <div className="fixed top-4 right-4 bg-gray-100 border-l-4 border-blue-600 text-blue-700 p-2 rounded shadow">
+        <div className="fixed top-4 right-4 bg-gray-100 border-l-4 border-blue-600 text-blue-700 p-3 rounded shadow-lg animate-fade">
           {toast}
         </div>
       )}
@@ -81,7 +82,7 @@ export default function CreatePost() {
           <input
             type="text"
             placeholder="Title"
-            className="w-full p-2 border rounded"
+            className="w-full p-3 border rounded focus:outline-none focus:ring-2 focus:ring-blue-500 transition"
             value={title}
             onChange={(e) => setTitle(e.target.value)}
           />
@@ -93,9 +94,10 @@ export default function CreatePost() {
         <div>
           <textarea
             placeholder="Body"
-            className="w-full p-2 border rounded"
+            className="w-full p-3 border rounded focus:outline-none focus:ring-2 focus:ring-blue-500 transition"
             value={body}
             onChange={(e) => setBody(e.target.value)}
+            rows={6}
           />
           {errors.body && (
             <p className="text-red-600 text-sm mt-1">{errors.body}</p>
@@ -106,7 +108,7 @@ export default function CreatePost() {
           <input
             type="text"
             placeholder="Author"
-            className="w-full p-2 border rounded"
+            className="w-full p-3 border rounded focus:outline-none focus:ring-2 focus:ring-blue-500 transition"
             value={author}
             onChange={(e) => setAuthor(e.target.value)}
           />
@@ -119,7 +121,7 @@ export default function CreatePost() {
           <input
             type="text"
             placeholder="Tags (comma separated)"
-            className="w-full p-2 border rounded"
+            className="w-full p-3 border rounded focus:outline-none focus:ring-2 focus:ring-blue-500 transition"
             value={tags}
             onChange={(e) => setTags(e.target.value)}
           />
@@ -127,8 +129,8 @@ export default function CreatePost() {
 
         <button
           type="submit"
-          className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 disabled:opacity-50"
           disabled={loading}
+          className="w-full bg-blue-600 text-white px-4 py-3 rounded hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition"
         >
           {loading ? "Creating..." : "Create Post"}
         </button>

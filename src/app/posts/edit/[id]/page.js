@@ -13,10 +13,12 @@ export default function EditPostPage() {
   const { id } = useParams();
   const [form, setForm] = useState({ title: "", body: "" });
   const [loading, setLoading] = useState(false);
+  const [fetching, setFetching] = useState(true);
 
   // Fetch post data
   useEffect(() => {
     const fetchPost = async () => {
+      setFetching(true);
       try {
         const res = await fetch(`/api/posts/${id}`);
         if (!res.ok) throw new Error("Failed to fetch post");
@@ -24,13 +26,15 @@ export default function EditPostPage() {
         setForm({ title: data.post.title, body: data.post.body });
       } catch (err) {
         toast.error(err.message);
+      } finally {
+        setFetching(false);
       }
     };
     fetchPost();
   }, [id]);
 
   const handleUpdate = async () => {
-    if (!form.title || !form.body) {
+    if (!form.title.trim() || !form.body.trim()) {
       toast.error("Title and body are required");
       return;
     }
@@ -47,12 +51,20 @@ export default function EditPostPage() {
       router.push("/posts/manage");
     } catch (err) {
       toast.error(err.message);
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   };
 
+  if (fetching)
+    return (
+      <div className="flex justify-center items-center min-h-[50vh]">
+        <p className="text-gray-500">Loading post...</p>
+      </div>
+    );
+
   return (
-    <div className="max-w-2xl mx-auto">
+    <div className="max-w-2xl mx-auto my-8 p-4">
       <Card className="shadow-lg">
         <CardHeader>
           <CardTitle>Edit Post</CardTitle>
@@ -63,18 +75,25 @@ export default function EditPostPage() {
             <Input
               value={form.title}
               onChange={(e) => setForm({ ...form, title: e.target.value })}
+              className="focus:ring-2 focus:ring-blue-500 transition"
             />
           </div>
+
           <div>
             <Label>Body</Label>
             <textarea
               value={form.body}
               onChange={(e) => setForm({ ...form, body: e.target.value })}
               rows={8}
-              className="w-full p-2 border rounded-md"
+              className="w-full p-3 border rounded-md focus:ring-2 focus:ring-blue-500 transition"
             />
           </div>
-          <Button onClick={handleUpdate} disabled={loading}>
+
+          <Button
+            onClick={handleUpdate}
+            disabled={loading}
+            className="w-full"
+          >
             {loading ? "Updating..." : "Update Post"}
           </Button>
         </CardContent>

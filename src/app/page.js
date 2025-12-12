@@ -19,14 +19,17 @@ export default function Home() {
       try {
         setLoading(true);
         let url = `/api/posts?limit=${limit}&page=${page}&sort=${sort}`;
-        if (author) url += `&author=${author}`;
-        if (tag) url += `&tag=${tag}`;
+        if (author.trim()) url += `&author=${author.trim()}`;
+        if (tag.trim()) url += `&tag=${tag.trim()}`;
 
         const res = await fetch(url);
+        if (!res.ok) throw new Error("Failed to fetch posts");
         const data = await res.json();
-        setPosts(data);
+     setPosts(data || []);
+
       } catch (error) {
         console.error("Error fetching posts:", error);
+        setPosts([]);
       } finally {
         setLoading(false);
       }
@@ -37,7 +40,7 @@ export default function Home() {
 
   return (
     <main className="container mx-auto p-4">
-      <h1 className="text-3xl font-bold mb-6">All Posts</h1>
+      <h1 className="text-3xl font-bold mb-6 text-center">All Posts</h1>
 
       {/* Filter Bar */}
       <FilterBar
@@ -51,19 +54,31 @@ export default function Home() {
 
       {/* Posts List */}
       {loading ? (
-        <p>Loading...</p>
+        <div className="flex justify-center items-center min-h-[40vh]">
+          <p className="text-gray-500">Loading posts...</p>
+        </div>
       ) : posts.length === 0 ? (
-        <p>No posts found</p>
+        <div className="flex justify-center items-center min-h-[40vh]">
+          <p className="text-red-500">No posts found</p>
+        </div>
       ) : (
-        posts.map((post) => <PostCard key={post._id} post={post} />)
+        <div className="space-y-4">
+          {posts.map((post) => (
+            <PostCard key={post._id} post={post} />
+          ))}
+        </div>
       )}
 
       {/* Pagination */}
-      <Pagination
-        page={page}
-        setPage={setPage}
-        hasNext={posts.length === limit}
-      />
+      {posts.length > 0 && (
+        <div className="mt-6 flex justify-center">
+          <Pagination
+            page={page}
+            setPage={setPage}
+            hasNext={posts.length === limit}
+          />
+        </div>
+      )}
     </main>
   );
 }

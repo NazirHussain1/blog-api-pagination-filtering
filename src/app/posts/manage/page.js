@@ -14,14 +14,16 @@ export default function ManagePosts() {
   const fetchPosts = async () => {
     setLoading(true);
     try {
-      const res = await fetch("/api/posts?limit=100&page=1&sort=newest"); // fetch all posts like home
+      const res = await fetch("/api/posts?limit=100&page=1&sort=newest");
       if (!res.ok) throw new Error("Failed to fetch posts");
       const data = await res.json();
-      setPosts(data.posts);
+      setPosts(data || []);
+;
     } catch (err) {
       toast.error(err.message);
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   };
 
   useEffect(() => {
@@ -34,44 +36,47 @@ export default function ManagePosts() {
       const res = await fetch(`/api/posts/${id}`, { method: "DELETE" });
       if (!res.ok) throw new Error("Failed to delete post");
       toast.success("Post deleted successfully!");
-      setPosts(posts.filter((p) => p._id !== id));
+      setPosts(data.filter((p) => p._id !== id));
     } catch (err) {
       toast.error(err.message);
     }
   };
 
   return (
-    <div className="space-y-4">
-      <h1 className="text-2xl font-bold">Manage Posts (Admin)</h1>
+    <div className="space-y-6">
+      <h1 className="text-2xl font-bold text-center">Manage Posts (Admin)</h1>
+
       {loading ? (
-        <p>Loading...</p>
+        <p className="text-center text-gray-500">Loading posts...</p>
       ) : posts.length === 0 ? (
-        <p>No posts found.</p>
+        <p className="text-center text-gray-500">No posts found.</p>
       ) : (
-        posts.map((post) => (
-          <Card key={post._id} className="shadow-md">
-            <CardHeader className="flex justify-between items-center">
-              <CardTitle>{post.title}</CardTitle>
-              <div className="space-x-2">
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={() => router.push(`/posts/edit/${post._id}`)}
-                >
-                  Edit
-                </Button>
-                <Button
-                  size="sm"
-                  variant="destructive"
-                  onClick={() => handleDelete(post._id)}
-                >
-                  Delete
-                </Button>
-              </div>
-            </CardHeader>
-            <CardContent>{post.body.substring(0, 150)}...</CardContent>
-          </Card>
-        ))
+        <div className="space-y-4">
+          {posts.map((post) => (
+            <Card key={post._id} className="shadow-md hover:shadow-lg transition">
+              <CardHeader className="flex justify-between items-center">
+                <CardTitle>{post.title}</CardTitle>
+                <div className="space-x-2">
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => router.push(`/posts/edit/${post._id}`)}
+                  >
+                    Edit
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="destructive"
+                    onClick={() => handleDelete(post._id)}
+                  >
+                    Delete
+                  </Button>
+                </div>
+              </CardHeader>
+              <CardContent>{post.body.substring(0, 150)}...</CardContent>
+            </Card>
+          ))}
+        </div>
       )}
     </div>
   );

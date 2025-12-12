@@ -30,22 +30,28 @@ export default function LoginPage() {
         body: JSON.stringify({ ...form, remember }),
       });
 
-      const data = await res.json();
+      const data = await res.json().catch(() => null);
 
       if (!res.ok) {
-        toast.error(data.error || "Login failed");
+        toast.error(data?.error || "Login failed");
         setLoading(false);
         return;
       }
 
-      toast.success("Login successful! Redirecting...");
-      setTimeout(() => router.push("/"), 1000);
+      toast.success("Login successful!");
 
-    } catch (error) {
+      const role = data?.user?.role;
+
+      setTimeout(() => {
+        if (role === "admin") router.push("/posts/manage");
+        else router.push("/");
+      }, 800);
+
+    } catch {
       toast.error("Something went wrong");
+    } finally {
+      setLoading(false);
     }
-
-    setLoading(false);
   };
 
   return (
@@ -63,6 +69,7 @@ export default function LoginPage() {
               onChange={(e) => setForm({ ...form, email: e.target.value })}
             />
           </div>
+
           <div>
             <Label>Password</Label>
             <Input
@@ -72,26 +79,28 @@ export default function LoginPage() {
               onChange={(e) => setForm({ ...form, password: e.target.value })}
             />
           </div>
+
           <div className="flex items-center space-x-2">
             <Checkbox checked={remember} onCheckedChange={setRemember} />
             <Label>Remember me</Label>
           </div>
-          <Button className="w-full" onClick={handleLogin} disabled={loading}>
+
+          <Button
+            className="w-full disabled:opacity-50 disabled:cursor-not-allowed"
+            onClick={handleLogin}
+            disabled={loading}
+          >
             {loading ? "Logging in..." : "Login"}
           </Button>
+
           <p className="text-center text-sm text-gray-600">
-            Dont have an account?{" "}
-            <span
-              className="text-blue-600 cursor-pointer"
-              onClick={() => router.push("/signup")}
-            >
+            Don t have an account?{" "}
+            <span className="text-blue-600 cursor-pointer hover:underline" onClick={() => router.push("/signup")}>
               Sign Up
             </span>
           </p>
         </CardContent>
       </Card>
-
-      {/* Global Toaster */}
       <Toaster richColors />
     </div>
   );
