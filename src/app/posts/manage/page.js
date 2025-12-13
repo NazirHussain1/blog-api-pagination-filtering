@@ -11,16 +11,23 @@ export default function ManagePosts() {
   const [posts, setPosts] = useState([]);
   const [loading, setLoading] = useState(false);
 
-  // Edit modal
+  // Edit modal state
   const [editPost, setEditPost] = useState(null);
-  const [editForm, setEditForm] = useState({ title: "", body: "" });
+  const [editForm, setEditForm] = useState({
+    title: "",
+    body: "",
+    author: "",
+    tags: "",
+  });
+
   const modalRef = useRef(null);
 
-  // Fetch posts
+  /* ================= FETCH POSTS ================= */
   const fetchPosts = async () => {
     setLoading(true);
     try {
       const res = await fetch("/api/posts?limit=100&page=1&sort=newest");
+      if (!res.ok) throw new Error();
       const data = await res.json();
       setPosts(data.posts || data || []);
     } catch {
@@ -34,7 +41,7 @@ export default function ManagePosts() {
     fetchPosts();
   }, []);
 
-  // Close modal on outside click
+  /* ================= CLOSE MODAL ON OUTSIDE CLICK ================= */
   useEffect(() => {
     const handler = (e) => {
       if (modalRef.current && !modalRef.current.contains(e.target)) {
@@ -45,55 +52,72 @@ export default function ManagePosts() {
     return () => document.removeEventListener("mousedown", handler);
   }, []);
 
-  // DELETE (slug based)
-  const handleDelete = async (slug) => {
-    toast(
-      <div className="space-y-2">
-        <p>Delete this post?</p>
-        <div className="flex gap-2">
-          <Button
-            size="sm"
-            variant="destructive"
-            onClick={async () => {
-              try {
-                const res = await fetch(`/api/posts/${slug}`, {
-                  method: "DELETE",
-                });
-                if (!res.ok) throw new Error();
-                setPosts((prev) => prev.filter((p) => p.slug !== slug));
-                toast.success("Post deleted");
-              } catch {
-                toast.error("Delete failed");
-              }
-            }}
-          >
-            Confirm
-          </Button>
-        </div>
-      </div>
-    );
+  /* ================= DELETE POST ================= */
+  const handleDelete = (slug) => {
+    toast("Delete this post?", {
+      action: {
+        label: "Delete",
+        onClick: async () => {
+          try {
+            const res = await fetch(`/api/posts/${slug}`, {
+              method: "DELETE",
+            });
+            if (!res.ok) throw new Error();
+            setPosts((prev) => prev.filter((p) => p.slug !== slug));
+            toast.success("Post deleted");
+          } catch {
+            toast.error("Delete failed");
+          }
+        },
+      },
+      cancel: { label: "Cancel" },
+    });
   };
 
-  // OPEN EDIT MODAL
+  /* ================= OPEN EDIT MODAL ================= */
   const openEdit = (post) => {
     setEditPost(post);
-    setEditForm({ title: post.title, body: post.body });
+    setEditForm({
+      title: post.title || "",
+      body: post.body || "",
+      author: post.author || "",
+      tags: post.tags?.join(", ") || "",
+    });
   };
 
-  // SAVE EDIT (slug based)
+  /* ================= SAVE EDIT ================= */
   const saveEdit = async () => {
     try {
       const res = await fetch(`/api/posts/${editPost.slug}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(editForm),
+        body: JSON.stringify({
+          title: editForm.title,
+          body: editForm.body,
+          author: editForm.author,
+          tags: editForm.tags
+            .split(",")
+            .map((t) => t.trim())
+            .filter(Boolean),
+        }),
       });
 
       if (!res.ok) throw new Error();
 
       setPosts((prev) =>
         prev.map((p) =>
-          p.slug === editPost.slug ? { ...p, ...editForm } : p
+          p.slug === editPost.slug
+            ? {
+                ...p,
+                title: editForm.title,
+                body: editForm.body,
+                author: editForm.author,
+                tags: editForm.tags
+                  .split(",")
+                  .map((t) => t.trim())
+                  .filter(Boolean),
+              }
+            : p
         )
       );
 
@@ -104,6 +128,7 @@ export default function ManagePosts() {
     }
   };
 
+  /* ================= UI ================= */
   return (
     <div className="max-w-4xl mx-auto space-y-6">
       <h1 className="text-3xl font-bold text-center">Manage Posts (Admin)</h1>
@@ -130,12 +155,33 @@ export default function ManagePosts() {
                 </Button>
               </div>
             </CardHeader>
-            <CardContent>{post.body.slice(0, 120)}...</CardContent>
+
+            <CardContent className="space-y-2 text-sm text-gray-700">
+              <p><b>Author:</b> {post.author}</p>
+              <p><b>Slug:</b> {post.slug}</p>
+
+              {post.tags?.length > 0 && (
+                <div className="flex flex-wrap gap-2">
+                  {post.tags.map((tag) => (
+                    <span
+                      key={tag}
+                      className="bg-blue-100 text-blue-800 px-2 py-0.5 rounded-full text-xs"
+                    >
+                      {tag}
+                    </span>
+                  ))}
+                </div>
+              )}
+
+              <p className="text-gray-600">
+                {post.body.slice(0, 120)}...
+              </p>
+            </CardContent>
           </Card>
         ))
       )}
 
-      {/* EDIT MODAL */}
+      {/* ================= EDIT MODAL ================= */}
       {editPost && (
         <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
           <div
@@ -152,15 +198,32 @@ export default function ManagePosts() {
             <h2 className="text-xl font-semibold">Edit Post</h2>
 
             <Input
+              placeholder="Title"
               value={editForm.title}
               onChange={(e) =>
                 setEditForm({ ...editForm, title: e.target.value })
               }
-              placeholder="Title"
+            />
+
+            <Input
+              placeholder="Author"
+              value={editForm.author}
+              onChange={(e) =>
+                setEditForm({ ...editForm, author: e.target.value })
+              }
+            />
+
+            <Input
+              placeholder="Tags (comma separated)"
+              value={editForm.tags}
+              onChange={(e) =>
+                setEditForm({ ...editForm, tags: e.target.value })
+              }
             />
 
             <textarea
-              className="w-full border rounded p-2 min-h-[120px]"
+              className="w-full border rounded p-2 min-h-[100px]"
+              placeholder="Body"
               value={editForm.body}
               onChange={(e) =>
                 setEditForm({ ...editForm, body: e.target.value })
