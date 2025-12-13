@@ -1,33 +1,26 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { X } from "lucide-react";
 import { toast } from "sonner";
-import FilterBar from "@/app/components/FilterBar/FilterBar";
 
 export default function ManagePosts() {
   const [posts, setPosts] = useState([]);
   const [loading, setLoading] = useState(false);
 
-  // filters
-  const [author, setAuthor] = useState("");
-  const [tag, setTag] = useState("");
-  const [sort, setSort] = useState("newest");
-
-  // edit modal
+  // Edit modal
   const [editPost, setEditPost] = useState(null);
   const [editForm, setEditForm] = useState({ title: "", body: "" });
+  const modalRef = useRef(null);
 
+  // Fetch posts
   const fetchPosts = async () => {
     setLoading(true);
     try {
-      let url = `/api/posts?limit=100&page=1&sort=${sort}`;
-      if (author) url += `&author=${author}`;
-      if (tag) url += `&tag=${tag}`;
-
-      const res = await fetch(url);
+      const res = await fetch("/api/posts?limit=100&page=1&sort=newest");
       const data = await res.json();
       setPosts(data.posts || data || []);
     } catch {
@@ -39,48 +32,68 @@ export default function ManagePosts() {
 
   useEffect(() => {
     fetchPosts();
-  }, [author, tag, sort]);
+  }, []);
 
-  // DELETE with toast confirm
-  const handleDelete = (id) => {
+  // Close modal on outside click
+  useEffect(() => {
+    const handler = (e) => {
+      if (modalRef.current && !modalRef.current.contains(e.target)) {
+        setEditPost(null);
+      }
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, []);
+
+  // DELETE (slug based)
+  const handleDelete = async (slug) => {
     toast(
       <div className="space-y-2">
         <p>Delete this post?</p>
-        <Button
-          size="sm"
-          variant="destructive"
-          onClick={async () => {
-            try {
-              await fetch(`/api/posts/${id}`, { method: "DELETE" });
-              setPosts((prev) => prev.filter((p) => p._id !== id));
-              toast.success("Post deleted");
-            } catch {
-              toast.error("Delete failed");
-            }
-          }}
-        >
-          Confirm Delete
-        </Button>
+        <div className="flex gap-2">
+          <Button
+            size="sm"
+            variant="destructive"
+            onClick={async () => {
+              try {
+                const res = await fetch(`/api/posts/${slug}`, {
+                  method: "DELETE",
+                });
+                if (!res.ok) throw new Error();
+                setPosts((prev) => prev.filter((p) => p.slug !== slug));
+                toast.success("Post deleted");
+              } catch {
+                toast.error("Delete failed");
+              }
+            }}
+          >
+            Confirm
+          </Button>
+        </div>
       </div>
     );
   };
 
+  // OPEN EDIT MODAL
   const openEdit = (post) => {
     setEditPost(post);
     setEditForm({ title: post.title, body: post.body });
   };
 
+  // SAVE EDIT (slug based)
   const saveEdit = async () => {
     try {
-      await fetch(`/api/posts/${editPost._id}`, {
+      const res = await fetch(`/api/posts/${editPost.slug}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(editForm),
       });
 
+      if (!res.ok) throw new Error();
+
       setPosts((prev) =>
         prev.map((p) =>
-          p._id === editPost._id ? { ...p, ...editForm } : p
+          p.slug === editPost.slug ? { ...p, ...editForm } : p
         )
       );
 
@@ -95,23 +108,13 @@ export default function ManagePosts() {
     <div className="max-w-4xl mx-auto space-y-6">
       <h1 className="text-3xl font-bold text-center">Manage Posts (Admin)</h1>
 
-      {/* FILTER BAR */}
-      <FilterBar
-        author={author}
-        setAuthor={setAuthor}
-        tag={tag}
-        setTag={setTag}
-        sort={sort}
-        setSort={setSort}
-      />
-
       {loading ? (
-        <p className="text-center">Loading...</p>
+        <p className="text-center text-gray-500">Loading...</p>
       ) : posts.length === 0 ? (
-        <p className="text-center">No posts found</p>
+        <p className="text-center text-gray-500">No posts found</p>
       ) : (
         posts.map((post) => (
-          <Card key={post._id}>
+          <Card key={post.slug} className="shadow-sm">
             <CardHeader className="flex justify-between items-center">
               <CardTitle>{post.title}</CardTitle>
               <div className="flex gap-2">
@@ -121,7 +124,7 @@ export default function ManagePosts() {
                 <Button
                   size="sm"
                   variant="destructive"
-                  onClick={() => handleDelete(post._id)}
+                  onClick={() => handleDelete(post.slug)}
                 >
                   Delete
                 </Button>
@@ -134,20 +137,16 @@ export default function ManagePosts() {
 
       {/* EDIT MODAL */}
       {editPost && (
-        <div
-          className="fixed inset-0 bg-black/40 flex items-center justify-center z-50"
-          onClick={() => setEditPost(null)}
-        >
+        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
           <div
-            className="bg-white rounded-lg p-6 w-full max-w-lg relative space-y-4"
-            onClick={(e) => e.stopPropagation()}
+            ref={modalRef}
+            className="bg-white rounded-lg p-6 w-full max-w-lg space-y-4 relative"
           >
-            {/* ❌ */}
             <button
-              className="absolute top-3 right-3 text-xl"
               onClick={() => setEditPost(null)}
+              className="absolute top-3 right-3 text-gray-500 hover:text-black"
             >
-              ✕
+              <X />
             </button>
 
             <h2 className="text-xl font-semibold">Edit Post</h2>
@@ -157,6 +156,7 @@ export default function ManagePosts() {
               onChange={(e) =>
                 setEditForm({ ...editForm, title: e.target.value })
               }
+              placeholder="Title"
             />
 
             <textarea
