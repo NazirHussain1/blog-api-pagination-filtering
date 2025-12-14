@@ -1,34 +1,27 @@
 "use client";
 
 import Link from "next/link";
-import { useState, useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
+import { useDispatch, useSelector } from "react-redux";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
+import { logoutUser, fetchCurrentUser } from "@/redux/features/auth/authSlice";
 import { User, LogOut, FilePlus2, ClipboardList, Menu, X } from "lucide-react";
 
-export default function Navbar() {
+export default function Header() {
   const router = useRouter();
-  const [user, setUser] = useState(null);
-  const [openMenu, setOpenMenu] = useState(false);
-  const [mobileMenu, setMobileMenu] = useState(false);
+  const dispatch = useDispatch();
   const menuRef = useRef(null);
 
-  // Fetch logged-in user
-  const fetchUser = async () => {
-    try {
-      const res = await fetch("/api/auth/me");
-      const data = await res.json();
-      setUser(data?.user || null);
-    } catch (err) {
-      console.error(err);
-      setUser(null);
-    }
-  };
+  const { user, loading } = useSelector((state) => state.auth);
 
-  // Run on mount and also after login/logout
+  const [openMenu, setOpenMenu] = useState(false);
+  const [mobileMenu, setMobileMenu] = useState(false);
+
+  // Fetch current user on mount
   useEffect(() => {
-    fetchUser();
-  }, []);
+    if (!user) dispatch(fetchCurrentUser());
+  }, [dispatch, user]);
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -43,24 +36,19 @@ export default function Navbar() {
 
   const handleLogout = async () => {
     try {
-      const res = await fetch("/api/auth/logout", { method: "POST" });
-      if (res.ok) {
-        setUser(null);
-        toast.success("Logged out successfully");
-        router.push("/login");
-      } else {
-        toast.error("Logout failed");
-      }
+      await dispatch(logoutUser()).unwrap();
+      toast.success("Logged out successfully");
+      setOpenMenu(false);
+      router.push("/login");
     } catch {
       toast.error("Logout failed");
     }
   };
 
-  const roleColor = (role) =>
-    role === "admin" ? "text-red-600" : "text-green-600";
+  const roleColor = (role) => (role === "admin" ? "text-red-600" : "text-green-600");
 
   return (
-    <nav className="bg-white shadow sticky top-0 z-50">
+    <header className="bg-white shadow sticky top-0 z-50">
       <div className="container mx-auto flex justify-between items-center p-4">
         {/* Logo */}
         <Link href="/">
@@ -74,19 +62,15 @@ export default function Navbar() {
           <Link href="/" className="text-gray-700 hover:text-blue-700 font-medium">
             Home
           </Link>
+
           {user && (
-            <Link
-              href="/posts/create"
-              className="text-gray-700 hover:text-blue-700 font-medium"
-            >
+            <Link href="/posts/create" className="text-gray-700 hover:text-blue-700 font-medium">
               Create Post
             </Link>
           )}
+
           {user?.role === "admin" && (
-            <Link
-              href="/posts/manage"
-              className="text-gray-700 hover:text-red-600 font-medium"
-            >
+            <Link href="/posts/manage" className="text-gray-700 hover:text-red-600 font-medium">
               Manage Posts
             </Link>
           )}
@@ -107,16 +91,10 @@ export default function Navbar() {
                 {!user ? (
                   <div className="flex flex-col px-4 py-3 space-y-2">
                     <p className="text-gray-800 font-medium">Welcome!</p>
-                    <Link
-                      href="/login"
-                      className="hover:bg-gray-100 px-3 py-2 rounded"
-                    >
+                    <Link href="/login" className="hover:bg-gray-100 px-3 py-2 rounded">
                       Login
                     </Link>
-                    <Link
-                      href="/signup"
-                      className="hover:bg-gray-100 px-3 py-2 rounded"
-                    >
+                    <Link href="/signup" className="hover:bg-gray-100 px-3 py-2 rounded">
                       Register
                     </Link>
                   </div>
@@ -129,23 +107,14 @@ export default function Navbar() {
                       </span>
                     </div>
                     <div className="py-2 flex flex-col">
-                      <Link
-                        href="/profile"
-                        className="px-4 py-2 hover:bg-gray-100 flex items-center gap-2"
-                      >
+                      <Link href="/profile" className="px-4 py-2 hover:bg-gray-100 flex items-center gap-2">
                         <User size={18} /> My Profile
                       </Link>
-                      <Link
-                        href="/posts/myposts"
-                        className="px-4 py-2 hover:bg-gray-100 flex items-center gap-2"
-                      >
+                      <Link href="/posts/myposts" className="px-4 py-2 hover:bg-gray-100 flex items-center gap-2">
                         <FilePlus2 size={18} /> My Posts
                       </Link>
                       {user.role === "admin" && (
-                        <Link
-                          href="/posts/manage"
-                          className="px-4 py-2 hover:bg-gray-100 flex items-center gap-2"
-                        >
+                        <Link href="/posts/manage" className="px-4 py-2 hover:bg-gray-100 flex items-center gap-2">
                           <ClipboardList size={18} /> Manage Posts
                         </Link>
                       )}
@@ -174,46 +143,26 @@ export default function Navbar() {
       {/* Mobile Menu */}
       {mobileMenu && (
         <div className="sm:hidden bg-white text-gray-700 w-full flex flex-col space-y-2 px-4 py-3 shadow-md">
-          <Link
-            href="/"
-            className="hover:text-blue-700 text-lg"
-            onClick={() => setMobileMenu(false)}
-          >
+          <Link href="/" className="hover:text-blue-700 text-lg" onClick={() => setMobileMenu(false)}>
             Home
           </Link>
           {user && (
-            <Link
-              href="/posts/create"
-              className="hover:text-blue-700 text-lg"
-              onClick={() => setMobileMenu(false)}
-            >
+            <Link href="/posts/create" className="hover:text-blue-700 text-lg" onClick={() => setMobileMenu(false)}>
               Create Post
             </Link>
           )}
           {user?.role === "admin" && (
-            <Link
-              href="/posts/manage"
-              className="hover:text-red-600 text-lg"
-              onClick={() => setMobileMenu(false)}
-            >
+            <Link href="/posts/manage" className="hover:text-red-600 text-lg" onClick={() => setMobileMenu(false)}>
               Manage Posts
             </Link>
           )}
 
           {!user ? (
             <>
-              <Link
-                href="/login"
-                className="hover:text-blue-700 text-lg"
-                onClick={() => setMobileMenu(false)}
-              >
+              <Link href="/login" className="hover:text-blue-700 text-lg" onClick={() => setMobileMenu(false)}>
                 Login
               </Link>
-              <Link
-                href="/signup"
-                className="hover:text-blue-700 text-lg"
-                onClick={() => setMobileMenu(false)}
-              >
+              <Link href="/signup" className="hover:text-blue-700 text-lg" onClick={() => setMobileMenu(false)}>
                 Register
               </Link>
             </>
@@ -227,23 +176,14 @@ export default function Navbar() {
                   {user.name} ({user.role.toUpperCase()})
                 </span>
               </div>
-              <Link
-                href="/profile"
-                className="px-4 py-2 hover:bg-gray-100 rounded flex items-center gap-2"
-              >
+              <Link href="/profile" className="px-4 py-2 hover:bg-gray-100 rounded flex items-center gap-2">
                 <User size={18} /> My Profile
               </Link>
-              <Link
-                href="/posts/myposts"
-                className="px-4 py-2 hover:bg-gray-100 rounded flex items-center gap-2"
-              >
+              <Link href="/posts/myposts" className="px-4 py-2 hover:bg-gray-100 rounded flex items-center gap-2">
                 <FilePlus2 size={18} /> My Posts
               </Link>
               {user.role === "admin" && (
-                <Link
-                  href="/posts/manage"
-                  className="px-4 py-2 hover:bg-gray-100 rounded flex items-center gap-2"
-                >
+                <Link href="/posts/manage" className="px-4 py-2 hover:bg-gray-100 rounded flex items-center gap-2">
                   <ClipboardList size={18} /> Manage Posts
                 </Link>
               )}
@@ -260,6 +200,6 @@ export default function Navbar() {
           )}
         </div>
       )}
-    </nav>
+    </header>
   );
 }
