@@ -1,45 +1,35 @@
-import cloudinary from "@/utils/cloudinary";
 import { NextResponse } from "next/server";
-import streamifier from "streamifier";
+import cloudinary from "@/utils/cloudinary";
 
 export async function POST(req) {
   try {
+    // Support multipart/form-data
     const formData = await req.formData();
-    const file = formData.get("image");
+    const file = formData.get("image"); // must match frontend key
 
-    if (!file) {
-      return NextResponse.json(
-        { error: "No file uploaded" },
-        { status: 400 }
-      );
+    if (!file || file.size === 0) {
+      return NextResponse.json({ error: "No file uploaded" }, { status: 400 });
     }
 
+    // Convert file to Buffer
     const buffer = Buffer.from(await file.arrayBuffer());
 
-    const uploadResult = await new Promise((resolve, reject) => {
-      const uploadStream = cloudinary.uploader.upload_stream(
-        {
-          folder: "blog_posts",
-          use_filename: true,
-          unique_filename: false,
-        },
-        (error, result) => {
-          if (error) reject(error);
-          resolve(result);
-        }
-      );
+    const streamUpload = (buffer) =>
+      new Promise((resolve, reject) => {
+        const stream = cloudinary.uploader.upload_stream(
+          { folder: "blog_posts", use_filename: true, unique_filename: false },
+          (error, result) => {
+            if (error) reject(error);
+            else resolve(result);
+          }
+        );
+        stream.end(buffer);
+      });
 
-      streamifier.createReadStream(buffer).pipe(uploadStream);
-    });
-
-    return NextResponse.json({
-      success: true,
-      url: uploadResult.secure_url,
-    });
-  } catch (error) {
-    return NextResponse.json(
-      { error: "Upload failed" },
-      { status: 500 }
-    );
+    const result = await streamUpload(buffer);
+    return NextResponse.json({ url: result.secure_url });
+  } catch (err) {
+    console.error("Upload error:", err);
+    return NextResponse.json({ error: "Upload failed" }, { status: 500 });
   }
 }

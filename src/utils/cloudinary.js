@@ -5,6 +5,14 @@ cloudinary.config({
   api_key: process.env.CLOUDINARY_API_KEY,
   api_secret: process.env.CLOUDINARY_API_SECRET,
   secure: true, 
+  
 });
+console.log(
+  "Cloudinary Config:",
+  process.env.CLOUDINARY_CLOUD_NAME,
+  process.env.CLOUDINARY_API_KEY,
+  process.env.CLOUDINARY_API_SECRET ? "Loaded" : "Missing"
+);
+
 
 export default cloudinary;

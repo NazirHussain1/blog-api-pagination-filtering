@@ -17,39 +17,16 @@ export const fetchPosts = createAsyncThunk(
   }
 );
 
-/* ================= CREATE POST (IMAGE + DATA) ================= */
+/* ================= CREATE POST ================= */
 export const createPost = createAsyncThunk(
   "posts/createPost",
   async (postData, { rejectWithValue }) => {
     try {
-      let imageUrl = "";
-
-      if (postData.image) {
-        const formData = new FormData();
-        formData.append("image", postData.image);
-
-        const uploadRes = await fetch("/api/posts/upload", {
-          method: "POST",
-          body: formData,
-        });
-
-        const uploadData = await uploadRes.json();
-        if (!uploadRes.ok) return rejectWithValue(uploadData);
-
-        imageUrl = uploadData.urlով
-        imageUrl = uploadData.url;
-      }
-
+      // postData.image should already be a URL string from frontend
       const res = await fetch("/api/posts", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          title: postData.title,
-          body: postData.body,
-          author: postData.author,
-          tags: postData.tags,
-          image: imageUrl,
-        }),
+        body: JSON.stringify(postData),
       });
 
       const data = await res.json();
@@ -65,31 +42,40 @@ export const createPost = createAsyncThunk(
 /* ================= UPDATE POST ================= */
 export const updatePost = createAsyncThunk(
   "posts/updatePost",
-  async ({ slug, data }) => {
-    const res = await fetch(`/api/posts/${slug}`, {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(data),
-    });
+  async ({ slug, data }, { rejectWithValue }) => {
+    try {
+      const res = await fetch(`/api/posts/${slug}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
+      });
 
-    if (!res.ok) throw new Error("Update failed");
-    return await res.json();
+      const updated = await res.json();
+      if (!res.ok) return rejectWithValue(updated);
+
+      return updated;
+    } catch (error) {
+      return rejectWithValue({ error: error.message });
+    }
   }
 );
 
 /* ================= DELETE POST ================= */
 export const deletePost = createAsyncThunk(
   "posts/deletePost",
-  async (slug) => {
-    const res = await fetch(`/api/posts/${slug}`, {
-      method: "DELETE",
-    });
+  async (slug, { rejectWithValue }) => {
+    try {
+      const res = await fetch(`/api/posts/${slug}`, { method: "DELETE" });
+      if (!res.ok) throw new Error("Delete failed");
 
-    if (!res.ok) throw new Error("Delete failed");
-    return slug;
+      return slug;
+    } catch (error) {
+      return rejectWithValue({ error: error.message });
+    }
   }
 );
 
+/* ================= SLICE ================= */
 const postSlice = createSlice({
   name: "posts",
   initialState: {
@@ -97,11 +83,17 @@ const postSlice = createSlice({
     loading: false,
     error: null,
   },
-  reducers: {},
+  reducers: {
+    clearError: (state) => {
+      state.error = null;
+    },
+  },
   extraReducers: (builder) => {
     builder
+      // FETCH POSTS
       .addCase(fetchPosts.pending, (state) => {
         state.loading = true;
+        state.error = null;
       })
       .addCase(fetchPosts.fulfilled, (state, action) => {
         state.loading = false;
@@ -109,8 +101,10 @@ const postSlice = createSlice({
       })
       .addCase(fetchPosts.rejected, (state, action) => {
         state.loading = false;
-        state.error = action.error.message;
+        state.error = action.error.message || "Failed to fetch posts";
       })
+
+      // CREATE POST
       .addCase(createPost.pending, (state) => {
         state.loading = true;
         state.error = null;
@@ -123,17 +117,38 @@ const postSlice = createSlice({
         state.loading = false;
         state.error = action.payload?.error || "Create post failed";
       })
+
+      // UPDATE POST
+      .addCase(updatePost.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
       .addCase(updatePost.fulfilled, (state, action) => {
+        state.loading = false;
         state.list = state.list.map((post) =>
           post.slug === action.payload.slug ? action.payload : post
         );
       })
+      .addCase(updatePost.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload?.error || "Update post failed";
+      })
+
+      // DELETE POST
+      .addCase(deletePost.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
       .addCase(deletePost.fulfilled, (state, action) => {
-        state.list = state.list.filter(
-          (post) => post.slug !== action.payload
-        );
+        state.loading = false;
+        state.list = state.list.filter((post) => post.slug !== action.payload);
+      })
+      .addCase(deletePost.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload?.error || "Delete post failed";
       });
   },
 });
 
+export const { clearError } = postSlice.actions;
 export default postSlice.reducer;

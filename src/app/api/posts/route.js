@@ -1,7 +1,7 @@
+// src/app/api/posts/route.js
 import { connectDB } from "@/app/lib/db";
 import Post from "@/app/models/Post";
 
-// GET: List posts with pagination, filter, and sort
 export async function GET(req) {
   await connectDB();
   const { searchParams } = new URL(req.url);
@@ -36,7 +36,7 @@ export async function POST(req) {
 
   try {
     const bodyData = await req.json();
-    const { title, body, author, tags } = bodyData;
+    const { title, body, author, tags, image } = bodyData;
 
     if (!title || !body || !author) {
       return new Response(
@@ -45,17 +45,16 @@ export async function POST(req) {
       );
     }
 
-    // Generate slug here
     let slug = title
-  .toLowerCase()
-  .trim()
-  .replace(/\s+/g, "-")
-  .replace(/[^\w\-]+/g, "");
+      .toLowerCase()
+      .trim()
+      .replace(/\s+/g, "-")
+      .replace(/[^\w\-]+/g, "");
 
-const existingPost = await Post.findOne({ slug });
-if (existingPost) {
-  slug = `${slug}-${Date.now()}`; // only add timestamp if duplicate exists
-}
+    const existingPost = await Post.findOne({ slug });
+    if (existingPost) {
+      slug = `${slug}-${Date.now()}`;
+    }
 
     const post = await Post.create({
       title,
@@ -63,6 +62,7 @@ if (existingPost) {
       author,
       tags: tags || [],
       slug,
+      image: image || "",
     });
 
     return new Response(

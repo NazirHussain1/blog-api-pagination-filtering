@@ -7,11 +7,14 @@ import PostCard from "@/app/components/PostCard/PostCard";
 import Pagination from "@/app/components/Pagination/Pagination";
 import FilterBar from "@/app/components/FilterBar/FilterBar";
 
-const StateMessage = ({ message, color = "gray" }) => (
-  <div className="flex justify-center items-center min-h-[40vh]">
-    <p className={`text-${color}-500`}>{message}</p>
-  </div>
-);
+const StateMessage = ({ message, color = "gray" }) => {
+  const colorClass = color === "red" ? "text-red-500" : "text-gray-500";
+  return (
+    <div className="flex justify-center items-center min-h-[40vh]">
+      <p className={colorClass}>{message}</p>
+    </div>
+  );
+};
 
 export default function Home() {
   const dispatch = useDispatch();
@@ -48,8 +51,8 @@ export default function Home() {
       {!loading && !error && posts.length === 0 && <StateMessage message="No posts found" />}
 
       <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
-        {!loading && !error && posts.map((post) => (
-          <PostCard key={post.slug} post={post} />
+        {!loading && !error && posts.map((post, index) => (
+          <PostCard key={post._id || post.slug || index} post={post} />
         ))}
       </div>
 

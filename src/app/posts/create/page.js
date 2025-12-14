@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { useDispatch } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import { createPost } from "@/redux/features/posts/postSlice";
 import { toast } from "sonner";
 import { Input } from "@/components/ui/input";
@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 
 export default function CreatePost() {
   const dispatch = useDispatch();
+  const { loading } = useSelector((state) => state.posts);
 
   const [form, setForm] = useState({
     title: "",
@@ -19,15 +20,14 @@ export default function CreatePost() {
 
   const [imageFile, setImageFile] = useState(null);
   const [preview, setPreview] = useState(null);
-  const [loading, setLoading] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [errors, setErrors] = useState({});
 
+  // ---------------- IMAGE UPLOAD ----------------
   const handleImageUpload = async () => {
     if (!imageFile) return "";
 
     setUploading(true);
-
     try {
       const formData = new FormData();
       formData.append("image", imageFile);
@@ -38,17 +38,18 @@ export default function CreatePost() {
       });
 
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error);
+      if (!res.ok || data.error) throw new Error(data.error || "Upload failed");
 
-      return data.url;
-    } catch {
-      toast.error("Image upload failed");
-      throw new Error();
+      return data.url; // Cloudinary image URL
+    } catch (err) {
+      toast.error(err.message || "Image upload failed");
+      throw err;
     } finally {
       setUploading(false);
     }
   };
 
+  // ---------------- SUBMIT POST ----------------
   const handleSubmit = async (e) => {
     e.preventDefault();
     setErrors({});
@@ -63,30 +64,25 @@ export default function CreatePost() {
       return;
     }
 
-    setLoading(true);
-
     try {
+      // Upload image first and get URL
       const imageUrl = await handleImageUpload();
 
       const postData = {
-        title: form.title,
-        body: form.body,
-        author: form.author,
-        tags: form.tags.split(",").map(t => t.trim()).filter(Boolean),
+        ...form,
+        tags: form.tags.split(",").map((t) => t.trim()).filter(Boolean),
         image: imageUrl,
       };
 
+      // Dispatch Redux action
       await dispatch(createPost(postData)).unwrap();
 
       toast.success("Post created successfully");
-
       setForm({ title: "", body: "", author: "", tags: "" });
       setImageFile(null);
       setPreview(null);
     } catch {
       toast.error("Failed to create post");
-    } finally {
-      setLoading(false);
     }
   };
 
@@ -95,7 +91,6 @@ export default function CreatePost() {
       <h1 className="text-2xl font-bold mb-6 text-center">Create New Post</h1>
 
       <form onSubmit={handleSubmit} className="space-y-4">
-
         <Input
           placeholder="Title"
           value={form.title}
@@ -129,7 +124,8 @@ export default function CreatePost() {
           type="file"
           accept="image/*"
           onChange={(e) => {
-            const file = e.target.files[0];
+            const file = e.target.files?.[0];
+            if (!file) return;
             setImageFile(file);
             setPreview(URL.createObjectURL(file));
           }}
@@ -146,7 +142,6 @@ export default function CreatePost() {
         <Button disabled={loading || uploading} className="w-full">
           {uploading ? "Uploading Image..." : loading ? "Creating..." : "Create Post"}
         </Button>
-
       </form>
     </div>
   );
