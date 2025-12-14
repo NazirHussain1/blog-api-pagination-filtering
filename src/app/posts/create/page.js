@@ -1,27 +1,36 @@
 "use client";
 
 import { useState } from "react";
+import { useDispatch } from "react-redux";
+import { createPost } from "@/redux/features/posts/postSlice";
+import { toast } from "sonner";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
 
 export default function CreatePost() {
-  const [title, setTitle] = useState("");
-  const [body, setBody] = useState("");
-  const [author, setAuthor] = useState("");
-  const [tags, setTags] = useState("");
+  const dispatch = useDispatch();
+
+  const [form, setForm] = useState({
+    title: "",
+    body: "",
+    author: "",
+    tags: "",
+    image: null, // ready for image upload
+  });
 
   const [loading, setLoading] = useState(false);
-  const [toast, setToast] = useState("");
   const [errors, setErrors] = useState({});
 
+  /* ================= HANDLE FORM SUBMIT ================= */
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setToast("");
     setErrors({});
 
     // Validation
     const newErrors = {};
-    if (!title.trim()) newErrors.title = "Title is required";
-    if (!body.trim()) newErrors.body = "Body is required";
-    if (!author.trim()) newErrors.author = "Author is required";
+    if (!form.title.trim()) newErrors.title = "Title is required";
+    if (!form.body.trim()) newErrors.body = "Body is required";
+    if (!form.author.trim()) newErrors.author = "Author is required";
 
     if (Object.keys(newErrors).length > 0) {
       setErrors(newErrors);
@@ -30,110 +39,87 @@ export default function CreatePost() {
 
     setLoading(true);
 
-    const postData = {
-      title,
-      body,
-      author,
-      tags: tags
-        .split(",")
-        .map((tag) => tag.trim())
-        .filter((tag) => tag),
-    };
-
     try {
-      const res = await fetch("/api/posts", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(postData),
-      });
+      // Prepare data for Redux/API
+      const postData = {
+        title: form.title,
+        body: form.body,
+        author: form.author,
+        tags: form.tags
+          .split(",")
+          .map((t) => t.trim())
+          .filter(Boolean),
+        image: form.image, // future: base64 or Cloud URL
+      };
 
-      const data = await res.json().catch(() => null);
+      await dispatch(createPost(postData)).unwrap();
 
-      if (res.ok) {
-        setToast("✅ Post successfully created!");
-        setTitle("");
-        setBody("");
-        setAuthor("");
-        setTags("");
-      } else {
-        setToast(`❌ Error: ${data?.message || "Failed to create post"}`);
-      }
+      toast.success("Post created successfully!");
+      setForm({ title: "", body: "", author: "", tags: "", image: null });
     } catch (error) {
-      setToast(`❌ Error: ${error.message}`);
+      toast.error("Failed to create post");
     } finally {
       setLoading(false);
-      setTimeout(() => setToast(""), 3000);
     }
   };
 
   return (
-    <div className="max-w-xl mx-auto my-8 p-4 bg-white rounded shadow">
+    <div className="max-w-xl mx-auto my-8 p-6 bg-white rounded shadow">
       <h1 className="text-2xl font-bold mb-6 text-center">Create New Post</h1>
-
-      {/* Toast */}
-      {toast && (
-        <div className="fixed top-4 right-4 bg-gray-100 border-l-4 border-blue-600 text-blue-700 p-3 rounded shadow-lg animate-fade">
-          {toast}
-        </div>
-      )}
 
       <form onSubmit={handleSubmit} className="space-y-4">
         <div>
-          <input
-            type="text"
+          <Input
             placeholder="Title"
-            className="w-full p-3 border rounded focus:outline-none focus:ring-2 focus:ring-blue-500 transition"
-            value={title}
-            onChange={(e) => setTitle(e.target.value)}
+            value={form.title}
+            onChange={(e) => setForm({ ...form, title: e.target.value })}
           />
-          {errors.title && (
-            <p className="text-red-600 text-sm mt-1">{errors.title}</p>
-          )}
+          {errors.title && <p className="text-red-600 text-sm mt-1">{errors.title}</p>}
         </div>
 
         <div>
           <textarea
             placeholder="Body"
             className="w-full p-3 border rounded focus:outline-none focus:ring-2 focus:ring-blue-500 transition"
-            value={body}
-            onChange={(e) => setBody(e.target.value)}
+            value={form.body}
+            onChange={(e) => setForm({ ...form, body: e.target.value })}
             rows={6}
           />
-          {errors.body && (
-            <p className="text-red-600 text-sm mt-1">{errors.body}</p>
-          )}
+          {errors.body && <p className="text-red-600 text-sm mt-1">{errors.body}</p>}
         </div>
 
         <div>
-          <input
-            type="text"
+          <Input
             placeholder="Author"
-            className="w-full p-3 border rounded focus:outline-none focus:ring-2 focus:ring-blue-500 transition"
-            value={author}
-            onChange={(e) => setAuthor(e.target.value)}
+            value={form.author}
+            onChange={(e) => setForm({ ...form, author: e.target.value })}
           />
-          {errors.author && (
-            <p className="text-red-600 text-sm mt-1">{errors.author}</p>
-          )}
+          {errors.author && <p className="text-red-600 text-sm mt-1">{errors.author}</p>}
+        </div>
+
+        <div>
+          <Input
+            placeholder="Tags (comma separated)"
+            value={form.tags}
+            onChange={(e) => setForm({ ...form, tags: e.target.value })}
+          />
         </div>
 
         <div>
           <input
-            type="text"
-            placeholder="Tags (comma separated)"
-            className="w-full p-3 border rounded focus:outline-none focus:ring-2 focus:ring-blue-500 transition"
-            value={tags}
-            onChange={(e) => setTags(e.target.value)}
+            type="file"
+            accept="image/*"
+            onChange={(e) => setForm({ ...form, image: e.target.files[0] })}
           />
         </div>
 
-        <button
+        <Button
           type="submit"
+          className="w-full bg-blue-600 text-white py-3 rounded hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition"
           disabled={loading}
-          className="w-full bg-blue-600 text-white px-4 py-3 rounded hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition"
         >
           {loading ? "Creating..." : "Create Post"}
-        </button>
+        </Button>
       </form>
     </div>
   );

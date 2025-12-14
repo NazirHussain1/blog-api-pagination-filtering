@@ -4,19 +4,29 @@ import Link from "next/link";
 
 export default function PostCard({ post }) {
   return (
-    <div className="border rounded-lg shadow hover:shadow-lg transition p-4 mb-6 bg-white">
+    <div className="border rounded-lg shadow hover:shadow-xl transition p-4 mb-6 bg-white hover:scale-[1.01] duration-200">
       
+      {/* Optional Featured Image */}
+      {post.image && (
+        <img
+          src={post.image}
+          alt={post.title}
+          className="w-full h-48 object-cover rounded mb-4"
+        />
+      )}
+
       <h2 className="text-2xl font-bold mb-2 hover:text-blue-600 transition">
         {post.title}
       </h2>
 
+      <div className="flex justify-between text-sm text-gray-500 mb-2">
+        <span>Author: {post.author}</span>
+        {post.date && <span>{new Date(post.date).toLocaleDateString()}</span>}
+      </div>
+
       <p className="text-gray-700 mb-3 line-clamp-3">
         {post.body}
       </p>
-
-      <div className="flex flex-wrap gap-2 mb-2 text-sm text-gray-500">
-        <span>Author: {post.author}</span>
-      </div>
 
       {post.tags && post.tags.length > 0 && (
         <div className="flex flex-wrap gap-2 mb-3">

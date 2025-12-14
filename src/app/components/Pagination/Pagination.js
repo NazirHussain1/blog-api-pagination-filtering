@@ -12,7 +12,10 @@ export default function Pagination({ page, setPage, hasNext }) {
         Prev
       </button>
 
-      <span className="px-4 py-2 border rounded bg-white text-gray-700">{page}</span>
+      {/* Current Page Highlight */}
+      <span className="px-4 py-2 border rounded bg-blue-600 text-white">
+        {page}
+      </span>
 
       <button
         onClick={() => setPage((p) => p + 1)}

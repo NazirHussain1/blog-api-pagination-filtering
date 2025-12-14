@@ -2,6 +2,8 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { useDispatch, useSelector } from "react-redux";
+import { loginUser } from "@/redux/features/auth/authSlice";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
@@ -11,9 +13,11 @@ import { toast, Toaster } from "sonner";
 
 export default function LoginPage() {
   const router = useRouter();
+  const dispatch = useDispatch();
+  const { loading } = useSelector((state) => state.auth);
+
   const [form, setForm] = useState({ email: "", password: "" });
   const [remember, setRemember] = useState(false);
-  const [loading, setLoading] = useState(false);
 
   const handleLogin = async () => {
     if (!form.email || !form.password) {
@@ -21,36 +25,22 @@ export default function LoginPage() {
       return;
     }
 
-    setLoading(true);
-
     try {
-      const res = await fetch("/api/auth/login", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ...form, remember }),
-      });
+      const result = await dispatch(loginUser({ ...form, remember })).unwrap();
 
-      const data = await res.json().catch(() => null);
-
-      if (!res.ok) {
-        toast.error(data?.error || "Login failed");
-        setLoading(false);
-        return;
-      }
+      // Persist token if remember checked
+      if (remember && result.token) localStorage.setItem("token", result.token);
 
       toast.success("Login successful!");
-
-      const role = data?.user?.role;
+      const role = result.user.role;
 
       setTimeout(() => {
         if (role === "admin") router.push("/posts/manage");
         else router.push("/");
       }, 800);
 
-    } catch {
-      toast.error("Something went wrong");
-    } finally {
-      setLoading(false);
+    } catch (err) {
+      toast.error(err?.error || "Login failed");
     }
   };
 
@@ -95,7 +85,10 @@ export default function LoginPage() {
 
           <p className="text-center text-sm text-gray-600">
             Don t have an account?{" "}
-            <span className="text-blue-600 cursor-pointer hover:underline" onClick={() => router.push("/signup")}>
+            <span
+              className="text-blue-600 cursor-pointer hover:underline"
+              onClick={() => router.push("/signup")}
+            >
               Sign Up
             </span>
           </p>
