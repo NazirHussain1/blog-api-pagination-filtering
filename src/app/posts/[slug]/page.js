@@ -2,12 +2,15 @@
 
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
+import { Button } from "@/components/ui/button";
 
 export default function SinglePost() {
   const { slug } = useParams();
+  const router = useRouter();
+
   const [post, setPost] = useState(null);
   const [loading, setLoading] = useState(true);
-  const router = useRouter();
+  const [error, setError] = useState("");
 
   useEffect(() => {
     const fetchPost = async () => {
@@ -16,67 +19,91 @@ export default function SinglePost() {
         if (!res.ok) throw new Error("Post not found");
         const data = await res.json();
         setPost(data);
-      } catch (error) {
-        setPost(null);
-        console.error(error);
+      } catch (err) {
+        setError("Post not found");
       } finally {
         setLoading(false);
       }
     };
+
     fetchPost();
   }, [slug]);
 
-  if (loading)
-    return (
-      <div className="flex justify-center items-center min-h-[60vh]">
-        <p className="text-gray-500">Loading post...</p>
-      </div>
-    );
+  /* ================= STATES ================= */
 
-  if (!post)
+  if (loading) {
     return (
-      <div className="flex justify-center items-center min-h-[60vh]">
-        <p className="text-red-500">Post not found</p>
+      <div className="flex items-center justify-center min-h-[60vh]">
+        <p className="text-gray-500 text-lg">Loading post...</p>
       </div>
     );
+  }
+
+  if (error || !post) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[60vh] space-y-4">
+        <p className="text-red-500 text-lg">{error}</p>
+        <Button variant="outline" onClick={() => router.push("/")}>
+          Back to Home
+        </Button>
+      </div>
+    );
+  }
+
+  /* ================= UI ================= */
 
   return (
-    <main className="container mx-auto p-4 max-w-3xl bg-white rounded shadow mt-6">
-      {/* Post Title */}
+    <article className="max-w-3xl mx-auto bg-white rounded-lg shadow p-6 mt-8">
+
+      {/* Title */}
       <h1 className="text-3xl font-bold mb-2">{post.title}</h1>
 
-      {/* Published Date */}
-      {post.createdAt && (
-        <p className="text-sm text-gray-400 mb-2">
-          Published: {new Date(post.createdAt).toLocaleDateString()}
-        </p>
-      )}
+      {/* Meta */}
+      <div className="text-sm text-gray-500 mb-4 flex flex-wrap gap-2">
+        <span>By <b>{post.author}</b></span>
+        {post.createdAt && (
+          <span>
+            • {new Date(post.createdAt).toLocaleDateString()}
+          </span>
+        )}
+      </div>
 
-      {/* Post Image */}
+      {/* Image */}
       {post.image && (
         <img
           src={post.image}
           alt={post.title}
-          className="w-full h-auto rounded mb-4"
+          className="w-full max-h-[400px] object-cover rounded mb-6"
+          loading="lazy"
         />
       )}
 
-      {/* Post Body */}
-      <p className="text-gray-700 mb-4">{post.body}</p>
+      {/* Content */}
+      <div className="text-gray-800 leading-relaxed whitespace-pre-line mb-6">
+        {post.body}
+      </div>
 
-      {/* Author & Tags */}
-      <p className="text-sm text-gray-500 mb-1">Author: {post.author}</p>
-      <p className="text-sm text-gray-500 mb-4">
-        Tags: {post.tags?.join(", ") || "No tags"}
-      </p>
+      {/* Tags */}
+      {post.tags?.length > 0 && (
+        <div className="flex flex-wrap gap-2 mb-6">
+          {post.tags.map((tag) => (
+            <span
+              key={tag}
+              className="bg-blue-100 text-blue-700 px-3 py-1 rounded-full text-xs"
+            >
+              #{tag}
+            </span>
+          ))}
+        </div>
+      )}
 
-      {/* Back Button */}
-      <button
-        className="mt-4 bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition"
-        onClick={() => router.back()}
-      >
-        Go Back
-      </button>
-    </main>
+      {/* Actions */}
+      <div className="flex justify-between">
+        <Button variant="outline" onClick={() => router.back()}>
+          ← Go Back
+        </Button>
+      </div>
+
+    </article>
   );
 }

@@ -1,46 +1,45 @@
 import cloudinary from "@/utils/cloudinary";
-import multer from "multer";
-import nextConnect from "next-connect";
+import { NextResponse } from "next/server";
 import streamifier from "streamifier";
 
-
-const upload = multer({ storage: multer.memoryStorage() });
-
-const handler = nextConnect();
-handler.use(upload.single("image"));
-
-handler.post(async (req, res) => {
+export async function POST(req) {
   try {
-    const file = req.file;
-    if (!file) return res.status(400).json({ error: "No file uploaded" });
+    const formData = await req.formData();
+    const file = formData.get("image");
 
-    // Upload to Cloudinary using a stream
-    const streamUpload = (buffer) => {
-      return new Promise((resolve, reject) => {
-        const stream = cloudinary.uploader.upload_stream(
-          { folder: "blog_posts", use_filename: true, unique_filename: false },
-          (error, result) => {
-            if (result) resolve(result);
-            else reject(error);
-          }
-        );
-        streamifier.createReadStream(buffer).pipe(stream);
-      });
-    };
+    if (!file) {
+      return NextResponse.json(
+        { error: "No file uploaded" },
+        { status: 400 }
+      );
+    }
 
-    const result = await streamUpload(file.buffer);
+    const buffer = Buffer.from(await file.arrayBuffer());
 
-    res.status(200).json({ url: result.secure_url });
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: "Upload failed" });
+    const uploadResult = await new Promise((resolve, reject) => {
+      const uploadStream = cloudinary.uploader.upload_stream(
+        {
+          folder: "blog_posts",
+          use_filename: true,
+          unique_filename: false,
+        },
+        (error, result) => {
+          if (error) reject(error);
+          resolve(result);
+        }
+      );
+
+      streamifier.createReadStream(buffer).pipe(uploadStream);
+    });
+
+    return NextResponse.json({
+      success: true,
+      url: uploadResult.secure_url,
+    });
+  } catch (error) {
+    return NextResponse.json(
+      { error: "Upload failed" },
+      { status: 500 }
+    );
   }
-});
-
-export const config = {
-  api: {
-    bodyParser: false, 
-  },
-};
-
-export default handler;
+}

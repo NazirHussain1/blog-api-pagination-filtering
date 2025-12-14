@@ -8,6 +8,7 @@ import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { X } from "lucide-react";
 import { toast } from "sonner";
+
 export default function ManagePosts() {
   const dispatch = useDispatch();
   const { list: posts, loading, error } = useSelector((state) => state.posts);
@@ -20,14 +21,16 @@ export default function ManagePosts() {
     tags: "",
   });
 
+  const [newImage, setNewImage] = useState(null);
+  const [preview, setPreview] = useState(null);
+  const [uploading, setUploading] = useState(false);
+
   const modalRef = useRef(null);
 
-  // Fetch posts on mount
   useEffect(() => {
     dispatch(fetchPosts({ page: 1, limit: 100, sort: "newest" }));
   }, [dispatch]);
 
-  // Close modal on outside click
   useEffect(() => {
     const handler = (e) => {
       if (modalRef.current && !modalRef.current.contains(e.target)) {
@@ -38,7 +41,6 @@ export default function ManagePosts() {
     return () => document.removeEventListener("mousedown", handler);
   }, []);
 
-  /* ================= DELETE POST ================= */
   const handleDelete = (slug) => {
     toast("Delete this post?", {
       action: {
@@ -56,7 +58,6 @@ export default function ManagePosts() {
     });
   };
 
-  /* ================= OPEN EDIT MODAL ================= */
   const openEdit = (post) => {
     setEditPost(post);
     setEditForm({
@@ -65,11 +66,37 @@ export default function ManagePosts() {
       author: post.author || "",
       tags: post.tags?.join(", ") || "",
     });
+    setPreview(post.image || null);
+    setNewImage(null);
   };
 
-  /* ================= SAVE EDIT ================= */
+  const uploadImage = async () => {
+    if (!newImage) return editPost.image;
+
+    setUploading(true);
+
+    try {
+      const formData = new FormData();
+      formData.append("image", newImage);
+
+      const res = await fetch("/api/posts/upload", {
+        method: "POST",
+        body: formData,
+      });
+
+      const data = await res.json();
+      if (!res.ok) throw new Error();
+
+      return data.url;
+    } finally {
+      setUploading(false);
+    }
+  };
+
   const saveEdit = async () => {
     try {
+      const imageUrl = await uploadImage();
+
       await dispatch(
         updatePost({
           slug: editPost.slug,
@@ -81,6 +108,7 @@ export default function ManagePosts() {
               .split(",")
               .map((t) => t.trim())
               .filter(Boolean),
+            image: imageUrl,
           },
         })
       ).unwrap();
@@ -92,7 +120,6 @@ export default function ManagePosts() {
     }
   };
 
-  /* ================= UI ================= */
   return (
     <div className="max-w-4xl mx-auto space-y-6">
       <h1 className="text-3xl font-bold text-center">Manage Posts (Admin)</h1>
@@ -121,6 +148,9 @@ export default function ManagePosts() {
             <CardContent className="space-y-2 text-sm text-gray-700">
               <p><b>Author:</b> {post.author}</p>
               <p><b>Slug:</b> {post.slug}</p>
+              {post.image && (
+                <img src={post.image} className="rounded max-h-40 object-cover" />
+              )}
               {post.tags?.length > 0 && (
                 <div className="flex flex-wrap gap-2">
                   {post.tags.map((tag) => (
@@ -139,52 +169,42 @@ export default function ManagePosts() {
         ))
       )}
 
-      {/* ================= EDIT MODAL ================= */}
       {editPost && (
         <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
-          <div
-            ref={modalRef}
-            className="bg-white rounded-lg p-6 w-full max-w-lg space-y-4 relative"
-          >
-            <button
-              onClick={() => setEditPost(null)}
-              className="absolute top-3 right-3 text-gray-500 hover:text-black"
-            >
+          <div ref={modalRef} className="bg-white rounded-lg p-6 w-full max-w-lg space-y-4 relative">
+            <button onClick={() => setEditPost(null)} className="absolute top-3 right-3 text-gray-500">
               <X />
             </button>
 
             <h2 className="text-xl font-semibold">Edit Post</h2>
 
-            <Input
-              placeholder="Title"
-              value={editForm.title}
-              onChange={(e) => setEditForm({ ...editForm, title: e.target.value })}
+            <Input value={editForm.title} onChange={(e) => setEditForm({ ...editForm, title: e.target.value })} />
+            <Input value={editForm.author} onChange={(e) => setEditForm({ ...editForm, author: e.target.value })} />
+            <Input value={editForm.tags} onChange={(e) => setEditForm({ ...editForm, tags: e.target.value })} />
+
+            <input
+              type="file"
+              accept="image/*"
+              onChange={(e) => {
+                const file = e.target.files[0];
+                setNewImage(file);
+                setPreview(URL.createObjectURL(file));
+              }}
             />
 
-            <Input
-              placeholder="Author"
-              value={editForm.author}
-              onChange={(e) => setEditForm({ ...editForm, author: e.target.value })}
-            />
-
-            <Input
-              placeholder="Tags (comma separated)"
-              value={editForm.tags}
-              onChange={(e) => setEditForm({ ...editForm, tags: e.target.value })}
-            />
+            {preview && <img src={preview} className="rounded border max-h-40 object-cover" />}
 
             <textarea
               className="w-full border rounded p-2 min-h-[100px]"
-              placeholder="Body"
               value={editForm.body}
               onChange={(e) => setEditForm({ ...editForm, body: e.target.value })}
             />
 
             <div className="flex justify-end gap-2">
-              <Button variant="outline" onClick={() => setEditPost(null)}>
-                Cancel
+              <Button variant="outline" onClick={() => setEditPost(null)}>Cancel</Button>
+              <Button disabled={uploading} onClick={saveEdit}>
+                {uploading ? "Uploading..." : "Save"}
               </Button>
-              <Button onClick={saveEdit}>Save</Button>
             </div>
           </div>
         </div>

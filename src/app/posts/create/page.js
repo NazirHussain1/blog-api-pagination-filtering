@@ -15,24 +15,50 @@ export default function CreatePost() {
     body: "",
     author: "",
     tags: "",
-    image: null, // ready for image upload
   });
 
+  const [imageFile, setImageFile] = useState(null);
+  const [preview, setPreview] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [uploading, setUploading] = useState(false);
   const [errors, setErrors] = useState({});
 
-  /* ================= HANDLE FORM SUBMIT ================= */
+  const handleImageUpload = async () => {
+    if (!imageFile) return "";
+
+    setUploading(true);
+
+    try {
+      const formData = new FormData();
+      formData.append("image", imageFile);
+
+      const res = await fetch("/api/posts/upload", {
+        method: "POST",
+        body: formData,
+      });
+
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error);
+
+      return data.url;
+    } catch {
+      toast.error("Image upload failed");
+      throw new Error();
+    } finally {
+      setUploading(false);
+    }
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setErrors({});
 
-    // Validation
     const newErrors = {};
     if (!form.title.trim()) newErrors.title = "Title is required";
     if (!form.body.trim()) newErrors.body = "Body is required";
     if (!form.author.trim()) newErrors.author = "Author is required";
 
-    if (Object.keys(newErrors).length > 0) {
+    if (Object.keys(newErrors).length) {
       setErrors(newErrors);
       return;
     }
@@ -40,23 +66,24 @@ export default function CreatePost() {
     setLoading(true);
 
     try {
-      // Prepare data for Redux/API
+      const imageUrl = await handleImageUpload();
+
       const postData = {
         title: form.title,
         body: form.body,
         author: form.author,
-        tags: form.tags
-          .split(",")
-          .map((t) => t.trim())
-          .filter(Boolean),
-        image: form.image, // future: base64 or Cloud URL
+        tags: form.tags.split(",").map(t => t.trim()).filter(Boolean),
+        image: imageUrl,
       };
 
       await dispatch(createPost(postData)).unwrap();
 
-      toast.success("Post created successfully!");
-      setForm({ title: "", body: "", author: "", tags: "", image: null });
-    } catch (error) {
+      toast.success("Post created successfully");
+
+      setForm({ title: "", body: "", author: "", tags: "" });
+      setImageFile(null);
+      setPreview(null);
+    } catch {
       toast.error("Failed to create post");
     } finally {
       setLoading(false);
@@ -68,58 +95,58 @@ export default function CreatePost() {
       <h1 className="text-2xl font-bold mb-6 text-center">Create New Post</h1>
 
       <form onSubmit={handleSubmit} className="space-y-4">
-        <div>
-          <Input
-            placeholder="Title"
-            value={form.title}
-            onChange={(e) => setForm({ ...form, title: e.target.value })}
-          />
-          {errors.title && <p className="text-red-600 text-sm mt-1">{errors.title}</p>}
-        </div>
 
-        <div>
-          <textarea
-            placeholder="Body"
-            className="w-full p-3 border rounded focus:outline-none focus:ring-2 focus:ring-blue-500 transition"
-            value={form.body}
-            onChange={(e) => setForm({ ...form, body: e.target.value })}
-            rows={6}
-          />
-          {errors.body && <p className="text-red-600 text-sm mt-1">{errors.body}</p>}
-        </div>
+        <Input
+          placeholder="Title"
+          value={form.title}
+          onChange={(e) => setForm({ ...form, title: e.target.value })}
+        />
+        {errors.title && <p className="text-red-600 text-sm">{errors.title}</p>}
 
-        <div>
-          <Input
-            placeholder="Author"
-            value={form.author}
-            onChange={(e) => setForm({ ...form, author: e.target.value })}
-          />
-          {errors.author && <p className="text-red-600 text-sm mt-1">{errors.author}</p>}
-        </div>
+        <textarea
+          placeholder="Body"
+          className="w-full p-3 border rounded"
+          value={form.body}
+          onChange={(e) => setForm({ ...form, body: e.target.value })}
+          rows={6}
+        />
+        {errors.body && <p className="text-red-600 text-sm">{errors.body}</p>}
 
-        <div>
-          <Input
-            placeholder="Tags (comma separated)"
-            value={form.tags}
-            onChange={(e) => setForm({ ...form, tags: e.target.value })}
-          />
-        </div>
+        <Input
+          placeholder="Author"
+          value={form.author}
+          onChange={(e) => setForm({ ...form, author: e.target.value })}
+        />
+        {errors.author && <p className="text-red-600 text-sm">{errors.author}</p>}
 
-        <div>
-          <input
-            type="file"
-            accept="image/*"
-            onChange={(e) => setForm({ ...form, image: e.target.files[0] })}
-          />
-        </div>
+        <Input
+          placeholder="Tags (comma separated)"
+          value={form.tags}
+          onChange={(e) => setForm({ ...form, tags: e.target.value })}
+        />
 
-        <Button
-          type="submit"
-          className="w-full bg-blue-600 text-white py-3 rounded hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition"
-          disabled={loading}
-        >
-          {loading ? "Creating..." : "Create Post"}
+        <input
+          type="file"
+          accept="image/*"
+          onChange={(e) => {
+            const file = e.target.files[0];
+            setImageFile(file);
+            setPreview(URL.createObjectURL(file));
+          }}
+        />
+
+        {preview && (
+          <img
+            src={preview}
+            alt="Preview"
+            className="rounded border max-h-48 object-cover"
+          />
+        )}
+
+        <Button disabled={loading || uploading} className="w-full">
+          {uploading ? "Uploading Image..." : loading ? "Creating..." : "Create Post"}
         </Button>
+
       </form>
     </div>
   );

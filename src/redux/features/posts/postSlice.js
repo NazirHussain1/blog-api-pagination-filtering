@@ -2,6 +2,7 @@
 
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 
+/* ================= FETCH POSTS ================= */
 export const fetchPosts = createAsyncThunk(
   "posts/fetchPosts",
   async ({ page = 1, limit = 5, author = "", tag = "", sort = "newest" }) => {
@@ -16,25 +17,52 @@ export const fetchPosts = createAsyncThunk(
   }
 );
 
+/* ================= CREATE POST (IMAGE + DATA) ================= */
 export const createPost = createAsyncThunk(
   "posts/createPost",
   async (postData, { rejectWithValue }) => {
     try {
+      let imageUrl = "";
+
+      if (postData.image) {
+        const formData = new FormData();
+        formData.append("image", postData.image);
+
+        const uploadRes = await fetch("/api/posts/upload", {
+          method: "POST",
+          body: formData,
+        });
+
+        const uploadData = await uploadRes.json();
+        if (!uploadRes.ok) return rejectWithValue(uploadData);
+
+        imageUrl = uploadData.urlով
+        imageUrl = uploadData.url;
+      }
+
       const res = await fetch("/api/posts", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(postData),
+        body: JSON.stringify({
+          title: postData.title,
+          body: postData.body,
+          author: postData.author,
+          tags: postData.tags,
+          image: imageUrl,
+        }),
       });
 
       const data = await res.json();
       if (!res.ok) return rejectWithValue(data);
+
       return data;
-    } catch (err) {
-      return rejectWithValue({ error: err.message });
+    } catch (error) {
+      return rejectWithValue({ error: error.message });
     }
   }
 );
 
+/* ================= UPDATE POST ================= */
 export const updatePost = createAsyncThunk(
   "posts/updatePost",
   async ({ slug, data }) => {
@@ -49,12 +77,14 @@ export const updatePost = createAsyncThunk(
   }
 );
 
+/* ================= DELETE POST ================= */
 export const deletePost = createAsyncThunk(
   "posts/deletePost",
   async (slug) => {
     const res = await fetch(`/api/posts/${slug}`, {
       method: "DELETE",
     });
+
     if (!res.ok) throw new Error("Delete failed");
     return slug;
   }
@@ -87,7 +117,7 @@ const postSlice = createSlice({
       })
       .addCase(createPost.fulfilled, (state, action) => {
         state.loading = false;
-        state.list.push(action.payload);
+        state.list.unshift(action.payload);
       })
       .addCase(createPost.rejected, (state, action) => {
         state.loading = false;
@@ -99,10 +129,11 @@ const postSlice = createSlice({
         );
       })
       .addCase(deletePost.fulfilled, (state, action) => {
-        state.list = state.list.filter((post) => post.slug !== action.payload);
+        state.list = state.list.filter(
+          (post) => post.slug !== action.payload
+        );
       });
   },
 });
 
 export default postSlice.reducer;
-export { fetchPosts, createPost, updatePost, deletePost };
