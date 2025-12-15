@@ -23,13 +23,13 @@ export default function PostCard({ post }) {
 
       {/* AUTHOR INFO */}
       <div className="flex items-center gap-3 mb-3">
-        <Image
-          src={post.author?.avatar || "/avatar.png"}
-          alt={post.author?.name}
-          width={40}
-          height={40}
-          className="rounded-full object-cover border"
-        />
+       <Image
+  src={post.author?.avatar || "/avatar.png"}
+  alt={post.author?.name || "Author profile picture"}
+  width={40}
+  height={40}
+  className="rounded-full object-cover border"
+/>
 
         <div className="text-sm">
           <Link
