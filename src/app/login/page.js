@@ -21,22 +21,22 @@ export default function LoginPage() {
 
   const handleLogin = async () => {
     if (!form.email || !form.password) {
-      toast.error("Please enter email & password");
-      return;
+      return toast.error("Please enter email & password");
     }
 
     try {
-      const result = await dispatch(loginUser({ ...form, remember })).unwrap();
-
-      // Persist token if remember checked
-      if (remember && result.token) localStorage.setItem("token", result.token);
+      const result = await dispatch(
+        loginUser({ ...form, remember })
+      ).unwrap();
 
       toast.success("Login successful!");
-      const role = result.user.role;
 
       setTimeout(() => {
-        if (role === "admin") router.push("/posts/manage");
-        else router.push("/");
+        if (result.user.role === "admin") {
+          router.push("/posts/manage");
+        } else {
+          router.push("/");
+        }
       }, 800);
 
     } catch (err) {
@@ -48,15 +48,20 @@ export default function LoginPage() {
     <div className="min-h-screen flex items-center justify-center bg-gray-100 p-4">
       <Card className="w-full max-w-md shadow-xl">
         <CardHeader>
-          <CardTitle className="text-center text-2xl font-semibold">Login</CardTitle>
+          <CardTitle className="text-center text-2xl font-semibold">
+            Login
+          </CardTitle>
         </CardHeader>
+
         <CardContent className="space-y-4">
           <div>
             <Label>Email</Label>
             <Input
               placeholder="Enter your email"
               value={form.email}
-              onChange={(e) => setForm({ ...form, email: e.target.value })}
+              onChange={(e) =>
+                setForm({ ...form, email: e.target.value })
+              }
             />
           </div>
 
@@ -66,7 +71,9 @@ export default function LoginPage() {
               type="password"
               placeholder="Enter password"
               value={form.password}
-              onChange={(e) => setForm({ ...form, password: e.target.value })}
+              onChange={(e) =>
+                setForm({ ...form, password: e.target.value })
+              }
             />
           </div>
 
@@ -76,7 +83,7 @@ export default function LoginPage() {
           </div>
 
           <Button
-            className="w-full disabled:opacity-50 disabled:cursor-not-allowed"
+            className="w-full"
             onClick={handleLogin}
             disabled={loading}
           >
@@ -84,7 +91,7 @@ export default function LoginPage() {
           </Button>
 
           <p className="text-center text-sm text-gray-600">
-            Don t have an account?{" "}
+            Don’t have an account?{" "}
             <span
               className="text-blue-600 cursor-pointer hover:underline"
               onClick={() => router.push("/signup")}
