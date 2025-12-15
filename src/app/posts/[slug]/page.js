@@ -60,7 +60,7 @@ export default function SinglePost() {
 
       {/* Meta */}
       <div className="text-sm text-gray-500 mb-4 flex flex-wrap gap-2">
-        <span>By <b>{post.author}</b></span>
+       <span>By <b>{post.author?.name || "Unknown Author"}</b></span>
         {post.createdAt && (
           <span>
             • {new Date(post.createdAt).toLocaleDateString()}

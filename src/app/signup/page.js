@@ -53,13 +53,13 @@ export default function SignupPage() {
 
     try {
       await dispatch(
-        signupUser({
-          name,
-          email,
-          phone,
-          password,
-          role: "user", // 🔐 force user role
-        })
+       signupUser({
+    name,
+    email,
+    phone,
+    password,
+    role: form.role,
+  })
       ).unwrap();
 
       toast.success("Signup successful! Redirecting to login...");
@@ -133,6 +133,19 @@ export default function SignupPage() {
               }
             />
           </div>
+
+         <div>
+  <Label>Role</Label>
+  <select
+    value={form.role || ""}
+    onChange={(e) => setForm({ ...form, role: e.target.value })}
+    className="w-full p-2 border rounded"
+  >
+    <option value="">Select role</option>
+    <option value="user">User</option>
+    <option value="admin">Admin</option>
+  </select>
+</div>
 
           {/* Terms */}
           <div className="flex items-center space-x-2">

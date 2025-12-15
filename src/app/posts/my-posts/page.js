@@ -15,18 +15,13 @@ export default function MyPostsPage() {
 
   const [posts, setPosts] = useState([]);
   const [loading, setLoading] = useState(true);
-
   const [editingPost, setEditingPost] = useState(null);
   const [editData, setEditData] = useState({ title: "", body: "" });
 
-  // 🔐 Route protection
   useEffect(() => {
-    if (!authLoading && !user) {
-      router.push("/login");
-    }
+    if (!authLoading && !user) router.push("/login");
   }, [user, authLoading, router]);
 
-  // 📥 Fetch my posts
   useEffect(() => {
     if (!user) return;
 
@@ -46,11 +41,8 @@ export default function MyPostsPage() {
     fetchPosts();
   }, [user]);
 
-  if (authLoading || loading) {
-    return <p className="text-center mt-10">Loading...</p>;
-  }
+  if (authLoading || loading) return <p className="text-center mt-10">Loading...</p>;
 
-  // 🗑️ Delete
   const deletePost = async (slug) => {
     if (!confirm("Delete this post?")) return;
 
@@ -64,7 +56,6 @@ export default function MyPostsPage() {
     }
   };
 
-  // ✏️ Update
   const updatePost = async () => {
     if (!editData.title || !editData.body) {
       toast.error("All fields required");
@@ -79,11 +70,7 @@ export default function MyPostsPage() {
 
     if (res.ok) {
       const updated = await res.json();
-
-      setPosts((prev) =>
-        prev.map((p) => (p.slug === updated.slug ? updated : p))
-      );
-
+      setPosts((prev) => prev.map((p) => (p.slug === updated.slug ? updated : p)));
       toast.success("Post updated");
       setEditingPost(null);
     } else {
@@ -97,9 +84,7 @@ export default function MyPostsPage() {
       <h1 className="text-3xl font-bold text-center mb-6">My Posts</h1>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-5xl mx-auto">
-        {posts.length === 0 && (
-          <p className="col-span-2 text-center">No posts found</p>
-        )}
+        {posts.length === 0 && <p className="col-span-2 text-center">No posts found</p>}
 
         {posts.map((post) => (
           <Card key={post._id} className="p-4 shadow">
@@ -127,11 +112,7 @@ export default function MyPostsPage() {
               >
                 Edit
               </Button>
-
-              <Button
-                variant="destructive"
-                onClick={() => deletePost(post.slug)}
-              >
+              <Button variant="destructive" onClick={() => deletePost(post.slug)}>
                 Delete
               </Button>
             </div>
@@ -139,7 +120,6 @@ export default function MyPostsPage() {
         ))}
       </div>
 
-      {/* ✏️ Edit Modal */}
       {editingPost && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
           <Card className="w-full max-w-lg p-6">
@@ -148,18 +128,14 @@ export default function MyPostsPage() {
             <Input
               className="mb-3"
               value={editData.title}
-              onChange={(e) =>
-                setEditData({ ...editData, title: e.target.value })
-              }
+              onChange={(e) => setEditData({ ...editData, title: e.target.value })}
             />
 
             <textarea
               className="w-full border rounded p-2 mb-4"
               rows={5}
               value={editData.body}
-              onChange={(e) =>
-                setEditData({ ...editData, body: e.target.value })
-              }
+              onChange={(e) => setEditData({ ...editData, body: e.target.value })}
             />
 
             <div className="flex justify-end gap-3">

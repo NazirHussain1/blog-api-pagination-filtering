@@ -1,73 +1,219 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { fetchPosts } from "@/redux/features/posts/postSlice";
+import { fetchPosts, deletePost, updatePost } from "@/redux/features/posts/postSlice";
 import PostCard from "@/app/components/PostCard/PostCard";
-import Pagination from "@/app/components/Pagination/Pagination";
-import FilterBar from "@/app/components/FilterBar/FilterBar";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { toast } from "sonner";
+import { X } from "lucide-react";
 
-const StateMessage = ({ message, color = "gray" }) => {
-  const colorClass = color === "red" ? "text-red-500" : "text-gray-500";
-  return (
-    <div className="flex justify-center items-center min-h-[40vh]">
-      <p className={colorClass}>{message}</p>
-    </div>
-  );
-};
-
-export default function AllPostsPage() {
+export default function MyPostsPage() {
   const dispatch = useDispatch();
+  const { user } = useSelector((state) => state.auth);
   const { list: posts, loading, error } = useSelector((state) => state.posts);
 
-  const [page, setPage] = useState(1);
-  const [author, setAuthor] = useState("");
-  const [tag, setTag] = useState("");
-  const [sort, setSort] = useState("newest");
+  const [editPost, setEditPost] = useState(null);
+  const [editForm, setEditForm] = useState({ title: "", body: "", tags: "" });
+  const [newImage, setNewImage] = useState(null);
+  const [preview, setPreview] = useState(null);
+  const [uploading, setUploading] = useState(false);
 
-  const limit = 6;
+  const modalRef = useRef(null);
 
+  // Fetch only user's posts
   useEffect(() => {
-    dispatch(fetchPosts({ page, limit, author, tag, sort }));
-  }, [dispatch, page, author, tag, sort]);
+    if (user) {
+      dispatch(fetchPosts({ page: 1, limit: 100, author: user._id }));
+    }
+  }, [dispatch, user]);
+
+  // Close modal on outside click
+  useEffect(() => {
+    const handler = (e) => {
+      if (modalRef.current && !modalRef.current.contains(e.target)) {
+        setEditPost(null);
+      }
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, []);
+
+  // Delete post with confirmation and optimistic UI
+  const handleDelete = async (postId, slug) => {
+    const confirmed = confirm("Are you sure you want to delete this post?");
+    if (!confirmed) return;
+
+    try {
+      // Optimistic UI: remove post immediately
+      dispatch({ type: "posts/deletePostOptimistic", payload: postId });
+      await dispatch(deletePost(slug)).unwrap();
+      toast.success("Post deleted");
+    } catch {
+      toast.error("Delete failed");
+      dispatch(fetchPosts({ page: 1, limit: 100, author: user._id })); // fallback
+    }
+  };
+
+  const openEdit = (post) => {
+    setEditPost(post);
+    setEditForm({
+      title: post.title || "",
+      body: post.body || "",
+      tags: post.tags?.join(", ") || "",
+    });
+    setPreview(post.image || null);
+    setNewImage(null);
+  };
+
+  const uploadImage = async () => {
+    if (!newImage) return editPost.image;
+
+    setUploading(true);
+    try {
+      const formData = new FormData();
+      formData.append("image", newImage);
+
+      const res = await fetch("/api/posts/upload", {
+        method: "POST",
+        body: formData,
+      });
+
+      const data = await res.json();
+      if (!res.ok) throw new Error();
+      return data.url;
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const saveEdit = async () => {
+    if (!editForm.title.trim() || !editForm.body.trim()) {
+      toast.error("Title and body are required");
+      return;
+    }
+
+    try {
+      const imageUrl = await uploadImage();
+
+      await dispatch(
+        updatePost({
+          slug: editPost.slug,
+          data: {
+            title: editForm.title,
+            body: editForm.body,
+            tags: editForm.tags
+              .split(",")
+              .map((t) => t.trim())
+              .filter(Boolean),
+            image: imageUrl,
+          },
+        })
+      ).unwrap();
+
+      toast.success("Post updated");
+      setEditPost(null);
+    } catch {
+      toast.error("Update failed");
+    }
+  };
 
   return (
-    <main className="container mx-auto p-4">
-      <h1 className="text-3xl font-bold mb-6 text-center">All Posts</h1>
+    <div className="max-w-4xl mx-auto space-y-6 p-4">
+      <h1 className="text-3xl font-bold text-center">My Posts</h1>
 
-      <FilterBar
-        author={author}
-        setAuthor={setAuthor}
-        tag={tag}
-        setTag={setTag}
-        sort={sort}
-        setSort={setSort}
-      />
-
-      {loading && <StateMessage message="Loading posts..." />}
-      {error && <StateMessage message={error} color="red" />}
-      {!loading && !error && posts.length === 0 && (
-        <StateMessage message="No posts found" />
+      {loading ? (
+        <p className="text-center text-gray-500">Loading...</p>
+      ) : error ? (
+        <p className="text-center text-red-500">{error}</p>
+      ) : posts.length === 0 ? (
+        <p className="text-center text-gray-500">You have no posts yet.</p>
+      ) : (
+        posts.map((post) => (
+          <div key={post._id} className="border rounded p-4 shadow-sm">
+            <PostCard post={post} />
+            {post.author?._id === user._id && (
+              <div className="flex gap-2 mt-2">
+                <Button size="sm" variant="outline" onClick={() => openEdit(post)}>
+                  Edit
+                </Button>
+                <Button
+                  size="sm"
+                  variant="destructive"
+                  onClick={() => handleDelete(post._id, post.slug)}
+                >
+                  Delete
+                </Button>
+              </div>
+            )}
+          </div>
+        ))
       )}
 
-      <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
-        {!loading &&
-          !error &&
-          posts.map((post) => (
-            <PostCard key={post._id || post.slug} post={post} />
-          ))}
-      </div>
+      {/* Edit Modal */}
+      {editPost && (
+        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
+          <div
+            ref={modalRef}
+            className="bg-white rounded-lg p-6 w-full max-w-lg space-y-4 relative"
+          >
+            <button
+              onClick={() => setEditPost(null)}
+              className="absolute top-3 right-3 text-gray-500"
+            >
+              <X />
+            </button>
 
-      {posts.length > 0 && (
-        <div className="mt-6 flex justify-center">
-          <Pagination
-            page={page}
-            setPage={setPage}
-            hasNext={posts.length === limit}
-          />
+            <h2 className="text-xl font-semibold">Edit Post</h2>
+
+            <Input
+              value={editForm.title}
+              onChange={(e) => setEditForm({ ...editForm, title: e.target.value })}
+              placeholder="Title"
+            />
+            <Input
+              value={editForm.tags}
+              onChange={(e) => setEditForm({ ...editForm, tags: e.target.value })}
+              placeholder="Tags (comma separated)"
+            />
+
+            <input
+              type="file"
+              accept="image/*"
+              onChange={(e) => {
+                const file = e.target.files[0];
+                setNewImage(file);
+                setPreview(URL.createObjectURL(file));
+              }}
+            />
+
+            {preview && (
+              <img
+                src={preview}
+                className="rounded border max-h-40 object-cover"
+                alt="Preview"
+              />
+            )}
+
+            <textarea
+              className="w-full border rounded p-2 min-h-[100px]"
+              value={editForm.body}
+              onChange={(e) => setEditForm({ ...editForm, body: e.target.value })}
+              placeholder="Body"
+            />
+
+            <div className="flex justify-end gap-2">
+              <Button variant="outline" onClick={() => setEditPost(null)}>
+                Cancel
+              </Button>
+              <Button disabled={uploading} onClick={saveEdit}>
+                {uploading ? "Uploading..." : "Save"}
+              </Button>
+            </div>
+          </div>
         </div>
       )}
-    </main>
+    </div>
   );
 }
-  

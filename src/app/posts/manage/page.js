@@ -8,16 +8,19 @@ import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { X } from "lucide-react";
 import { toast } from "sonner";
+import { useRouter } from "next/navigation";
 
 export default function ManagePosts() {
   const dispatch = useDispatch();
+  const router = useRouter();
+  const { user } = useSelector((state) => state.auth);
   const { list: posts, loading, error } = useSelector((state) => state.posts);
 
   const [editPost, setEditPost] = useState(null);
   const [editForm, setEditForm] = useState({
     title: "",
     body: "",
-    author: "",
+    authorName: "",
     tags: "",
   });
 
@@ -27,10 +30,17 @@ export default function ManagePosts() {
 
   const modalRef = useRef(null);
 
+  // Protect page: Only admin
   useEffect(() => {
-    dispatch(fetchPosts({ page: 1, limit: 100, sort: "newest" }));
-  }, [dispatch]);
+    if (!user || user.role !== "admin") {
+      toast.error("Access denied. Admins only.");
+      router.push("/"); // redirect to home
+    } else {
+      dispatch(fetchPosts({ page: 1, limit: 100, sort: "newest" }));
+    }
+  }, [dispatch, user, router]);
 
+  // Close modal on outside click
   useEffect(() => {
     const handler = (e) => {
       if (modalRef.current && !modalRef.current.contains(e.target)) {
@@ -63,7 +73,7 @@ export default function ManagePosts() {
     setEditForm({
       title: post.title || "",
       body: post.body || "",
-      author: post.author || "",
+      authorName: post.author?.name || "",
       tags: post.tags?.join(", ") || "",
     });
     setPreview(post.image || null);
@@ -74,7 +84,6 @@ export default function ManagePosts() {
     if (!newImage) return editPost.image;
 
     setUploading(true);
-
     try {
       const formData = new FormData();
       formData.append("image", newImage);
@@ -83,10 +92,8 @@ export default function ManagePosts() {
         method: "POST",
         body: formData,
       });
-
       const data = await res.json();
       if (!res.ok) throw new Error();
-
       return data.url;
     } finally {
       setUploading(false);
@@ -103,7 +110,7 @@ export default function ManagePosts() {
           data: {
             title: editForm.title,
             body: editForm.body,
-            author: editForm.author,
+            author: { name: editForm.authorName }, // only send name
             tags: editForm.tags
               .split(",")
               .map((t) => t.trim())
@@ -120,8 +127,12 @@ export default function ManagePosts() {
     }
   };
 
+  if (!user || user.role !== "admin") {
+    return <p className="text-center mt-10 text-red-500">Access denied.</p>;
+  }
+
   return (
-    <div className="max-w-4xl mx-auto space-y-6">
+    <div className="max-w-4xl mx-auto space-y-6 p-4">
       <h1 className="text-3xl font-bold text-center">Manage Posts (Admin)</h1>
 
       {loading ? (
@@ -146,7 +157,7 @@ export default function ManagePosts() {
             </CardHeader>
 
             <CardContent className="space-y-2 text-sm text-gray-700">
-              <p><b>Author:</b> {post.author}</p>
+              <p><b>Author:</b> {post.author?.name || "Unknown"}</p>
               <p><b>Slug:</b> {post.slug}</p>
               {post.image && (
                 <img src={post.image} className="rounded max-h-40 object-cover" />
@@ -169,6 +180,7 @@ export default function ManagePosts() {
         ))
       )}
 
+      {/* Edit Modal */}
       {editPost && (
         <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
           <div ref={modalRef} className="bg-white rounded-lg p-6 w-full max-w-lg space-y-4 relative">
@@ -178,9 +190,21 @@ export default function ManagePosts() {
 
             <h2 className="text-xl font-semibold">Edit Post</h2>
 
-            <Input value={editForm.title} onChange={(e) => setEditForm({ ...editForm, title: e.target.value })} />
-            <Input value={editForm.author} onChange={(e) => setEditForm({ ...editForm, author: e.target.value })} />
-            <Input value={editForm.tags} onChange={(e) => setEditForm({ ...editForm, tags: e.target.value })} />
+            <Input
+              value={editForm.title}
+              onChange={(e) => setEditForm({ ...editForm, title: e.target.value })}
+              placeholder="Title"
+            />
+            <Input
+              value={editForm.authorName}
+              onChange={(e) => setEditForm({ ...editForm, authorName: e.target.value })}
+              placeholder="Author Name"
+            />
+            <Input
+              value={editForm.tags}
+              onChange={(e) => setEditForm({ ...editForm, tags: e.target.value })}
+              placeholder="Tags (comma separated)"
+            />
 
             <input
               type="file"
@@ -198,6 +222,7 @@ export default function ManagePosts() {
               className="w-full border rounded p-2 min-h-[100px]"
               value={editForm.body}
               onChange={(e) => setEditForm({ ...editForm, body: e.target.value })}
+              placeholder="Body"
             />
 
             <div className="flex justify-end gap-2">

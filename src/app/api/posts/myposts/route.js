@@ -14,8 +14,8 @@ export async function GET(req) {
 
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
 
-    const posts = await Post.find({ author: decoded.id })
-      .sort({ createdAt: -1 });
+    // Fetch only posts created by the logged-in user
+    const posts = await Post.find({ author: decoded.id }).sort({ createdAt: -1 });
 
     return NextResponse.json(posts);
   } catch (error) {

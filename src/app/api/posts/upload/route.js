@@ -2,36 +2,46 @@
 import { NextResponse } from "next/server";
 import cloudinary from "@/utils/cloudinary";
 
-export const runtime = "edge"; // optional, depends on your setup
-
 export async function POST(req) {
   try {
     const formData = await req.formData();
-    const file = formData.get("image"); // frontend key must match
+    const file = formData.get("image");
 
     if (!file || file.size === 0) {
-      return NextResponse.json({ error: "No file uploaded" }, { status: 400 });
+      return NextResponse.json(
+        { error: "No file uploaded" },
+        { status: 400 }
+      );
     }
 
-    const buffer = Buffer.from(await file.arrayBuffer());
+    // Convert file to buffer
+    const bytes = await file.arrayBuffer();
+    const buffer = Buffer.from(bytes);
 
-    const streamUpload = (buffer) =>
-      new Promise((resolve, reject) => {
-        const stream = cloudinary.uploader.upload_stream(
-          { folder: "blog_posts", use_filename: true, unique_filename: false },
-          (error, result) => {
-            if (error) reject(error);
-            else resolve(result);
-          }
-        );
-        stream.end(buffer);
-      });
+    // Upload to Cloudinary using stream
+    const uploadResult = await new Promise((resolve, reject) => {
+      const uploadStream = cloudinary.uploader.upload_stream(
+        {
+          folder: "blog_posts",
+          resource_type: "image",
+        },
+        (error, result) => {
+          if (error) reject(error);
+          else resolve(result);
+        }
+      );
 
-    const result = await streamUpload(buffer);
+      uploadStream.end(buffer);
+    });
 
-    return NextResponse.json({ url: result.secure_url });
-  } catch (err) {
-    console.error("Cloudinary upload error:", err);
-    return NextResponse.json({ error: "Upload failed" }, { status: 500 });
+    return NextResponse.json({
+      url: uploadResult.secure_url,
+    });
+  } catch (error) {
+    console.error("Cloudinary upload error:", error);
+    return NextResponse.json(
+      { error: "Upload failed", details: error.message },
+      { status: 500 }
+    );
   }
 }
