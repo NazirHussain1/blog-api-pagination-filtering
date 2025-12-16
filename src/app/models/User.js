@@ -2,14 +2,17 @@ import mongoose from "mongoose";
 
 const userSchema = new mongoose.Schema(
   {
-    name: { type: String, required: true },
+    name: { type: String, required: true },        // Full name, will be used in profile URL
     email: { type: String, required: true, unique: true },
-    phone: { type: String, required: true },
+    phone: { type: String },
+    location: { type: String },
+    about: { type: String },
+    avatar: { type: String },                      // Profile picture URL
     password: { type: String, required: true },
     role: {
       type: String,
-      enum: ["user", "admin"], 
-      required: true,
+      enum: ["user", "admin"],
+      default: "user",
     },
   },
   { timestamps: true }

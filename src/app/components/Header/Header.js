@@ -133,13 +133,9 @@ export default function Header() {
                       >
                         <User size={18} /> My Profile
                       </Link>
-
-                      <Link
-                        href="/posts/myposts"
-                        className="px-4 py-2 hover:bg-gray-100 flex gap-2"
-                      >
-                        <FilePlus2 size={18} /> My Posts
-                      </Link>
+<Link href="/my-posts" className="px-4 py-2 hover:bg-gray-100 flex gap-2">
+  <FilePlus2 size={18} /> My Posts
+</Link>
 
                       {user.role === "admin" && (
                         <Link
