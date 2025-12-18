@@ -55,19 +55,19 @@ export default function PostCard({ post }) {
         {postBody || "No content available"}
       </p>
 
-      {/* TAGS */}
       {Array.isArray(post.tags) && post.tags.length > 0 && (
-        <div className="flex flex-wrap gap-2 mb-4">
-          {post.tags.map((tag) => (
-            <span
-              key={tag}
-              className="text-xs bg-gray-100 text-gray-700 px-2 py-1 rounded-full"
-            >
-              #{tag}
-            </span>
-          ))}
-        </div>
-      )}
+  <div className="flex flex-wrap gap-2 mb-4">
+    {post.tags.map((tag) => (
+      <span
+        key={`${post._id}-${tag}`}
+        className="text-xs bg-gray-100 text-gray-700 px-2 py-1 rounded-full"
+      >
+        #{tag}
+      </span>
+    ))}
+  </div>
+)}
+
 
       {/* READ MORE */}
       <Link

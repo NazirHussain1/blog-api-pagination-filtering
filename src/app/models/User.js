@@ -7,7 +7,9 @@ const userSchema = new mongoose.Schema(
     phone: { type: String },
     location: { type: String },
     about: { type: String },
-    avatar: { type: String },                      // Profile picture URL
+    avatar: { type: String },     
+    followers: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
+  following: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
     password: { type: String, required: true },
     role: {
       type: String,
