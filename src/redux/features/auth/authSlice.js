@@ -1,5 +1,10 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 
+/* =========================
+   AUTH API THUNKS
+========================= */
+
+// Signup user
 export const signupUser = createAsyncThunk(
   "auth/signupUser",
   async (userData, { rejectWithValue }) => {
@@ -9,7 +14,6 @@ export const signupUser = createAsyncThunk(
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(userData),
       });
-
       const data = await res.json();
       if (!res.ok) return rejectWithValue(data);
       return data;
@@ -19,6 +23,7 @@ export const signupUser = createAsyncThunk(
   }
 );
 
+// Login user
 export const loginUser = createAsyncThunk(
   "auth/loginUser",
   async (credentials, { rejectWithValue }) => {
@@ -28,7 +33,6 @@ export const loginUser = createAsyncThunk(
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(credentials),
       });
-
       const data = await res.json();
       if (!res.ok) return rejectWithValue(data);
       return data;
@@ -38,11 +42,12 @@ export const loginUser = createAsyncThunk(
   }
 );
 
+// Fetch current logged-in user
 export const fetchCurrentUser = createAsyncThunk(
   "auth/fetchCurrentUser",
   async (_, { rejectWithValue }) => {
     try {
-      const res = await fetch("/api/auth/me");
+      const res = await fetch("/api/auth/me", { credentials: "include" });
       const data = await res.json();
       if (!res.ok) return rejectWithValue(data);
       return data;
@@ -52,6 +57,7 @@ export const fetchCurrentUser = createAsyncThunk(
   }
 );
 
+// Logout
 export const logoutUser = createAsyncThunk(
   "auth/logoutUser",
   async (_, { rejectWithValue }) => {
@@ -59,6 +65,30 @@ export const logoutUser = createAsyncThunk(
       const res = await fetch("/api/auth/logout", { method: "POST" });
       if (!res.ok) throw new Error("Logout failed");
       return true;
+    } catch (err) {
+      return rejectWithValue(err.message);
+    }
+  }
+);
+
+
+export const toggleFollowUser = createAsyncThunk(
+  "auth/toggleFollowUser",
+  async ({ targetUserId }, { getState, rejectWithValue }) => {
+    try {
+      const { user } = getState().auth;
+      if (!user) throw new Error("Not logged in");
+
+      const res = await fetch(`/api/users/follow/${targetUserId}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ currentUserId: user._id }),
+      });
+
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Follow action failed");
+
+      return targetUserId; 
     } catch (err) {
       return rejectWithValue(err.message);
     }
@@ -77,8 +107,10 @@ const authSlice = createSlice({
   reducers: {},
   extraReducers: (builder) => {
     builder
+      // Signup
       .addCase(signupUser.pending, (state) => {
         state.loading = true;
+        state.error = null;
       })
       .addCase(signupUser.fulfilled, (state, action) => {
         state.loading = false;
@@ -89,8 +121,10 @@ const authSlice = createSlice({
         state.error = action.payload?.error;
       })
 
+      // Login
       .addCase(loginUser.pending, (state) => {
         state.loading = true;
+        state.error = null;
       })
       .addCase(loginUser.fulfilled, (state, action) => {
         state.loading = false;
@@ -101,12 +135,36 @@ const authSlice = createSlice({
         state.error = action.payload?.error;
       })
 
+
       .addCase(fetchCurrentUser.fulfilled, (state, action) => {
         state.user = action.payload.user;
       })
 
+     
       .addCase(logoutUser.fulfilled, (state) => {
         state.user = null;
+      })
+      .addCase(toggleFollowUser.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(toggleFollowUser.fulfilled, (state, action) => {
+        state.loading = false;
+        const targetUserId = action.payload;
+
+        if (!state.user.following) state.user.following = [];
+
+        if (state.user.following.includes(targetUserId)) {
+          state.user.following = state.user.following.filter(
+            (id) => id !== targetUserId
+          );
+        } else {
+          state.user.following.push(targetUserId);
+        }
+      })
+      .addCase(toggleFollowUser.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload;
       });
   },
 });
