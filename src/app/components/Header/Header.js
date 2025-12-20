@@ -127,31 +127,7 @@ export default function Header() {
                 <span className="font-semibold">Articles</span>
               </Link>
 
-              <div className="relative group">
-                <button className={`flex items-center space-x-2 px-4 py-2.5 rounded-xl transition-all duration-300 ${
-                  scrolled 
-                    ? 'hover:bg-gray-50 text-gray-700 hover:text-indigo-600' 
-                    : 'hover:bg-white/10 text-white/90'
-                }`}>
-                  <TrendingUp className="w-4 h-4" />
-                  <span className="font-semibold">Categories</span>
-                  <ChevronDown className="w-4 h-4 group-hover:rotate-180 transition-transform duration-300" />
-                </button>
-                <div className="absolute top-full left-0 mt-2 w-48 bg-white rounded-xl shadow-2xl border border-gray-100 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-300 transform -translate-y-2 group-hover:translate-y-0">
-                  <div className="py-2">
-                    {['Technology', 'Design', 'Business', 'Lifestyle', 'Health'].map((cat) => (
-                      <Link 
-                        key={cat}
-                        href={`/category/${cat.toLowerCase()}`}
-                        className="block px-4 py-2.5 text-gray-700 hover:text-indigo-600 hover:bg-gray-50 transition-colors duration-200"
-                      >
-                        {cat}
-                      </Link>
-                    ))}
-                  </div>
-                </div>
-              </div>
-
+             
               <Link 
                 href={user ? "/posts/create" : "/login"}
                 className={`flex items-center space-x-2 px-4 py-2.5 rounded-xl transition-all duration-300 ${
