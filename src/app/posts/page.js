@@ -100,9 +100,9 @@ export default function AllPostsPage() {
         </div>
       </div>
 
-      {/* Main Content */}
+      
       <div className="container mx-auto px-6 py-12">
-        {/* Controls */}
+    
         <div className="mb-12">
           <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-6 mb-8">
             {/* Search */}
@@ -222,8 +222,7 @@ export default function AllPostsPage() {
             </div>
           </div>
 
-          {/* Active Filters */}
-          {(searchQuery || selectedCategory !== 'all') && (
+                    {(searchQuery || selectedCategory !== 'all') && (
             <div className="flex flex-wrap items-center gap-3 mb-6 p-4 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-2xl">
               <span className="text-gray-700 font-medium">Active filters:</span>
               {searchQuery && (
@@ -246,8 +245,7 @@ export default function AllPostsPage() {
           )}
         </div>
 
-        {/* Content */}
-        {loading ? (
+              {loading ? (
           <div className="flex justify-center items-center py-20">
             <div className="text-center">
               <Loader2 className="w-12 h-12 text-indigo-600 animate-spin mx-auto mb-4" />
