@@ -525,28 +525,7 @@ export default function MyProfilePage() {
                   </div>
                 </div>
 
-                {/* Badges */}
-                <div className="bg-gradient-to-br from-indigo-50 to-purple-50 rounded-2xl border border-indigo-100 p-8">
-                  <h3 className="text-xl font-bold text-gray-900 mb-6 flex items-center">
-                    <Award className="w-6 h-6 mr-3 text-amber-500" />
-                    Achievements & Badges
-                  </h3>
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                    {[
-                      { name: 'First Article', icon: BookOpen, color: 'from-blue-500 to-cyan-500' },
-                      { name: 'Top Writer', icon: Award, color: 'from-amber-500 to-orange-500' },
-                      { name: 'Community Star', icon: Star, color: 'from-purple-500 to-pink-500' },
-                      { name: '1000+ Views', icon: Eye, color: 'from-green-500 to-emerald-500' }
-                    ].map((badge, idx) => (
-                      <div key={idx} className="text-center p-4 bg-white rounded-xl shadow-lg border border-gray-100">
-                        <div className={`inline-flex items-center justify-center w-16 h-16 mb-3 bg-gradient-to-r ${badge.color} rounded-2xl`}>
-                          <badge.icon className="w-8 h-8 text-white" />
-                        </div>
-                        <div className="font-semibold text-gray-900">{badge.name}</div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
+              
               </div>
             )}
 

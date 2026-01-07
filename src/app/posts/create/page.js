@@ -371,23 +371,7 @@ export default function CreatePost() {
                 </ul>
               </div>
 
-              {/* Stats Preview */}
-              <div className="bg-white rounded-2xl shadow-xl border border-gray-100 p-6">
-                <h3 className="text-lg font-bold text-gray-900 mb-4">
-                  Preview Stats
-                </h3>
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="text-center p-4 bg-gradient-to-br from-blue-50 to-cyan-50 rounded-xl">
-                    <div className="text-2xl font-black text-indigo-600">1,234</div>
-                    <div className="text-sm text-gray-600">Avg. Views</div>
-                  </div>
-                  <div className="text-center p-4 bg-gradient-to-br from-purple-50 to-pink-50 rounded-xl">
-                    <div className="text-2xl font-black text-purple-600">89%</div>
-                    <div className="text-sm text-gray-600">Read Rate</div>
-                  </div>
-                </div>
-              </div>
-            </div>
+                     </div>
           </div>
         </div>
       </div>
