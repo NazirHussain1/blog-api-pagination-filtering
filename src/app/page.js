@@ -3,7 +3,6 @@
 import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { fetchPosts } from "@/redux/features/posts/postSlice";
-import PostCard from "@/app/components/PostCard/PostCard";
 import Link from "next/link";
 import {
   FaArrowRight,
@@ -32,11 +31,13 @@ export default function Home() {
         isLoaded ? "opacity-100" : "opacity-0"
       }`}
     >
+      {/* Background */}
       <div className="fixed inset-0 overflow-hidden pointer-events-none">
         <div className="absolute -top-40 -right-40 w-80 h-80 bg-purple-200 rounded-full mix-blend-multiply filter blur-xl opacity-20 animate-pulse"></div>
         <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-blue-200 rounded-full mix-blend-multiply filter blur-xl opacity-20 animate-pulse delay-1000"></div>
       </div>
 
+      {/* Hero Section */}
       <section className="relative py-20 md:py-28 bg-gradient-to-br from-indigo-900 via-purple-800 to-pink-700 text-white overflow-hidden">
         <div className="absolute inset-0 bg-black opacity-20"></div>
         <div className="container mx-auto px-6 relative z-10">
@@ -71,6 +72,7 @@ export default function Home() {
           </div>
         </div>
 
+        {/* Hero bottom wave */}
         <div className="absolute bottom-0 left-0 right-0">
           <svg
             className="w-full h-20 md:h-28 text-gray-50"
@@ -90,6 +92,7 @@ export default function Home() {
         </div>
       </section>
 
+      {/* Latest Posts Section */}
       <section className="py-16 md:py-24 px-6" id="latest">
         <div className="container mx-auto max-w-7xl">
           <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center mb-16 gap-8">
@@ -119,11 +122,12 @@ export default function Home() {
             </Link>
           </div>
 
+          {/* Posts Grid */}
           {loading ? (
             <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
               {[...Array(3)].map((_, index) => (
                 <div
-                  key={index}
+                  key={`placeholder-${index}`}
                   className="bg-white rounded-2xl shadow-lg p-6 animate-pulse"
                 >
                   <div className="h-48 bg-gray-200 rounded-xl mb-6"></div>
@@ -138,7 +142,7 @@ export default function Home() {
             <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
               {posts.map((post, index) => (
                 <div
-                  key={post._id || post.slug}
+                  key={post._id ? post._id : `post-${index}`} // unique key
                   className="group transform transition-all duration-500 hover:-translate-y-2"
                   style={{ animationDelay: `${index * 150}ms` }}
                 >
@@ -173,7 +177,6 @@ export default function Home() {
                               <div className="font-semibold text-gray-900">
                                 {post.author?.name || "Admin"}
                               </div>
-
                               <div className="text-sm text-gray-500">
                                 Expert Writer
                               </div>
@@ -195,6 +198,7 @@ export default function Home() {
             </div>
           )}
 
+          {/* Search / Categories Section */}
           <div className="mt-20 p-8 bg-gradient-to-r from-indigo-50 to-purple-50 rounded-2xl border border-indigo-100">
             <div className="text-center max-w-3xl mx-auto">
               <FaSearch className="text-4xl text-indigo-600 mb-6 mx-auto" />
@@ -227,6 +231,7 @@ export default function Home() {
         </div>
       </section>
 
+      {/* Global Styles */}
       <style jsx global>{`
         @keyframes float {
           0%,

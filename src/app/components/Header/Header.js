@@ -256,7 +256,7 @@ export default function Header() {
                               <span className="font-medium text-gray-700">My Articles</span>
                             </div>
                             <div className="px-2 py-1 bg-gradient-to-r from-purple-100 to-pink-100 text-purple-700 text-xs font-bold rounded-full">
-                              12
+                              {user.postCount || 0}
                             </div>
                           </Link>
 
@@ -375,6 +375,9 @@ export default function Header() {
                           <div>
                             <h3 className="font-bold text-gray-900">{user.name}</h3>
                             <p className="text-sm text-gray-500">{user.email}</p>
+                            <p className="text-xs font-medium text-purple-600 mt-1">
+                              {user.postCount || 0} Articles
+                            </p>
                           </div>
                         </div>
 
@@ -391,7 +394,7 @@ export default function Header() {
                             className="block px-4 py-3 hover:bg-gray-50 rounded-xl"
                             onClick={() => setMobileMenu(false)}
                           >
-                            My Posts
+                            My Posts ({user.postCount || 0})
                           </Link>
                           {user.role === "admin" && (
                             <Link 

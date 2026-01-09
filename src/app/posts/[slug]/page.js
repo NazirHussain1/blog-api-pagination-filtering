@@ -443,25 +443,6 @@ export default function SinglePost() {
                     ))}
                   </nav>
                 </div>
-
-                {/* Newsletter */}
-                <div className="bg-gradient-to-br from-indigo-900 to-purple-900 text-white rounded-2xl p-6">
-                  <Sparkles className="w-8 h-8 text-amber-300 mb-4" />
-                  <h3 className="text-xl font-bold mb-3">Join Our Newsletter</h3>
-                  <p className="text-blue-200 mb-6">
-                    Get weekly updates on new articles, tutorials, and exclusive content.
-                  </p>
-                  <div className="space-y-3">
-                    <input
-                      type="email"
-                      placeholder="Your email"
-                      className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-xl placeholder-blue-300 focus:outline-none focus:border-white/40"
-                    />
-                    <Button className="w-full bg-gradient-to-r from-amber-500 to-orange-500 text-white hover:shadow-lg">
-                      Subscribe
-                    </Button>
-                  </div>
-                </div>
               </div>
             </div>
           </div>
