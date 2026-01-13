@@ -317,31 +317,7 @@ export default function SinglePost() {
                   </div>
                 )}
 
-                {/* Article Stats */}
-                <div className="p-6 border-b border-gray-100">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center space-x-6">
-                      <button
-                        onClick={() => setIsLiked(!isLiked)}
-                        className={`flex items-center space-x-2 transition-all duration-300 ${isLiked ? 'text-red-500' : 'text-gray-500 hover:text-red-500'}`}
-                      >
-                        <Heart className={`w-5 h-5 ${isLiked ? 'fill-current' : ''}`} />
-                        <span className="font-semibold">1.2k</span>
-                      </button>
-                      
-                      <div className="flex items-center space-x-2 text-gray-500">
-                        <Eye className="w-5 h-5" />
-                        <span className="font-semibold">5.4k views</span>
-                      </div>
-                      
-                      <div className="flex items-center space-x-2 text-gray-500">
-                        <MessageCircle className="w-5 h-5" />
-                        <span className="font-semibold">84 comments</span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
+                
                 {/* Article Body */}
                 <div className="p-8">
                   <div className="prose prose-lg max-w-none">
@@ -372,6 +348,31 @@ export default function SinglePost() {
                     )}
                   </div>
                 </div>
+                {/* Article Stats */}
+                <div className="p-6 border-b border-gray-100">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center space-x-6">
+                      <button
+                        onClick={() => setIsLiked(!isLiked)}
+                        className={`flex items-center space-x-2 transition-all duration-300 ${isLiked ? 'text-red-500' : 'text-gray-500 hover:text-red-500'}`}
+                      >
+                        <Heart className={`w-5 h-5 ${isLiked ? 'fill-current' : ''}`} />
+                        <span className="font-semibold">1.2k</span>
+                      </button>
+                      
+                      <div className="flex items-center space-x-2 text-gray-500">
+                        <Eye className="w-5 h-5" />
+                        <span className="font-semibold">5.4k views</span>
+                      </div>
+                      
+                      <div className="flex items-center space-x-2 text-gray-500">
+                        <MessageCircle className="w-5 h-5" />
+                        <span className="font-semibold">84 comments</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
               </div>
 
               {/* Author Bio */}
