@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
+import { useRouter } from "next/navigation"; // ← added for redirect
 import { createPost } from "@/redux/features/posts/postSlice";
 import { toast } from "sonner";
 import { Input } from "@/components/ui/input";
@@ -22,6 +23,7 @@ import {
 
 export default function CreatePost() {
   const dispatch = useDispatch();
+  const router = useRouter(); // ← initialized router
   const { loading } = useSelector((state) => state.posts);
 
   const [form, setForm] = useState({
@@ -88,7 +90,7 @@ export default function CreatePost() {
       setForm({ title: "", body: "", author: "", tags: "" });
       setImageFile(null);
       setPreview(null);
-      
+
       if (typeof window !== 'undefined') {
         const confetti = import('canvas-confetti');
         confetti.then((confetti) => {
@@ -99,6 +101,9 @@ export default function CreatePost() {
           });
         });
       }
+
+      router.push("/"); // ← Redirect to Home after post creation
+
     } catch {
       toast.error("Failed to create post", {
         icon: <AlertCircle className="text-red-500" />
