@@ -68,8 +68,7 @@ export default function ForgotPasswordPage() {
       {/* Back to Login */}
       <Link 
         href="/login"
-        className="absolute top-6 left-6 flex items-center gap-2 text-gray-600 hover:text-blue-600 
-        transition-all duration-300 group z-50"
+        className="absolute top-6 left-6 flex items-center gap-2 text-gray-600 hover:text-blue-600 transition-all duration-300 group z-50"
       >
         <ArrowLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />
         <span className="text-sm font-medium">Back to Login</span>
@@ -78,7 +77,6 @@ export default function ForgotPasswordPage() {
       <div className="w-full max-w-md relative z-10">
         {/* Card Container */}
         <div className="bg-white/90 backdrop-blur-xl rounded-2xl shadow-2xl overflow-hidden border border-white/20 animate-slide-up">
-
           
           {/* Decorative Header */}
           <div className="relative bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 p-6">
@@ -104,8 +102,7 @@ export default function ForgotPasswordPage() {
             {!submitted ? (
               <>
                 <div className="text-center mb-8">
-                  <div className="inline-flex items-center justify-center w-20 h-20 rounded-full 
-                  bg-gradient-to-r from-blue-100 to-purple-100 mb-4">
+                  <div className="inline-flex items-center justify-center w-20 h-20 rounded-full bg-gradient-to-r from-blue-100 to-purple-100 mb-4">
                     <Mail className="w-10 h-10 text-blue-600" />
                   </div>
                   <h2 className="text-xl font-bold text-gray-800 mb-2">Forgot your password?</h2>
@@ -127,7 +124,6 @@ export default function ForgotPasswordPage() {
                         value={email}
                         onChange={(e) => setEmail(e.target.value)}
                         className="pl-12 h-12 rounded-xl border-2 border-gray-200 bg-white/50 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all duration-300 group-hover:border-blue-300"
-
                         disabled={loading}
                       />
                       <div className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 group-hover:text-blue-500 transition-colors">
@@ -141,8 +137,7 @@ export default function ForgotPasswordPage() {
 
                   <Button
                     onClick={handleReset}
-                 className="w-full h-12 rounded-xl bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-semibold text-base transform hover:-translate-y-0.5 transition-all duration-300 shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
-
+                    className="w-full h-12 rounded-xl bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-semibold text-base transform hover:-translate-y-0.5 transition-all duration-300 shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
                     disabled={loading}
                   >
                     {loading ? (
@@ -176,8 +171,7 @@ export default function ForgotPasswordPage() {
               </>
             ) : (
               <div className="text-center py-8 animate-fade-in">
-                <div className="inline-flex items-center justify-center w-20 h-20 rounded-full 
-                bg-gradient-to-r from-green-100 to-emerald-100 mb-6">
+                <div className="inline-flex items-center justify-center w-20 h-20 rounded-full bg-gradient-to-r from-green-100 to-emerald-100 mb-6">
                   <CheckCircle2 className="w-10 h-10 text-green-600 animate-scale" />
                 </div>
                 <h2 className="text-2xl font-bold text-gray-800 mb-3">Check Your Email!</h2>
@@ -200,15 +194,13 @@ export default function ForgotPasswordPage() {
                   <Button
                     onClick={() => setSubmitted(false)}
                     variant="outline"
-                    className="w-full h-12 rounded-xl border-2 text-blue-600 border-blue-200 
-                    hover:bg-blue-50 hover:border-blue-300 transition-all duration-300"
+                    className="w-full h-12 rounded-xl border-2 text-blue-600 border-blue-200 hover:bg-blue-50 hover:border-blue-300 transition-all duration-300"
                   >
                     Back to Reset Form
                   </Button>
                   <Link href="/login">
                     <Button
-                      className="w-full h-12 rounded-xl bg-gradient-to-r from-gray-800 to-gray-900 
-                      hover:from-gray-900 hover:to-black text-white transition-all duration-300"
+                      className="w-full h-12 rounded-xl bg-gradient-to-r from-gray-800 to-gray-900 hover:from-gray-900 hover:to-black text-white transition-all duration-300"
                     >
                       Return to Login
                     </Button>
@@ -261,72 +253,23 @@ export default function ForgotPasswordPage() {
       {/* Animation Styles */}
       <style jsx global>{`
         @keyframes blob {
-          0% {
-            transform: translate(0px, 0px) scale(1);
-          }
-          33% {
-            transform: translate(30px, -50px) scale(1.1);
-          }
-          66% {
-            transform: translate(-20px, 20px) scale(0.9);
-          }
-          100% {
-            transform: translate(0px, 0px) scale(1);
-          }
+          0% { transform: translate(0px, 0px) scale(1); }
+          33% { transform: translate(30px, -50px) scale(1.1); }
+          66% { transform: translate(-20px, 20px) scale(0.9); }
+          100% { transform: translate(0px, 0px) scale(1); }
         }
         
-        @keyframes slide-up {
-          from {
-            opacity: 0;
-            transform: translateY(20px);
-          }
-          to {
-            opacity: 1;
-            transform: translateY(0);
-          }
-        }
-        
-        @keyframes fade-in {
-          from {
-            opacity: 0;
-          }
-          to {
-            opacity: 1;
-          }
-        }
-        
-        @keyframes scale {
-          0%, 100% {
-            transform: scale(1);
-          }
-          50% {
-            transform: scale(1.1);
-          }
-        }
-        
-        .animate-blob {
-          animation: blob 7s infinite;
-        }
-        
-        .animate-slide-up {
-          animation: slide-up 0.6s ease-out;
-        }
-        
-        .animate-fade-in {
-          animation: fade-in 0.5s ease-out;
-        }
-        
-        .animate-scale {
-          animation: scale 2s ease-in-out infinite;
-        }
-        
-        .animation-delay-2000 {
-          animation-delay: 2s;
-        }
-        
-        .animation-delay-4000 {
-          animation-delay: 4s;
-        }
+        @keyframes slide-up { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes fade-in { from { opacity: 0; } to { opacity: 1; } }
+        @keyframes scale { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.1); } }
+
+        .animate-blob { animation: blob 7s infinite; }
+        .animate-slide-up { animation: slide-up 0.6s ease-out; }
+        .animate-fade-in { animation: fade-in 0.5s ease-out; }
+        .animate-scale { animation: scale 2s ease-in-out infinite; }
+
+        .animation-delay-2000 { animation-delay: 2s; }
+        .animation-delay-4000 { animation-delay: 4s; }
       `}</style>
     </div>
   );
