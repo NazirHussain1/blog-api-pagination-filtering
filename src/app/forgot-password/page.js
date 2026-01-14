@@ -77,8 +77,8 @@ export default function ForgotPasswordPage() {
 
       <div className="w-full max-w-md relative z-10">
         {/* Card Container */}
-        <div className="bg-white/90 backdrop-blur-xl rounded-2xl shadow-2xl overflow-hidden 
-        border border-white/20 animate-slide-up">
+        <div className="bg-white/90 backdrop-blur-xl rounded-2xl shadow-2xl overflow-hidden border border-white/20 animate-slide-up">
+
           
           {/* Decorative Header */}
           <div className="relative bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 p-6">
@@ -126,9 +126,8 @@ export default function ForgotPasswordPage() {
                         placeholder="you@example.com"
                         value={email}
                         onChange={(e) => setEmail(e.target.value)}
-                        className="pl-12 h-12 rounded-xl border-2 border-gray-200 bg-white/50 
-                        focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all duration-300
-                        group-hover:border-blue-300"
+                        className="pl-12 h-12 rounded-xl border-2 border-gray-200 bg-white/50 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all duration-300 group-hover:border-blue-300"
+
                         disabled={loading}
                       />
                       <div className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 group-hover:text-blue-500 transition-colors">
@@ -142,10 +141,8 @@ export default function ForgotPasswordPage() {
 
                   <Button
                     onClick={handleReset}
-                    className="w-full h-12 rounded-xl bg-gradient-to-r from-blue-600 to-purple-600 
-                    hover:from-blue-700 hover:to-purple-700 text-white font-semibold text-base
-                    transform hover:-translate-y-0.5 transition-all duration-300 shadow-lg hover:shadow-xl
-                    disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
+                 className="w-full h-12 rounded-xl bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-semibold text-base transform hover:-translate-y-0.5 transition-all duration-300 shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
+
                     disabled={loading}
                   >
                     {loading ? (
