@@ -417,7 +417,7 @@ export default function MyProfilePage() {
                         >
                           {updating ? (
                             <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                          ) : (
+                           ) : (
                             <Save className="w-4 h-4 mr-2" />
                           )}
                           {updating ? "Saving..." : "Save"}
@@ -527,7 +527,7 @@ export default function MyProfilePage() {
 
               
               </div>
-            )}
+            )} 
 
             {/* Security Settings Preview */}
             {activeTab === 'settings' && (

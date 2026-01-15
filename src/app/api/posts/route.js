@@ -1,6 +1,6 @@
-// src/app/api/posts/route.js
 import { connectDB } from "@/app/lib/db";
 import Post from "@/app/models/Post";
+import Comment from "@/app/models/Comment"; // ✅ NEW
 import jwt from "jsonwebtoken";
 
 await connectDB();
@@ -18,14 +18,27 @@ export async function GET(req) {
     let filter = {};
     if (tag) filter.tags = { $regex: tag, $options: "i" };
 
-    // Populate author info (name, avatar)
     const posts = await Post.find(filter)
-      .populate("author", "name email avatar") // 🔥 author details
+      .populate("author", "name email avatar")
       .sort({ createdAt: sort })
       .skip((page - 1) * limit)
-      .limit(limit);
+      .limit(limit)
+      .lean(); 
 
-    return new Response(JSON.stringify(posts), { status: 200 });
+    const postsWithComments = await Promise.all(
+      posts.map(async (post) => {
+        const commentsCount = await Comment.countDocuments({
+          post: post._id,
+        });
+
+        return {
+          ...post,
+          commentsCount,
+        };
+      })
+    );
+
+    return new Response(JSON.stringify(postsWithComments), { status: 200 });
   } catch (error) {
     return new Response(
       JSON.stringify({ message: "Server Error", error: error.message }),
@@ -41,10 +54,13 @@ export async function POST(req) {
     const { title, body, tags, image } = bodyData;
 
     const token = req.cookies.get("token")?.value;
-    if (!token) return new Response(JSON.stringify({ message: "Unauthorized" }), { status: 401 });
+    if (!token)
+      return new Response(JSON.stringify({ message: "Unauthorized" }), {
+        status: 401,
+      });
 
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    const authorId = decoded.id; // 🔥 logged-in user id
+    const authorId = decoded.id;
 
     if (!title || !body) {
       return new Response(
@@ -53,8 +69,12 @@ export async function POST(req) {
       );
     }
 
-    // Generate slug
-    let slug = title.toLowerCase().trim().replace(/\s+/g, "-").replace(/[^\w\-]+/g, "");
+    let slug = title
+      .toLowerCase()
+      .trim()
+      .replace(/\s+/g, "-")
+      .replace(/[^\w\-]+/g, "");
+
     const existingPost = await Post.findOne({ slug });
     if (existingPost) slug = `${slug}-${Date.now()}`;
 
@@ -64,10 +84,12 @@ export async function POST(req) {
       slug,
       tags: tags || [],
       image: image || "",
-      author: authorId, // 🔥 save reference to User
+      author: authorId,
     });
 
-    return new Response(JSON.stringify({ message: "Post Created", post }), { status: 201 });
+    return new Response(JSON.stringify({ message: "Post Created", post }), {
+      status: 201,
+    });
   } catch (error) {
     return new Response(
       JSON.stringify({ message: "Server Error", error: error.message }),

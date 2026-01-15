@@ -1,4 +1,3 @@
-// src/app/models/Post.js
 import mongoose from "mongoose";
 
 const postSchema = new mongoose.Schema(
@@ -9,11 +8,15 @@ const postSchema = new mongoose.Schema(
     image: { type: String, default: "" },
     tags: { type: [String], default: [] },
 
-    // 🔥 Author reference
     author: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
       required: true,
+    },
+
+     views: {
+      type: Number,
+      default: 0,
     },
   },
   { timestamps: true }

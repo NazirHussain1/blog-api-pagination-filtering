@@ -80,17 +80,6 @@ export default function PostCard({ post }) {
                 {post.title}
               </h2>
             </Link>
-
-            <div className="flex items-center gap-4 text-xs text-gray-500 mb-4">
-              <div className="flex items-center gap-1">
-                <Eye size={12} />
-                <span>1.2k views</span>
-              </div>
-              <div className="flex items-center gap-1">
-                <MessageCircle size={12} />
-                <span>24 comments</span>
-              </div>
-            </div>
           </div>
 
           <div className="mb-6 flex-1">
@@ -120,7 +109,18 @@ export default function PostCard({ post }) {
                   </span>
                 )}
               </div>
+               <div className="flex items-center gap-4 text-xs text-gray-500 mb-2">
+              <div className="flex items-center gap-1">
+                <Eye size={12} />
+                <span>1.2k views</span>
+              </div>
+              <div className="flex items-center gap-1">
+                <MessageCircle size={12} />
+                <span>24 comments</span>
+              </div>
             </div>
+            </div>
+            
           )}
 
           <div className="pt-6 border-t border-gray-100 mt-auto">

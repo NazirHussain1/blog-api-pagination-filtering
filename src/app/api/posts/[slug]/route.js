@@ -1,5 +1,6 @@
 import { connectDB } from "@/app/lib/db";
 import Post from "@/app/models/Post";
+import Comment from "@/app/models/Comment";
 import { NextResponse } from "next/server";
 import jwt from "jsonwebtoken";
 
@@ -8,16 +9,28 @@ await connectDB();
 // ----------------- GET POST -----------------
 export async function GET(req, { params }) {
   try {
-    const { slug } = await params; // ✅ FIX
+    const { slug } = params;
 
-    const post = await Post.findOne({ slug })
-      .populate("author", "name email avatar");
+    // ✅ VIEW +1 (SAFE)
+    const post = await Post.findOneAndUpdate(
+      { slug },
+      { $inc: { views: 1 } },
+      { new: true }
+    ).populate("author", "name email avatar");
 
     if (!post) {
       return NextResponse.json({ message: "Post not found" }, { status: 404 });
     }
 
-    return NextResponse.json(post);
+    // ✅ REAL COMMENTS COUNT
+    const commentsCount = await Comment.countDocuments({
+      post: post._id,
+    });
+
+    return NextResponse.json({
+      ...post.toObject(),
+      commentsCount,
+    });
   } catch (error) {
     return NextResponse.json(
       { message: "Server Error", error: error.message },
@@ -29,7 +42,7 @@ export async function GET(req, { params }) {
 // ----------------- UPDATE POST -----------------
 export async function PUT(req, { params }) {
   try {
-    const { slug } = await params; // ✅ FIX
+    const { slug } = params;
     const data = await req.json();
 
     const token = req.cookies.get("token")?.value;
@@ -44,7 +57,6 @@ export async function PUT(req, { params }) {
       return NextResponse.json({ message: "Post not found" }, { status: 404 });
     }
 
-    // Only author or admin
     if (post.author.toString() !== decoded.id && decoded.role !== "admin") {
       return NextResponse.json({ message: "Forbidden" }, { status: 403 });
     }
@@ -67,7 +79,7 @@ export async function PUT(req, { params }) {
 // ----------------- DELETE POST -----------------
 export async function DELETE(req, { params }) {
   try {
-    const { slug } = await params; // ✅ FIX
+    const { slug } = params;
 
     const token = req.cookies.get("token")?.value;
     if (!token) {
