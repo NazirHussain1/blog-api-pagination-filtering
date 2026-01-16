@@ -237,8 +237,7 @@ export default function MyPostsPage() {
             ))}
           </div>
 
-          {/* Filters & Search */}
-          <div className="bg-white rounded-2xl shadow-lg border border-gray-100 p-6 mb-8">
+         <div className="bg-white rounded-2xl shadow-lg border border-gray-100 p-6 mb-8">
             <div className="flex flex-col md:flex-row gap-4">
               <div className="relative flex-1">
                 <div className="absolute left-4 top-1/2 transform -translate-y-1/2">
