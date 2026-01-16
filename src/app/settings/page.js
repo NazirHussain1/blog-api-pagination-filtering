@@ -152,8 +152,7 @@ export default function SettingsPage() {
             </div>
           </section>
 
-          {/* Password Section */}
-          <section>
+                  <section>
             <h2 className="text-xl font-semibold text-gray-800 mb-4">Change Password</h2>
             <div className="space-y-4 md:w-1/2">
               <div>

@@ -230,8 +230,7 @@ export default function MyProfilePage() {
     <div className="min-h-screen bg-gradient-to-b from-gray-50 to-white">
       <Toaster richColors position="top-right" />
       
-      {/* Background Elements */}
-      <div className="fixed inset-0 overflow-hidden pointer-events-none">
+          <div className="fixed inset-0 overflow-hidden pointer-events-none">
         <div className="absolute -top-40 -right-40 w-80 h-80 bg-purple-200 rounded-full mix-blend-multiply filter blur-3xl opacity-20"></div>
         <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-blue-200 rounded-full mix-blend-multiply filter blur-3xl opacity-20"></div>
       </div>
