@@ -33,12 +33,10 @@ export default function ForgotPasswordPage() {
 
     setLoading(true);
     
-    // Simulate API call with delay
+    
     setTimeout(() => {
       try {
-        // Backend API call to send reset link
-        // await axios.post("/api/auth/forgot-password", { email });
-        
+             
         toast.success("Reset link sent successfully!", { 
           icon: <CheckCircle2 className="text-green-500 animate-bounce" />,
           description: "Check your inbox for password reset instructions",
@@ -155,8 +153,7 @@ export default function ForgotPasswordPage() {
                     )}
                   </Button>
 
-                  {/* Security Notice */}
-                  <div className="p-4 rounded-lg bg-gradient-to-r from-blue-50 to-cyan-50 border border-blue-100">
+                        <div className="p-4 rounded-lg bg-gradient-to-r from-blue-50 to-cyan-50 border border-blue-100">
                     <div className="flex items-start gap-3">
                       <ShieldCheck className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" />
                       <div>

@@ -193,8 +193,6 @@ export default function SettingsPage() {
               </div>
             </div>
           </section>
-
-          {/* Save Changes Button */}
           <div className="pt-4 border-t border-gray-100">
             <Button
               onClick={handleProfileUpdate}
