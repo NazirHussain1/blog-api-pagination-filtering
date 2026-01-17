@@ -1,4 +1,5 @@
 "use client";
+import Comments from "@/app/components/Comments/Comments";
 
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
@@ -97,6 +98,33 @@ export default function SinglePost() {
     window.open(shareUrls[platform], '_blank', 'noopener,noreferrer');
     setShowShareMenu(false);
   };
+  useEffect(() => {
+  if (!post) return;
+
+  const incrementViews = async () => {
+    try {
+      await fetch(`/api/posts/${slug}/view`, { method: 'POST', credentials: 'include' });
+      setPost(prev => ({ ...prev, views: (prev.views || 0) + 1 }));
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  incrementViews();
+}, [post]);
+
+  const handleLike = async () => {
+  try {
+    const res = await fetch(`/api/posts/${slug}/like`, { method: 'POST', credentials: 'include' });
+    if (!res.ok) throw new Error('Failed to like');
+    const data = await res.json();
+    setIsLiked(data.isLiked);
+    setPost(prev => ({ ...prev, likes: data.likes }));
+  } catch (err) {
+    console.error(err);
+  }
+};
+
 
   if (loading) {
     return (
@@ -353,21 +381,22 @@ export default function SinglePost() {
                   <div className="flex items-center justify-between">
                     <div className="flex items-center space-x-6">
                       <button
-                        onClick={() => setIsLiked(!isLiked)}
-                        className={`flex items-center space-x-2 transition-all duration-300 ${isLiked ? 'text-red-500' : 'text-gray-500 hover:text-red-500'}`}
-                      >
-                        <Heart className={`w-5 h-5 ${isLiked ? 'fill-current' : ''}`} />
-                        <span className="font-semibold">1.2k</span>
-                      </button>
-                      
-                      <div className="flex items-center space-x-2 text-gray-500">
-                        <Eye className="w-5 h-5" />
-                        <span className="font-semibold">5.4k views</span>
-                      </div>
+  onClick={handleLike}
+  className={`flex items-center space-x-2 transition-all duration-300 ${isLiked ? 'text-red-500' : 'text-gray-500 hover:text-red-500'}`}
+>
+  <Heart className={`w-5 h-5 ${isLiked ? 'fill-current' : ''}`} />
+  <span className="font-semibold">{post.likes || 0}</span>
+</button>
+
+                     <div className="flex items-center space-x-2 text-gray-500">
+  <Eye className="w-5 h-5" />
+  <span className="font-semibold">{post.views || 0} views</span>
+</div>
+
                       
                       <div className="flex items-center space-x-2 text-gray-500">
                         <MessageCircle className="w-5 h-5" />
-                        <span className="font-semibold">84 comments</span>
+                        <span className="font-semibold">comments</span>
                       </div>
                     </div>
                   </div>
@@ -424,6 +453,8 @@ export default function SinglePost() {
                     ))}
                   </div>
                 </div>
+{/* Comments Section */}
+<Comments slug={post.slug} user={post.author} />
 
                 {/* Table of Contents */}
                 <div className="bg-gradient-to-br from-purple-50 to-pink-50 rounded-2xl border border-purple-100 p-6">

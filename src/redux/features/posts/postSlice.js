@@ -77,11 +77,55 @@ export const deletePost = createAsyncThunk(
   }
 );
 
+export const fetchSinglePost = createAsyncThunk(
+  "posts/fetchSinglePost",
+  async (slug, { rejectWithValue }) => {
+    try {
+      const res = await fetch(`/api/posts/${slug}`);
+      if (!res.ok) throw new Error("Post not found");
+      const data = await res.json();
+      return data;
+    } catch (err) {
+      return rejectWithValue(err.message);
+    }
+  }
+);
+
+export const likePost = createAsyncThunk(
+  "posts/likePost",
+  async (slug, { rejectWithValue }) => {
+    try {
+      const res = await fetch(`/api/posts/${slug}/like`, {
+        method: "POST",
+        credentials: "include",
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error("Failed to like");
+      return data; // { isLiked, likes }
+    } catch (err) {
+      return rejectWithValue(err.message);
+    }
+  }
+);
+
+export const incrementViews = createAsyncThunk(
+  "posts/incrementViews",
+  async (slug, { rejectWithValue }) => {
+    try {
+      await fetch(`/api/posts/${slug}/view`, { method: "POST", credentials: "include" });
+      return slug;
+    } catch (err) {
+      return rejectWithValue(err.message);
+    }
+  }
+);
+
 const postSlice = createSlice({
   name: "posts",
   initialState: {
     list: [],
     userPosts: [],
+    singlePost: null, 
     loading: false,
     error: null,
   },
@@ -92,6 +136,7 @@ const postSlice = createSlice({
   },
   extraReducers: (builder) => {
     builder
+
       .addCase(fetchPosts.pending, (state) => {
         state.loading = true;
         state.error = null;
@@ -141,6 +186,9 @@ const postSlice = createSlice({
         state.userPosts = state.userPosts.map((post) =>
           post.slug === action.payload.slug ? action.payload : post
         );
+        if (state.singlePost?.slug === action.payload.slug) {
+          state.singlePost = action.payload;
+        }
       })
       .addCase(updatePost.rejected, (state, action) => {
         state.loading = false;
@@ -154,10 +202,30 @@ const postSlice = createSlice({
         state.loading = false;
         state.list = state.list.filter((post) => post.slug !== action.payload);
         state.userPosts = state.userPosts.filter((post) => post.slug !== action.payload);
+        if (state.singlePost?.slug === action.payload) state.singlePost = null;
       })
       .addCase(deletePost.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload?.error || "Delete post failed";
+      })
+
+          .addCase(fetchSinglePost.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(fetchSinglePost.fulfilled, (state, action) => {
+        state.loading = false;
+        state.singlePost = action.payload;
+      })
+      .addCase(fetchSinglePost.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload || "Failed to fetch post";
+      })
+      .addCase(likePost.fulfilled, (state, action) => {
+        if (state.singlePost) state.singlePost.likes = action.payload.likes;
+      })
+      .addCase(incrementViews.fulfilled, (state, action) => {
+        if (state.singlePost) state.singlePost.views = (state.singlePost.views || 0) + 1;
       });
   },
 });
