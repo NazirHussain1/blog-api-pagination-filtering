@@ -2,23 +2,52 @@
 
 import Link from "next/link";
 import Image from "next/image";
-import { UserCircle, Clock, Tag, ArrowRight, Eye, MessageCircle } from "lucide-react";
+import {
+  UserCircle,
+  Clock,
+  Tag,
+  ArrowRight,
+  Eye,
+  MessageCircle,
+  Heart,
+} from "lucide-react";
 import { useState } from "react";
 
-export default function PostCard({ post }) {
+export default function PostCard({ post, user }) {
   const [isHovered, setIsHovered] = useState(false);
-  const postBody = typeof post.body === "string"
-    ? post.body
-    : post.body?.text || post.body?.content || "";
+  const [likesCount, setLikesCount] = useState(post.likes?.length || 0);
+  const [liked, setLiked] = useState(
+    user && post.likes?.some((id) => id.toString() === user.id)
+  );
+
+  const postBody =
+    typeof post.body === "string"
+      ? post.body
+      : post.body?.text || post.body?.content || "";
+
+  // Handle Like / Unlike
+  const handleLike = async () => {
+    try {
+      const res = await fetch(`/api/posts/${post.slug}/like`, {
+        method: "PUT",
+        credentials: "include",
+      });
+      const data = await res.json();
+      setLiked(data.liked);
+      setLikesCount(data.likesCount);
+    } catch (err) {
+      console.error("Like Error:", err);
+    }
+  };
 
   return (
-    <div 
+    <div
       className="group relative bg-white rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-500 overflow-hidden border border-gray-100 hover:border-indigo-200 h-full transform hover:-translate-y-2"
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
       <div className="absolute inset-0 bg-gradient-to-br from-blue-50 via-white to-purple-50 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
-      
+
       <div className="relative z-10 h-full flex flex-col">
         {post.image && (
           <div className="relative w-full h-56 md:h-64 overflow-hidden rounded-t-2xl">
@@ -27,7 +56,9 @@ export default function PostCard({ post }) {
               src={post.image}
               alt={post.title || "Post image"}
               fill
-              className={`object-cover transition-transform duration-700 ${isHovered ? 'scale-110' : 'scale-100'}`}
+              className={`object-cover transition-transform duration-700 ${
+                isHovered ? "scale-110" : "scale-100"
+              }`}
               sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
             />
             <div className="absolute top-4 right-4 z-20">
@@ -39,6 +70,7 @@ export default function PostCard({ post }) {
         )}
 
         <div className="p-6 md:p-8 flex-1 flex flex-col">
+          {/* Author + Date */}
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-2">
               <div className="relative">
@@ -59,22 +91,23 @@ export default function PostCard({ post }) {
               <Clock size={12} />
               <span className="font-medium">
                 {post.createdAt
-                  ? new Date(post.createdAt).toLocaleDateString('en-US', {
-                      month: 'short',
-                      day: 'numeric',
-                      year: 'numeric'
+                  ? new Date(post.createdAt).toLocaleDateString("en-US", {
+                      month: "short",
+                      day: "numeric",
+                      year: "numeric",
                     })
                   : ""}
               </span>
             </div>
           </div>
 
+          {/* Title */}
           <div className="mb-4">
             <div className="flex items-center gap-2 mb-3">
               <div className="w-8 h-1 bg-gradient-to-r from-indigo-500 to-purple-500 rounded-full"></div>
               <div className="w-4 h-1 bg-gradient-to-r from-amber-500 to-orange-500 rounded-full"></div>
             </div>
-            
+
             <Link href={`/posts/${post.slug}`}>
               <h2 className="text-xl md:text-2xl font-bold text-gray-900 mb-3 group-hover:text-indigo-600 transition-colors duration-300 line-clamp-2 leading-tight">
                 {post.title}
@@ -82,19 +115,22 @@ export default function PostCard({ post }) {
             </Link>
           </div>
 
+          {/* Post Body */}
           <div className="mb-6 flex-1">
             <p className="text-gray-600 line-clamp-3 leading-relaxed">
-              {postBody || "Explore this insightful article packed with valuable information and expert perspectives."}
+              {postBody ||
+                "Explore this insightful article packed with valuable information and expert perspectives."}
             </p>
           </div>
 
+          {/* Tags + Views + Comments + Likes */}
           {Array.isArray(post.tags) && post.tags.length > 0 && (
             <div className="mb-6">
               <div className="flex items-center gap-2 mb-3">
                 <Tag size={14} className="text-indigo-500" />
                 <span className="text-xs font-semibold text-gray-700">TAGS</span>
               </div>
-              <div className="flex flex-wrap gap-2">
+              <div className="flex flex-wrap gap-2 mb-2">
                 {post.tags.slice(0, 3).map((tag) => (
                   <span
                     key={`${post._id}-${tag}`}
@@ -109,20 +145,31 @@ export default function PostCard({ post }) {
                   </span>
                 )}
               </div>
-               <div className="flex items-center gap-4 text-xs text-gray-500 mb-2">
-              <div className="flex items-center gap-1">
-                <Eye size={12} />
-                <span>1.2k views</span>
-              </div>
-              <div className="flex items-center gap-1">
-                <MessageCircle size={12} />
-                <span>24 comments</span>
+
+              {/* Views, Comments, Likes */}
+              <div className="flex items-center gap-4 text-xs text-gray-500">
+                <div className="flex items-center gap-1">
+                  <Eye size={12} />
+                  <span>{post.views?.toLocaleString() || 0} views</span>
+                </div>
+                <div className="flex items-center gap-1">
+                  <MessageCircle size={12} />
+                  <span>{post.commentsCount ?? 0} comments</span>
+                </div>
+                <button
+                  className={`flex items-center gap-1 transition ${
+                    liked ? "text-red-500" : ""
+                  }`}
+                  onClick={handleLike}
+                >
+                  <Heart size={12} />
+                  <span>{likesCount}</span>
+                </button>
               </div>
             </div>
-            </div>
-            
           )}
 
+          {/* Read More */}
           <div className="pt-6 border-t border-gray-100 mt-auto">
             <Link
               href={`/posts/${post.slug}`}
