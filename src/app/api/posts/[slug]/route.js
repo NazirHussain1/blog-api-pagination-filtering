@@ -7,9 +7,32 @@ import jwt from "jsonwebtoken";
 
 await connectDB();
 
+// Helper function to get reaction counts
+const getReactionCounts = async (postId) => {
+  const reactions = await Like.aggregate([
+    { $match: { post: postId } },
+    { $group: { _id: "$reaction", count: { $sum: 1 } } }
+  ]);
+
+  const reactionCounts = {
+    like: 0,
+    love: 0,
+    laugh: 0,
+    wow: 0,
+    sad: 0,
+    angry: 0
+  };
+
+  reactions.forEach(r => {
+    reactionCounts[r._id] = r.count;
+  });
+
+  return reactionCounts;
+};
+
 export async function GET(req, { params }) {
   try {
-    const { slug } = params;
+    const { slug } = await params;
 
     const post = await Post.findOneAndUpdate(
       { slug },
@@ -25,11 +48,27 @@ export async function GET(req, { params }) {
 
   
     const likesCount = await Like.countDocuments({ post: post._id });
+    const reactions = await getReactionCounts(post._id);
+
+    // Check if user is authenticated and get their reaction
+    let userReaction = null;
+    const token = req.cookies.get("token")?.value;
+    if (token) {
+      try {
+        const decoded = jwt.verify(token, process.env.JWT_SECRET);
+        const userLike = await Like.findOne({ post: post._id, user: decoded.id });
+        userReaction = userLike ? userLike.reaction : null;
+      } catch (err) {
+        // Token invalid, userReaction remains null
+      }
+    }
 
     return NextResponse.json({
       ...post.toObject(),
       commentsCount,
       likesCount,
+      reactions,
+      userReaction,
     });
   } catch (error) {
     return NextResponse.json(
@@ -41,7 +80,7 @@ export async function GET(req, { params }) {
 
 export async function PUT(req, { params }) {
   try {
-    const { slug } = params;
+    const { slug } = await params;
     const data = await req.json();
 
     const token = req.cookies.get("token")?.value;
@@ -77,7 +116,7 @@ export async function PUT(req, { params }) {
 
 export async function DELETE(req, { params }) {
   try {
-    const { slug } = params;
+    const { slug } = await params;
 
     const token = req.cookies.get("token")?.value;
     if (!token) {
@@ -108,7 +147,8 @@ export async function DELETE(req, { params }) {
 
 export async function POST(req, { params }) {
   try {
-    const { slug } = params;
+    const { slug } = await params;
+    const { reaction = "like" } = await req.json();
 
     const token = req.cookies.get("token")?.value;
     if (!token) {
@@ -127,18 +167,42 @@ export async function POST(req, { params }) {
       user: decoded.id,
     });
 
-    // Toggle like
-    if (existingLike) {
+    // If user already reacted with the same reaction, remove it
+    if (existingLike && existingLike.reaction === reaction) {
       await Like.deleteOne({ _id: existingLike._id });
-      return NextResponse.json({ liked: false, message: "Post unliked" });
+      const likesCount = await Like.countDocuments({ post: post._id });
+      const reactions = await getReactionCounts(post._id);
+      return NextResponse.json({
+        liked: false,
+        message: "Reaction removed",
+        likesCount,
+        reactions,
+        userReaction: null
+      });
     }
 
-    await Like.create({
-      post: post._id,
-      user: decoded.id,
-    });
+    // If user reacted with different reaction, update it
+    if (existingLike) {
+      existingLike.reaction = reaction;
+      await existingLike.save();
+    } else {
+      // Create new reaction
+      await Like.create({
+        post: post._id,
+        user: decoded.id,
+        reaction,
+      });
+    }
 
-    return NextResponse.json({ liked: true, message: "Post liked" });
+    const likesCount = await Like.countDocuments({ post: post._id });
+    const reactions = await getReactionCounts(post._id);
+    return NextResponse.json({
+      liked: true,
+      message: `Post reacted with ${reaction}`,
+      likesCount,
+      reactions,
+      userReaction: reaction
+    });
   } catch (error) {
     return NextResponse.json(
       { message: "Server Error", error: error.message },

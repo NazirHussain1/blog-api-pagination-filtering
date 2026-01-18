@@ -8,7 +8,7 @@ await connectDB();
 
 export async function GET(req, { params }) {
   try {
-    const { slug } = params;
+    const { slug } = await params;
 
     const post = await Post.findOne({ slug });
     if (!post) return NextResponse.json({ message: "Post not found" }, { status: 404 });
@@ -34,7 +34,7 @@ export async function GET(req, { params }) {
 
 export async function POST(req, { params }) {
   try {
-    const { slug } = params;
+    const { slug } = await params;
     const data = await req.json(); 
 
     const token = req.cookies.get("token")?.value;
@@ -60,7 +60,7 @@ export async function POST(req, { params }) {
 
 export async function PUT(req, { params }) {
   try {
-    const { slug } = params;
+    const { slug } = await params;
     const { commentId } = await req.json();
 
     const token = req.cookies.get("token")?.value;

@@ -93,32 +93,23 @@ export const fetchSinglePost = createAsyncThunk(
 
 export const likePost = createAsyncThunk(
   "posts/likePost",
-  async (slug, { rejectWithValue }) => {
+  async ({ slug, reaction = null }, { rejectWithValue }) => {
     try {
-      const res = await fetch(`/api/posts/${slug}/like`, {
+      const res = await fetch(`/api/posts/${slug}`, {
         method: "POST",
+        headers: { "Content-Type": "application/json" },
         credentials: "include",
+        body: JSON.stringify({ reaction }),
       });
       const data = await res.json();
-      if (!res.ok) throw new Error("Failed to like");
-      return data; // { isLiked, likes }
+      if (!res.ok) throw new Error("Failed to react");
+      return data; // { reactions, userReaction, likesCount }
     } catch (err) {
       return rejectWithValue(err.message);
     }
   }
 );
 
-export const incrementViews = createAsyncThunk(
-  "posts/incrementViews",
-  async (slug, { rejectWithValue }) => {
-    try {
-      await fetch(`/api/posts/${slug}/view`, { method: "POST", credentials: "include" });
-      return slug;
-    } catch (err) {
-      return rejectWithValue(err.message);
-    }
-  }
-);
 
 const postSlice = createSlice({
   name: "posts",
@@ -222,10 +213,11 @@ const postSlice = createSlice({
         state.error = action.payload || "Failed to fetch post";
       })
       .addCase(likePost.fulfilled, (state, action) => {
-        if (state.singlePost) state.singlePost.likes = action.payload.likes;
-      })
-      .addCase(incrementViews.fulfilled, (state, action) => {
-        if (state.singlePost) state.singlePost.views = (state.singlePost.views || 0) + 1;
+        if (state.singlePost) {
+          state.singlePost.reactions = action.payload.reactions;
+          state.singlePost.userReaction = action.payload.userReaction;
+          state.singlePost.likes = action.payload.likesCount; // Keep for backward compatibility
+        }
       });
   },
 });

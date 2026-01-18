@@ -33,9 +33,23 @@ import {
   ArrowLeft,
   BookOpen,
   Users,
-  ChevronRight
+  ChevronRight,
+  ThumbsUp,
+  Laugh,
+  Frown,
+  Angry,
+  Meh
 } from "lucide-react";
 import Comments from "@/app/components/Comments/Comments";
+
+const REACTIONS = {
+  like: { icon: ThumbsUp, label: "Like", color: "text-blue-500" },
+  love: { icon: Heart, label: "Love", color: "text-red-500" },
+  laugh: { icon: Laugh, label: "Laugh", color: "text-yellow-500" },
+  wow: { icon: Sparkles, label: "Wow", color: "text-purple-500" },
+  sad: { icon: Frown, label: "Sad", color: "text-blue-400" },
+  angry: { icon: Angry, label: "Angry", color: "text-red-600" }
+};
 
 export default function MyPostsPage() {
   const router = useRouter();
@@ -155,32 +169,35 @@ export default function MyPostsPage() {
     return matchesSearch;
   });
 
-  const toggleLikePost = async (post) => {
+  const [showReactionPicker, setShowReactionPicker] = useState(null);
+
+  const toggleReaction = async (post, reaction = null) => {
     if (!user) {
-      toast.error("You must be logged in to like posts", { icon: <AlertCircle className="text-red-500" /> });
+      toast.error("You must be logged in to react to posts", { icon: <AlertCircle className="text-red-500" /> });
       return;
     }
 
     try {
       const res = await fetch(`/api/posts/${post.slug}`, {
         method: "POST",
+        headers: { "Content-Type": "application/json" },
         credentials: "include",
+        body: JSON.stringify({ reaction }),
       });
 
-      if (!res.ok) throw new Error("Failed to toggle like");
+      if (!res.ok) throw new Error("Failed to toggle reaction");
 
-      // fetch updated post data (includes likesCount)
-      const updatedRes = await fetch(`/api/posts/${post.slug}`);
-      if (updatedRes.ok) {
-        const updated = await updatedRes.json();
-        setPosts(prev => prev.map(p => p.slug === post.slug ? { ...p, likes: updated.likesCount ?? (p.likes || 0) } : p));
-      } else {
-        // best-effort: toggle local count
-        setPosts(prev => prev.map(p => p.slug === post.slug ? { ...p, likes: (p.likes || 0) + 1 } : p));
-      }
+      const data = await res.json();
+      setPosts(prev => prev.map(p => p.slug === post.slug ? { 
+        ...p, 
+        reactions: data.reactions,
+        userReaction: data.userReaction,
+        likes: data.likesCount // Keep for backward compatibility
+      } : p));
+      setShowReactionPicker(null);
     } catch (err) {
       console.error(err);
-      toast.error("Could not update like", { icon: <AlertCircle className="text-red-500" /> });
+      toast.error("Could not update reaction", { icon: <AlertCircle className="text-red-500" /> });
     }
   };
 
@@ -189,7 +206,7 @@ export default function MyPostsPage() {
     published: posts.filter(p => p.status === 'published').length,
     draft: posts.filter(p => p.status === 'draft').length,
     totalViews: posts.reduce((sum, post) => sum + (post.views || 0), 0),
-    totalLikes: posts.reduce((sum, post) => sum + (post.likes || 0), 0)
+    totalReactions: posts.reduce((sum, post) => sum + (Object.values(post.reactions || {}).reduce((rSum, count) => rSum + count, 0)), 0)
   };
 
   if (authLoading || loading) {
@@ -252,7 +269,7 @@ export default function MyPostsPage() {
               { label: 'Published', value: stats.published, icon: Eye, color: 'from-green-500 to-emerald-500' },
               { label: 'Drafts', value: stats.draft, icon: FileText, color: 'from-amber-500 to-orange-500' },
               { label: 'Total Views', value: stats.totalViews.toLocaleString(), icon: TrendingUp, color: 'from-purple-500 to-pink-500' },
-              { label: 'Total Likes', value: stats.totalLikes.toLocaleString(), icon: Heart, color: 'from-red-500 to-pink-500' }
+              { label: 'Total Reactions', value: stats.totalReactions.toLocaleString(), icon: Heart, color: 'from-red-500 to-pink-500' }
             ].map((stat, idx) => (
               <div key={idx} className="bg-white rounded-xl shadow-lg border border-gray-100 p-4">
                 <div className="flex items-center justify-between">
@@ -362,14 +379,50 @@ export default function MyPostsPage() {
                                 <Eye className="w-3 h-3 mr-1" />
                                 {post.views || 0} views
                               </div>
-                              <div className="flex items-center px-3 py-1 bg-gradient-to-r from-green-100 to-emerald-100 text-green-700 rounded-full text-sm font-medium">
+                              <div className="flex items-center px-3 py-1 bg-gradient-to-r from-green-100 to-emerald-100 text-green-700 rounded-full text-sm font-medium relative">
                                 <button
-                                  onClick={() => toggleLikePost(post)}
-                                  className="inline-flex items-center text-green-700 hover:text-red-500 transition"
+                                  onClick={() => setShowReactionPicker(showReactionPicker === post.slug ? null : post.slug)}
+                                  className="inline-flex items-center hover:scale-110 transition-transform"
                                 >
-                                  <Heart className="w-3 h-3 mr-1" />
+                                  {post.userReaction ? (
+                                    <div className={`w-3 h-3 mr-1 ${REACTIONS[post.userReaction].color}`}>
+                                      {(() => {
+                                        const IconComponent = REACTIONS[post.userReaction].icon;
+                                        return <IconComponent className="w-3 h-3" />;
+                                      })()}
+                                    </div>
+                                  ) : (
+                                    <Heart className="w-3 h-3 mr-1" />
+                                  )}
                                 </button>
-                                <span>{post.likes || 0} likes</span>
+                                <span>
+                                  {Object.values(post.reactions || {}).reduce((sum, count) => sum + count, 0) || 0} reactions
+                                </span>
+                                
+                                {/* Reaction Picker */}
+                                {showReactionPicker === post.slug && (
+                                  <div className="absolute top-full left-0 mt-2 bg-white border border-gray-200 rounded-lg shadow-lg p-2 z-10 flex gap-1">
+                                    {Object.entries(REACTIONS).map(([type, { icon: Icon, label, color }]) => (
+                                      <button
+                                        key={type}
+                                        onClick={() => toggleReaction(post, type)}
+                                        className={`p-2 rounded-full hover:bg-gray-100 transition-colors ${color} ${post.userReaction === type ? 'bg-gray-100' : ''}`}
+                                        title={label}
+                                      >
+                                        <Icon className="w-4 h-4" />
+                                      </button>
+                                    ))}
+                                    {post.userReaction && (
+                                      <button
+                                        onClick={() => toggleReaction(post, null)}
+                                        className="p-2 rounded-full hover:bg-red-100 transition-colors text-gray-400 hover:text-red-500"
+                                        title="Remove reaction"
+                                      >
+                                        <X className="w-4 h-4" />
+                                      </button>
+                                    )}
+                                  </div>
+                                )}
                               </div>
                               {post.status === 'draft' && (
                                 <div className="flex items-center px-3 py-1 bg-gradient-to-r from-amber-100 to-orange-100 text-amber-700 rounded-full text-sm font-medium">
@@ -406,14 +459,13 @@ export default function MyPostsPage() {
                             )}
 
                             <div className="flex items-center gap-4 text-sm text-gray-500">
-                              <div
-                                role="button"
+                              <button
                                 onClick={() => setActiveCommentsSlug(activeCommentsSlug === post.slug ? null : post.slug)}
-                                className="flex items-center cursor-pointer"
+                                className="flex items-center cursor-pointer hover:text-blue-600 transition-colors"
                               >
                                 <MessageCircle className="w-4 h-4 mr-1" />
                                 {post.comments || 0} comments
-                              </div>
+                              </button>
                               <div className="flex items-center">
                                 <Clock className="w-4 h-4 mr-1" />
                                 {post.readTime || 5} min read

@@ -10,33 +10,50 @@ import {
   Eye,
   MessageCircle,
   Heart,
+  ThumbsUp,
+  Laugh,
+  Frown,
+  Angry,
+  Meh,
+  X,
 } from "lucide-react";
 import { useState } from "react";
 
+const REACTIONS = {
+  like: { icon: ThumbsUp, label: "Like", color: "text-blue-500" },
+  love: { icon: Heart, label: "Love", color: "text-red-500" },
+  laugh: { icon: Laugh, label: "Laugh", color: "text-yellow-500" },
+  wow: { icon: Meh, label: "Wow", color: "text-purple-500" },
+  sad: { icon: Frown, label: "Sad", color: "text-blue-400" },
+  angry: { icon: Angry, label: "Angry", color: "text-red-600" }
+};
+
 export default function PostCard({ post, user }) {
   const [isHovered, setIsHovered] = useState(false);
-  const [likesCount, setLikesCount] = useState(post.likes?.length || 0);
-  const [liked, setLiked] = useState(
-    user && post.likes?.some((id) => id.toString() === user.id)
-  );
+  const [showReactionPicker, setShowReactionPicker] = useState(false);
+  const [reactions, setReactions] = useState(post.reactions || {});
+  const [userReaction, setUserReaction] = useState(post.userReaction || null);
 
   const postBody =
     typeof post.body === "string"
       ? post.body
       : post.body?.text || post.body?.content || "";
 
-  // Handle Like / Unlike
-  const handleLike = async () => {
+  // Handle Reaction
+  const handleReaction = async (reaction = null) => {
     try {
-      const res = await fetch(`/api/posts/${post.slug}/like`, {
-        method: "PUT",
+      const res = await fetch(`/api/posts/${post.slug}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
         credentials: "include",
+        body: JSON.stringify({ reaction }),
       });
       const data = await res.json();
-      setLiked(data.liked);
-      setLikesCount(data.likesCount);
+      setReactions(data.reactions);
+      setUserReaction(data.userReaction);
+      setShowReactionPicker(false);
     } catch (err) {
-      console.error("Like Error:", err);
+      console.error("Reaction Error:", err);
     }
   };
 
@@ -156,15 +173,51 @@ export default function PostCard({ post, user }) {
                   <MessageCircle size={12} />
                   <span>{post.commentsCount ?? 0} comments</span>
                 </div>
-                <button
-                  className={`flex items-center gap-1 transition ${
-                    liked ? "text-red-500" : ""
-                  }`}
-                  onClick={handleLike}
-                >
-                  <Heart size={12} />
-                  <span>{likesCount}</span>
-                </button>
+                <div className="flex items-center gap-1 relative">
+                  <button
+                    onClick={() => setShowReactionPicker(!showReactionPicker)}
+                    className={`flex items-center gap-1 transition hover:scale-110 ${
+                      userReaction ? REACTIONS[userReaction].color : ""
+                    }`}
+                  >
+                    {userReaction ? (
+                      (() => {
+                        const IconComponent = REACTIONS[userReaction].icon;
+                        return <IconComponent size={12} />;
+                      })()
+                    ) : (
+                      <Heart size={12} />
+                    )}
+                  </button>
+                  <span>
+                    {Object.values(reactions).reduce((sum, count) => sum + count, 0) || 0}
+                  </span>
+                  
+                  {/* Reaction Picker */}
+                  {showReactionPicker && (
+                    <div className="absolute bottom-full left-0 mb-2 bg-white border border-gray-200 rounded-lg shadow-lg p-2 z-10 flex gap-1">
+                      {Object.entries(REACTIONS).map(([type, { icon: Icon, label, color }]) => (
+                        <button
+                          key={type}
+                          onClick={() => handleReaction(type)}
+                          className={`p-1 rounded hover:bg-gray-100 transition-colors ${color} ${userReaction === type ? 'bg-gray-100' : ''}`}
+                          title={label}
+                        >
+                          <Icon size={14} />
+                        </button>
+                      ))}
+                      {userReaction && (
+                        <button
+                          onClick={() => handleReaction(null)}
+                          className="p-1 rounded hover:bg-red-100 transition-colors text-gray-400 hover:text-red-500"
+                          title="Remove reaction"
+                        >
+                          <X size={14} />
+                        </button>
+                      )}
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
           )}

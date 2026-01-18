@@ -25,9 +25,24 @@ import {
   Twitter,
   Facebook,
   Linkedin,
-  Link as LinkIcon
+  Link as LinkIcon,
+  ThumbsUp,
+  Laugh,
+  Frown,
+  Angry,
+  Meh,
+  X
 } from "lucide-react";
 import Link from "next/link";
+
+const REACTIONS = {
+  like: { icon: ThumbsUp, label: "Like", color: "text-blue-500" },
+  love: { icon: Heart, label: "Love", color: "text-red-500" },
+  laugh: { icon: Laugh, label: "Laugh", color: "text-yellow-500" },
+  wow: { icon: Meh, label: "Wow", color: "text-purple-500" },
+  sad: { icon: Frown, label: "Sad", color: "text-blue-400" },
+  angry: { icon: Angry, label: "Angry", color: "text-red-600" }
+};
 
 export default function SinglePost() {
   const { slug } = useParams();
@@ -36,7 +51,8 @@ export default function SinglePost() {
   const [post, setPost] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-  const [isLiked, setIsLiked] = useState(false);
+  const [userReaction, setUserReaction] = useState(null);
+  const [showReactionPicker, setShowReactionPicker] = useState(false);
   const [isBookmarked, setIsBookmarked] = useState(false);
   const [readingProgress, setReadingProgress] = useState(0);
   const [relatedPosts, setRelatedPosts] = useState([]);
@@ -49,6 +65,7 @@ export default function SinglePost() {
         if (!res.ok) throw new Error("Post not found");
         const data = await res.json();
         setPost(data);
+        setUserReaction(data.userReaction || null);
         
         // Simulate fetching related posts
         setTimeout(() => {
@@ -100,31 +117,34 @@ export default function SinglePost() {
     setShowShareMenu(false);
   };
   useEffect(() => {
-  if (!post) return;
+    if (!post) return;
 
-  const incrementViews = async () => {
+    // Views are already incremented by the GET request to fetch the post
+    // No need for additional view increment call
+  }, [post]);
+
+  const handleReaction = async (reaction = null) => {
     try {
-      await fetch(`/api/posts/${slug}/view`, { method: 'POST', credentials: 'include' });
-      setPost(prev => ({ ...prev, views: (prev.views || 0) + 1 }));
+      const res = await fetch(`/api/posts/${slug}`, {
+        method: 'POST',
+        headers: { "Content-Type": "application/json" },
+        credentials: 'include',
+        body: JSON.stringify({ reaction }),
+      });
+      if (!res.ok) throw new Error('Failed to react');
+      const data = await res.json();
+      setPost(prev => ({ 
+        ...prev, 
+        reactions: data.reactions,
+        userReaction: data.userReaction,
+        likes: data.likesCount // Keep for backward compatibility
+      }));
+      setUserReaction(data.userReaction);
+      setShowReactionPicker(false);
     } catch (err) {
       console.error(err);
     }
   };
-
-  incrementViews();
-}, [post]);
-
-  const handleLike = async () => {
-  try {
-    const res = await fetch(`/api/posts/${slug}/like`, { method: 'POST', credentials: 'include' });
-    if (!res.ok) throw new Error('Failed to like');
-    const data = await res.json();
-    setIsLiked(data.isLiked);
-    setPost(prev => ({ ...prev, likes: data.likes }));
-  } catch (err) {
-    console.error(err);
-  }
-};
 
 
   if (loading) {
@@ -381,17 +401,51 @@ export default function SinglePost() {
                 <div className="p-6 border-b border-gray-100">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center space-x-6">
-                      <button
-  onClick={handleLike}
-  className={`flex items-center space-x-2 transition-all duration-300 ${isLiked ? 'text-red-500' : 'text-gray-500 hover:text-red-500'}`}
->
-  <Heart className={`w-5 h-5 ${isLiked ? 'fill-current' : ''}`} />
-  <span className="font-semibold">{post.likes || 0}</span>
-</button>
+                      <div className="relative">
+                        <button
+                          onClick={() => setShowReactionPicker(!showReactionPicker)}
+                          className={`flex items-center space-x-2 transition-all duration-300 ${
+                            userReaction ? REACTIONS[userReaction].color : 'text-gray-500 hover:text-red-500'
+                          }`}
+                        >
+                          {userReaction ? (
+                            (() => {
+                              const IconComponent = REACTIONS[userReaction].icon;
+                              return <IconComponent className="w-5 h-5 fill-current" />;
+                            })()
+                          ) : (
+                            <Heart className="w-5 h-5" />
+                          )}
+                          <span className="font-semibold">
+                            {Object.values(post.reactions || {}).reduce((sum, count) => sum + count, 0) || 0}
+                          </span>
+                        </button>
 
-                     <div className="flex items-center space-x-2 text-gray-500">
-  <Eye className="w-5 h-5" />
-  <span className="font-semibold">{post.views || 0} views</span>
+                        {/* Reaction Picker */}
+                        {showReactionPicker && (
+                          <div className="absolute top-full left-0 mt-2 bg-white border border-gray-200 rounded-lg shadow-lg p-2 z-10 flex gap-1">
+                            {Object.entries(REACTIONS).map(([type, { icon: Icon, label, color }]) => (
+                              <button
+                                key={type}
+                                onClick={() => handleReaction(type)}
+                                className={`p-2 rounded-full hover:bg-gray-100 transition-colors ${color} ${userReaction === type ? 'bg-gray-100' : ''}`}
+                                title={label}
+                              >
+                                <Icon className="w-4 h-4" />
+                              </button>
+                            ))}
+                            {userReaction && (
+                              <button
+                                onClick={() => handleReaction(null)}
+                                className="p-2 rounded-full hover:bg-red-100 transition-colors text-gray-400 hover:text-red-500"
+                                title="Remove reaction"
+                              >
+                                <X className="w-4 h-4" />
+                              </button>
+                            )}
+                          </div>
+                        )}
+                      </div>
 </div>
 
                       
@@ -486,20 +540,3 @@ export default function SinglePost() {
     </div>
   );
 }
-
-<style jsx global>{`
-  @keyframes slide-down {
-    from { transform: translateY(-10px); opacity: 0; }
-    to { transform: translateY(0); opacity: 1; }
-  }
-  @keyframes loading-bar {
-    0% { transform: translateX(-100%); }
-    100% { transform: translateX(100%); }
-  }
-  .animate-slide-down {
-    animation: slide-down 0.2s ease-out forwards;
-  }
-  .animate-loading-bar {
-    animation: loading-bar 1.5s ease-in-out infinite;
-  }
-`}</style>
