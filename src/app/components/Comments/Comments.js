@@ -22,28 +22,52 @@ export default function Comments({ slug, user }) {
   };
 
  
-  useEffect(() => {
-    fetchComments();
-  }, [slug]); 
-  const handleComment = async (parentComment = null) => {
+    const [currentUser, setCurrentUser] = useState(null);
+    const [userLoading, setUserLoading] = useState(true);
+
+    useEffect(() => {
+      fetchComments();
+    }, [slug]); 
+
+    useEffect(() => {
+      const fetchUser = async () => {
+        try {
+          const res = await axios.get(`/api/auth/me`, { withCredentials: true });
+          setCurrentUser(res.data.user || null);
+        } catch (err) {
+          setCurrentUser(null);
+        } finally {
+          setUserLoading(false);
+        }
+      };
+
+      fetchUser();
+    }, []);
+
+    const handleComment = async (parentComment = null) => {
     try {
-      const content = parentComment ? replyText[parentComment] : text;
-      if (!content?.trim()) return;
+        if (!currentUser) {
+          alert("You must be logged in to comment.");
+          return;
+        }
 
-      await axios.post(
-        `/api/posts/${slug}/comments`,
-        { text: content, parentComment },
-        { withCredentials: true }
-      );
+        const content = parentComment ? replyText[parentComment] : text;
+        if (!content?.trim()) return;
 
-      if (parentComment) {
-        setReplyText(prev => ({ ...prev, [parentComment]: "" }));
-        setReplyOpen(prev => ({ ...prev, [parentComment]: false }));
-      } else {
-        setText("");
-      }
+        await axios.post(
+          `/api/posts/${slug}/comments`,
+          { text: content, parentComment },
+          { withCredentials: true }
+        );
 
-      fetchComments(); // refresh comments
+        if (parentComment) {
+          setReplyText(prev => ({ ...prev, [parentComment]: "" }));
+          setReplyOpen(prev => ({ ...prev, [parentComment]: false }));
+        } else {
+          setText("");
+        }
+
+        fetchComments(); // refresh comments
     } catch (err) {
       console.error("Add Comment Error:", err);
     }
@@ -52,37 +76,19 @@ export default function Comments({ slug, user }) {
   // Like / unlike a comment or reply
   const toggleLike = async (commentId) => {
     try {
-      const res = await axios.put(
+      if (!currentUser) {
+        alert("You must be logged in to like comments.");
+        return;
+      }
+
+      await axios.put(
         `/api/posts/${slug}/comments`,
         { commentId },
         { withCredentials: true }
       );
-      const liked = res.data.liked;
 
-      setComments(prev =>
-        prev.map(c => {
-          // Update main comment
-          if (c._id === commentId) {
-            const likes = liked
-              ? [...(c.likes || []), user.id]
-              : (c.likes || []).filter(id => id !== user.id);
-            return { ...c, likes };
-          }
-          // Update replies
-          if (c.replies) {
-            c.replies = c.replies.map(r => {
-              if (r._id === commentId) {
-                const likes = liked
-                  ? [...(r.likes || []), user.id]
-                  : (r.likes || []).filter(id => id !== user.id);
-                return { ...r, likes };
-              }
-              return r;
-            });
-          }
-          return c;
-        })
-      );
+      // Re-fetch comments to get authoritative like counts
+      fetchComments();
     } catch (err) {
       console.error("Like Comment Error:", err);
     }
@@ -100,12 +106,14 @@ export default function Comments({ slug, user }) {
           className="flex-1 border rounded px-3 py-2 focus:outline-none"
           value={text}
           onChange={(e) => setText(e.target.value)}
+          disabled={!currentUser}
         />
         <button
-          className="px-4 py-2 bg-indigo-600 text-white rounded hover:bg-indigo-700 transition"
+          className="px-4 py-2 bg-indigo-600 text-white rounded hover:bg-indigo-700 transition disabled:opacity-60"
           onClick={() => handleComment()}
+          disabled={!currentUser}
         >
-          Comment
+          {currentUser ? "Comment" : "Login to comment"}
         </button>
       </div>
 
@@ -126,11 +134,11 @@ export default function Comments({ slug, user }) {
               onClick={() => toggleLike(c._id)}
               className="flex items-center gap-1 hover:text-red-500 transition"
             >
-              <Heart size={12} className={c.likes?.includes(user.id) ? "text-red-500" : ""} />
+              <Heart size={12} className={c.likes?.some(id => id?.toString() === currentUser?._id?.toString()) ? "text-red-500" : ""} />
               <span>{c.likes?.length || 0}</span>
             </button>
             <button onClick={() => setReplyOpen(prev => ({ ...prev, [c._id]: !prev[c._id] }))}>
-              Reply
+              {currentUser ? "Reply" : "Login to reply"}
             </button>
           </div>
 
@@ -169,7 +177,7 @@ export default function Comments({ slug, user }) {
                   onClick={() => toggleLike(r._id)}
                   className="flex items-center gap-1 hover:text-red-500 transition"
                 >
-                  <Heart size={12} className={r.likes?.includes(user.id) ? "text-red-500" : ""} />
+                  <Heart size={12} className={r.likes?.some(id => id?.toString() === currentUser?._id?.toString()) ? "text-red-500" : ""} />
                   <span>{r.likes?.length || 0}</span>
                 </button>
               </div>
