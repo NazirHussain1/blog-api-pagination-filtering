@@ -84,7 +84,7 @@ export default function MyPostsPage() {
         <AlertCircle className="w-5 h-5 text-red-500 mr-3" />
         <div>
           <div className="font-semibold">Delete Post</div>
-          <div className="text-sm text-gray-600">Are you sure you want to delete "{title}"?</div>
+          <div className="text-sm text-gray-600">Are you sure you want to delete &quot;{title}&quot;?</div>
         </div>
       </div>,
       {

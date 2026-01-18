@@ -54,7 +54,12 @@ export default function ProfilePage() {
   const [isFollowing, setIsFollowing] = useState(false);
 
   useEffect(() => {
-    if (!name) return;
+    if (!name) {
+      console.log("No name parameter");
+      return;
+    }
+
+    console.log("Fetching profile for:", name);
 
     const controller = new AbortController();
     const signal = controller.signal;
@@ -62,16 +67,31 @@ export default function ProfilePage() {
     const fetchProfile = async () => {
       setLoading(true);
       try {
-        const [userRes, postsRes] = await Promise.all([
-          fetch(`/api/users/profile/${name}`, { signal }),
-          fetch(`/api/posts/user/${name}`, { signal }),
-        ]);
+        console.log("Fetching user data...");
+        const userRes = await fetch(`/api/users/profile/${name}`, { signal });
+        console.log("User response status:", userRes.status);
 
-        if (!userRes.ok) throw new Error("User not found");
-        if (!postsRes.ok) throw new Error("Posts not found");
+        if (!userRes.ok) {
+          const errorText = await userRes.text();
+          console.log("User error:", errorText);
+          throw new Error("User not found");
+        }
 
         const userData = await userRes.json();
+        console.log("User data:", userData);
+
+        console.log("Fetching posts...");
+        const postsRes = await fetch(`/api/posts/user/${name}`, { signal });
+        console.log("Posts response status:", postsRes.status);
+
+        if (!postsRes.ok) {
+          const errorText = await postsRes.text();
+          console.log("Posts error:", errorText);
+          throw new Error("Posts not found");
+        }
+
         const postsData = await postsRes.json();
+        console.log("Posts data:", postsData);
 
         setUser(userData);
         setPosts(postsData);
@@ -80,6 +100,7 @@ export default function ProfilePage() {
 
       } catch (error) {
         if (error.name !== "AbortError") {
+          console.error("Fetch error:", error);
           toast.error(error.message, {
             icon: <CheckCircle2 className="text-red-500" />
           });
