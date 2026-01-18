@@ -249,7 +249,7 @@ export default function ProfilePage() {
                       
                       <div className="flex items-center">
                         <Globe className="w-4 h-4 mr-2 text-blue-300" />
-                        <span>English, Español</span>
+                        <span>English, espanol</span>
                       </div>
                     </div>
                   </div>
