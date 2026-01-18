@@ -1,5 +1,6 @@
 "use client";
 import Comments from "@/app/components/Comments/Comments";
+import PostCard from "@/app/components/PostCard/PostCard";
 
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
@@ -434,23 +435,25 @@ export default function SinglePost() {
                     Related Articles
                   </h3>
                   <div className="space-y-4">
-                    {relatedPosts.map((related) => (
-                      <Link
-                        key={related.id}
-                        href={`/posts/${related.slug}`}
-                        className="group block p-4 rounded-xl hover:bg-gray-50 transition-all duration-300"
-                      >
-                        <div className="flex items-start space-x-3">
-                          <div className="w-3 h-3 mt-2 bg-gradient-to-r from-indigo-500 to-purple-500 rounded-full"></div>
-                          <div>
-                            <div className="text-xs font-semibold text-indigo-600 mb-1">{related.category}</div>
-                            <h4 className="font-medium text-gray-900 group-hover:text-indigo-600 transition-colors duration-300">
-                              {related.title}
-                            </h4>
-                          </div>
+                    <div className="grid gap-4">
+                      {relatedPosts.map((related) => (
+                        <div
+                          key={related.id}
+                          className="transform transition-all duration-300 hover:-translate-y-2"
+                        >
+                          <PostCard post={{
+                            ...related,
+                            // provide minimal fields PostCard expects
+                            author: post.author || { name: "Unknown" },
+                            createdAt: related.createdAt || post.createdAt,
+                            image: related.image || null,
+                            likes: related.likes || 0,
+                            views: related.views || 0,
+                            commentsCount: related.commentsCount || 0,
+                          }} />
                         </div>
-                      </Link>
-                    ))}
+                      ))}
+                    </div>
                   </div>
                 </div>
 {/* Comments Section */}

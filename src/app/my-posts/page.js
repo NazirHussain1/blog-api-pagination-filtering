@@ -35,6 +35,7 @@ import {
   Users,
   ChevronRight
 } from "lucide-react";
+import Comments from "@/app/components/Comments/Comments";
 
 export default function MyPostsPage() {
   const router = useRouter();
@@ -48,6 +49,7 @@ export default function MyPostsPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [activeFilter, setActiveFilter] = useState("all");
   const [showActions, setShowActions] = useState(null);
+  const [activeCommentsSlug, setActiveCommentsSlug] = useState(null);
 
   useEffect(() => {
     if (!authLoading && !user) router.push("/login");
@@ -152,6 +154,35 @@ export default function MyPostsPage() {
                          post.body?.toLowerCase().includes(searchQuery.toLowerCase());
     return matchesSearch;
   });
+
+  const toggleLikePost = async (post) => {
+    if (!user) {
+      toast.error("You must be logged in to like posts", { icon: <AlertCircle className="text-red-500" /> });
+      return;
+    }
+
+    try {
+      const res = await fetch(`/api/posts/${post.slug}`, {
+        method: "POST",
+        credentials: "include",
+      });
+
+      if (!res.ok) throw new Error("Failed to toggle like");
+
+      // fetch updated post data (includes likesCount)
+      const updatedRes = await fetch(`/api/posts/${post.slug}`);
+      if (updatedRes.ok) {
+        const updated = await updatedRes.json();
+        setPosts(prev => prev.map(p => p.slug === post.slug ? { ...p, likes: updated.likesCount ?? (p.likes || 0) } : p));
+      } else {
+        // best-effort: toggle local count
+        setPosts(prev => prev.map(p => p.slug === post.slug ? { ...p, likes: (p.likes || 0) + 1 } : p));
+      }
+    } catch (err) {
+      console.error(err);
+      toast.error("Could not update like", { icon: <AlertCircle className="text-red-500" /> });
+    }
+  };
 
   const stats = {
     total: posts.length,
@@ -332,8 +363,13 @@ export default function MyPostsPage() {
                                 {post.views || 0} views
                               </div>
                               <div className="flex items-center px-3 py-1 bg-gradient-to-r from-green-100 to-emerald-100 text-green-700 rounded-full text-sm font-medium">
-                                <Heart className="w-3 h-3 mr-1" />
-                                {post.likes || 0} likes
+                                <button
+                                  onClick={() => toggleLikePost(post)}
+                                  className="inline-flex items-center text-green-700 hover:text-red-500 transition"
+                                >
+                                  <Heart className="w-3 h-3 mr-1" />
+                                </button>
+                                <span>{post.likes || 0} likes</span>
                               </div>
                               {post.status === 'draft' && (
                                 <div className="flex items-center px-3 py-1 bg-gradient-to-r from-amber-100 to-orange-100 text-amber-700 rounded-full text-sm font-medium">
@@ -370,7 +406,11 @@ export default function MyPostsPage() {
                             )}
 
                             <div className="flex items-center gap-4 text-sm text-gray-500">
-                              <div className="flex items-center">
+                              <div
+                                role="button"
+                                onClick={() => setActiveCommentsSlug(activeCommentsSlug === post.slug ? null : post.slug)}
+                                className="flex items-center cursor-pointer"
+                              >
                                 <MessageCircle className="w-4 h-4 mr-1" />
                                 {post.comments || 0} comments
                               </div>
@@ -464,6 +504,11 @@ export default function MyPostsPage() {
 
                   <div className="absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r from-transparent via-gray-200 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
                 </div>
+              {activeCommentsSlug === post.slug && (
+                <div className="mt-4 p-4 bg-white rounded-2xl border border-gray-100">
+                  <Comments slug={post.slug} user={user} />
+                </div>
+              )}
               </div>
             ))}
           </div>

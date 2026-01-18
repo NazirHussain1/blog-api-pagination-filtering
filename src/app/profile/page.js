@@ -7,6 +7,7 @@ import Image from "next/image";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { toast, Toaster } from "sonner";
+import PostCard from "@/app/components/PostCard/PostCard";
 import {
   User,
   Mail,
@@ -35,7 +36,8 @@ import {
   TrendingUp,
   CheckCircle2,
   Loader2,
-  Sparkles
+  Sparkles,
+  Plus
 } from "lucide-react";
 
 const EMPTY_PROFILE = {
@@ -59,6 +61,8 @@ export default function MyProfilePage() {
   const [updating, setUpdating] = useState(false);
   const [activeTab, setActiveTab] = useState("overview");
   const [isDragging, setIsDragging] = useState(false);
+  const [posts, setPosts] = useState([]);
+  const [postsLoading, setPostsLoading] = useState(true);
 
   const fileInputRef = useRef(null);
 
@@ -93,6 +97,25 @@ export default function MyProfilePage() {
     };
 
     fetchProfile();
+  }, [user]);
+
+  useEffect(() => {
+    if (!user) return;
+
+    const fetchPosts = async () => {
+      try {
+        const res = await fetch("/api/posts/myposts", { credentials: "include" });
+        if (!res.ok) throw new Error("Failed to fetch posts");
+        const data = await res.json();
+        setPosts(data);
+      } catch (err) {
+        console.error("Failed to fetch posts:", err);
+      } finally {
+        setPostsLoading(false);
+      }
+    };
+
+    fetchPosts();
   }, [user]);
 
   const handleAvatarChange = (e) => {
@@ -192,12 +215,16 @@ export default function MyProfilePage() {
   };
 
   const profileStats = {
-    posts: 12,
-    views: 12560,
-    likes: 1243,
-    followers: 456,
-    following: 234,
-    joined: "2023-06-15"
+    posts: posts.length,
+    views: posts.reduce((sum, post) => sum + (post.views || 0), 0),
+    likes: posts.reduce((sum, post) => sum + (post.likes || 0), 0),
+    followers: user?.followers?.length || 0,
+    following: user?.following?.length || 0,
+    joined: user?.createdAt ? new Date(user.createdAt).toLocaleDateString('en-US', { 
+      year: 'numeric', 
+      month: 'short', 
+      day: 'numeric' 
+    }) : "N/A"
   };
 
   const socialLinks = [
@@ -451,7 +478,7 @@ export default function MyProfilePage() {
             {/* Tabs */}
             <div className="mb-8">
               <div className="flex flex-wrap gap-2 mb-6">
-                {['overview', 'activity', 'settings', 'analytics'].map((tab) => (
+                {['overview', 'posts', 'activity', 'settings', 'analytics'].map((tab) => (
                   <button
                     key={tab}
                     onClick={() => setActiveTab(tab)}
@@ -526,7 +553,57 @@ export default function MyProfilePage() {
 
               
               </div>
-            )} 
+            )}
+
+            {activeTab === 'posts' && (
+              <div className="space-y-8">
+                <div className="bg-white rounded-2xl shadow-xl border border-gray-100 p-8">
+                  <h3 className="text-xl font-bold text-gray-900 mb-6 flex items-center">
+                    <BookOpen className="w-6 h-6 mr-3 text-indigo-600" />
+                    My Articles ({posts.length})
+                  </h3>
+                  
+                  {postsLoading ? (
+                    <div className="text-center py-12">
+                      <Loader2 className="w-8 h-8 text-indigo-600 animate-spin mx-auto mb-4" />
+                      <p className="text-gray-600">Loading your articles...</p>
+                    </div>
+                  ) : posts.length === 0 ? (
+                    <div className="text-center py-12">
+                      <div className="w-16 h-16 mx-auto mb-4 bg-gradient-to-r from-gray-100 to-gray-200 rounded-full flex items-center justify-center">
+                        <BookOpen className="w-8 h-8 text-gray-400" />
+                      </div>
+                      <h4 className="text-lg font-semibold text-gray-900 mb-2">No articles yet</h4>
+                      <p className="text-gray-600 mb-6">Start sharing your knowledge with the community.</p>
+                      <Button
+                        onClick={() => router.push('/posts/create')}
+                        className="bg-gradient-to-r from-green-500 to-emerald-500 hover:shadow-lg"
+                      >
+                        <Plus className="w-4 h-4 mr-2" />
+                        Create Your First Article
+                      </Button>
+                    </div>
+                  ) : (
+                    <div className="grid gap-6 md:grid-cols-2">
+                      {posts.map((post) => (
+                        <div key={post._id} className="transform transition-all duration-300 hover:-translate-y-2">
+                          <PostCard 
+                            post={{
+                              ...post,
+                              author: user,
+                              likes: post.likes || 0,
+                              views: post.views || 0,
+                              commentsCount: post.comments || 0,
+                            }} 
+                            user={user}
+                          />
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
 
             {/* Security Settings Preview */}
             {activeTab === 'settings' && (
