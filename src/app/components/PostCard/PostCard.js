@@ -195,26 +195,30 @@ export default function PostCard({ post, user }) {
                   
                   {/* Reaction Picker */}
                   {showReactionPicker && (
-                    <div className="absolute bottom-full left-0 mb-2 bg-white border border-gray-200 rounded-lg shadow-lg p-2 z-10 flex gap-1">
-                      {Object.entries(REACTIONS).map(([type, { icon: Icon, label, color }]) => (
-                        <button
-                          key={type}
-                          onClick={() => handleReaction(type)}
-                          className={`p-1 rounded hover:bg-gray-100 transition-colors ${color} ${userReaction === type ? 'bg-gray-100' : ''}`}
-                          title={label}
-                        >
-                          <Icon size={14} />
-                        </button>
-                      ))}
-                      {userReaction && (
-                        <button
-                          onClick={() => handleReaction(null)}
-                          className="p-1 rounded hover:bg-red-100 transition-colors text-gray-400 hover:text-red-500"
-                          title="Remove reaction"
-                        >
-                          <X size={14} />
-                        </button>
-                      )}
+                    <div className="absolute bottom-full left-0 mb-2 bg-white border border-gray-200 rounded-lg shadow-lg p-2 z-10">
+                      <div className="flex gap-1">
+                        <>
+                          {Object.entries(REACTIONS).map(([type, { icon: Icon, label, color }]) => (
+                            <button
+                              key={type}
+                              onClick={() => handleReaction(type)}
+                              className={`p-1 rounded hover:bg-gray-100 transition-colors ${color} ${userReaction === type ? 'bg-gray-100' : ''}`}
+                              title={label}
+                            >
+                              <Icon size={14} />
+                            </button>
+                          ))}
+                          {userReaction && (
+                            <button
+                              onClick={() => handleReaction(null)}
+                              className="p-1 rounded hover:bg-red-100 transition-colors text-gray-400 hover:text-red-500"
+                              title="Remove reaction"
+                            >
+                              <X size={14} />
+                            </button>
+                          )}
+                        </>
+                      </div>
                     </div>
                   )}
                 </div>

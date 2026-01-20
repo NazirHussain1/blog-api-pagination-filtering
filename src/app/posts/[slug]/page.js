@@ -26,7 +26,6 @@ import {
   Facebook,
   Linkedin,
   Link as LinkIcon,
-  ThumbsUp,
   Laugh,
   Frown,
   Angry,
@@ -36,7 +35,7 @@ import {
 import Link from "next/link";
 
 const REACTIONS = {
-  like: { icon: ThumbsUp, label: "Like", color: "text-blue-500" },
+  like: { icon: Heart, label: "Like", color: "text-red-500" },
   love: { icon: Heart, label: "Love", color: "text-red-500" },
   laugh: { icon: Laugh, label: "Laugh", color: "text-yellow-500" },
   wow: { icon: Meh, label: "Wow", color: "text-purple-500" },
@@ -423,32 +422,32 @@ export default function SinglePost() {
 
                         {/* Reaction Picker */}
                         {showReactionPicker && (
-                          <div className="absolute top-full left-0 mt-2 bg-white border border-gray-200 rounded-lg shadow-lg p-2 z-10 flex gap-1">
-                            {Object.entries(REACTIONS).map(([type, { icon: Icon, label, color }]) => (
-                              <button
-                                key={type}
-                                onClick={() => handleReaction(type)}
-                                className={`p-2 rounded-full hover:bg-gray-100 transition-colors ${color} ${userReaction === type ? 'bg-gray-100' : ''}`}
-                                title={label}
-                              >
-                                <Icon className="w-4 h-4" />
-                              </button>
-                            ))}
-                            {userReaction && (
-                              <button
-                                onClick={() => handleReaction(null)}
-                                className="p-2 rounded-full hover:bg-red-100 transition-colors text-gray-400 hover:text-red-500"
-                                title="Remove reaction"
-                              >
-                                <X className="w-4 h-4" />
-                              </button>
-                            )}
+                          <div className="absolute top-full left-0 mt-2 bg-white border border-gray-200 rounded-lg shadow-lg p-2 z-10">
+                            <div className="flex gap-1">
+                              {Object.entries(REACTIONS).map(([type, { icon: Icon, label, color }]) => (
+                                <button
+                                  key={type}
+                                  onClick={() => handleReaction(type)}
+                                  className={`p-2 rounded-full hover:bg-gray-100 transition-colors ${color} ${userReaction === type ? 'bg-gray-100' : ''}`}
+                                  title={label}
+                                >
+                                  <Icon className="w-4 h-4" />
+                                </button>
+                              ))}
+                              {userReaction && (
+                                <button
+                                  onClick={() => handleReaction(null)}
+                                  className="p-2 rounded-full hover:bg-red-100 transition-colors text-gray-400 hover:text-red-500"
+                                  title="Remove reaction"
+                                >
+                                  <X className="w-4 h-4" />
+                                </button>
+                              )}
+                            </div>
                           </div>
                         )}
                       </div>
-</div>
 
-                      
                       <div className="flex items-center space-x-2 text-gray-500">
                         <MessageCircle className="w-5 h-5" />
                         <span className="font-semibold">comments</span>
@@ -465,16 +464,38 @@ export default function SinglePost() {
                   <div className="relative mr-4">
                     <div className="absolute inset-0 bg-gradient-to-r from-blue-500 to-cyan-400 rounded-full blur opacity-75"></div>
                     <div className="relative w-16 h-16 bg-gradient-to-r from-blue-600 to-cyan-500 rounded-full flex items-center justify-center text-white font-bold text-2xl">
-                      {post.author?.name?.charAt(0) || "A"}
+                      {post.author?.avatar ? (
+                        <img 
+                          src={post.author.avatar} 
+                          alt={post.author.name} 
+                          className="w-full h-full object-cover rounded-full"
+                        />
+                      ) : (
+                        post.author?.name?.charAt(0) || "A"
+                      )}
                     </div>
                   </div>
                   <div>
                     <h3 className="text-xl font-bold text-gray-900">{post.author?.name || "Unknown Author"}</h3>
-                    <p className="text-gray-600">Senior Content Writer & Technology Expert</p>
+                    <p className="text-gray-600">
+                      {post.author?.role === 'admin' ? 'Administrator' : 'Content Writer'} • 
+                      {post.author?.location ? ` ${post.author.location}` : ' Location not specified'}
+                    </p>
                   </div>
                 </div>
-                <p className="text-gray-700">
-                  Passionate about technology, design, and innovation. With over 10 years of experience in software development and technical writing, I love sharing insights that help others grow in their careers.
+                <p className="text-gray-700 mb-4">
+                  {post.author?.about || "This author hasn't added a bio yet."}
+                </p>
+                {post.author?.phone && (
+                  <p className="text-sm text-gray-600">
+                    📞 {post.author.phone}
+                  </p>
+                )}
+                <p className="text-sm text-gray-500 mt-2">
+                  Joined {post.author?.createdAt ? new Date(post.author.createdAt).toLocaleDateString('en-US', { 
+                    year: 'numeric', 
+                    month: 'long' 
+                  }) : 'Recently'}
                 </p>
               </div>
             </div>
@@ -510,8 +531,9 @@ export default function SinglePost() {
                     </div>
                   </div>
                 </div>
-{/* Comments Section */}
-<Comments slug={post.slug} user={post.author} />
+
+                {/* Comments Section */}
+                <Comments slug={post.slug} user={post.author} />
 
                 {/* Table of Contents */}
                 <div className="bg-gradient-to-br from-purple-50 to-pink-50 rounded-2xl border border-purple-100 p-6">

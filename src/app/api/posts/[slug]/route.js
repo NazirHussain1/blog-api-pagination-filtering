@@ -38,7 +38,7 @@ export async function GET(req, { params }) {
       { slug },
       { $inc: { views: 1 } },
       { new: true }
-    ).populate("author", "name email avatar");
+    ).populate("author", "name email avatar about location phone role createdAt");
 
     if (!post) {
       return NextResponse.json({ message: "Post not found" }, { status: 404 });
