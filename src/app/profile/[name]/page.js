@@ -537,14 +537,54 @@ export default function ProfilePage() {
                 </h3>
                 <div className="grid grid-cols-2 gap-3">
                   {[
-                    { platform: "Twitter", icon: Twitter, color: "bg-blue-400 text-white", link: "#" },
-                    { platform: "LinkedIn", icon: Linkedin, color: "bg-blue-600 text-white", link: "#" },
-                    { platform: "GitHub", icon: Github, color: "bg-gray-800 text-white", link: "#" },
-                    { platform: "Instagram", icon: Instagram, color: "bg-gradient-to-r from-purple-500 to-pink-500 text-white", link: "#" }
-                  ].map((social, idx) => (
+                    { 
+                      platform: "Twitter", 
+                      icon: Twitter, 
+                      color: "bg-blue-400 text-white", 
+                      link: user?.socialLinks?.twitter ? 
+                        (user.socialLinks.twitter.startsWith('http') ? user.socialLinks.twitter : `https://twitter.com/${user.socialLinks.twitter}`) : null 
+                    },
+                    { 
+                      platform: "LinkedIn", 
+                      icon: Linkedin, 
+                      color: "bg-blue-600 text-white", 
+                      link: user?.socialLinks?.linkedin ? 
+                        (user.socialLinks.linkedin.startsWith('http') ? user.socialLinks.linkedin : `https://linkedin.com/in/${user.socialLinks.linkedin}`) : null 
+                    },
+                    { 
+                      platform: "GitHub", 
+                      icon: Github, 
+                      color: "bg-gray-800 text-white", 
+                      link: user?.socialLinks?.github ? 
+                        (user.socialLinks.github.startsWith('http') ? user.socialLinks.github : `https://github.com/${user.socialLinks.github}`) : null 
+                    },
+                    { 
+                      platform: "Instagram", 
+                      icon: Instagram, 
+                      color: "bg-gradient-to-r from-purple-500 to-pink-500 text-white", 
+                      link: user?.socialLinks?.instagram ? 
+                        (user.socialLinks.instagram.startsWith('http') ? user.socialLinks.instagram : `https://instagram.com/${user.socialLinks.instagram}`) : null 
+                    },
+                    { 
+                      platform: "Website", 
+                      icon: Globe, 
+                      color: "bg-green-500 text-white", 
+                      link: user?.socialLinks?.website ? 
+                        (user.socialLinks.website.startsWith('http') ? user.socialLinks.website : `https://${user.socialLinks.website}`) : null 
+                    },
+                    { 
+                      platform: "YouTube", 
+                      icon: Award, 
+                      color: "bg-red-500 text-white", 
+                      link: user?.socialLinks?.youtube ? 
+                        (user.socialLinks.youtube.startsWith('http') ? user.socialLinks.youtube : `https://youtube.com/${user.socialLinks.youtube}`) : null 
+                    }
+                  ].filter(social => social.link).map((social, idx) => (
                     <a
                       key={idx}
                       href={social.link}
+                      target="_blank"
+                      rel="noopener noreferrer"
                       className={`${social.color} p-4 rounded-xl flex flex-col items-center justify-center hover:shadow-lg transition-all duration-300`}
                     >
                       <social.icon className="w-6 h-6 mb-2" />
@@ -552,6 +592,11 @@ export default function ProfilePage() {
                     </a>
                   ))}
                 </div>
+                {(!user?.socialLinks || Object.values(user.socialLinks).every(link => !link)) && (
+                  <p className="text-gray-500 text-sm text-center mt-4">
+                    No social links added yet
+                  </p>
+                )}
               </div>
 
               {/* Top Tags */}

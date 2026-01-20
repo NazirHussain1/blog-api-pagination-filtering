@@ -34,7 +34,6 @@ import {
   BookOpen,
   Users,
   ChevronRight,
-  ThumbsUp,
   Laugh,
   Frown,
   Angry,
@@ -43,7 +42,7 @@ import {
 import Comments from "@/app/components/Comments/Comments";
 
 const REACTIONS = {
-  like: { icon: ThumbsUp, label: "Like", color: "text-blue-500" },
+  like: { icon: Heart, label: "Like", color: "text-red-500" },
   love: { icon: Heart, label: "Love", color: "text-red-500" },
   laugh: { icon: Laugh, label: "Laugh", color: "text-yellow-500" },
   wow: { icon: Sparkles, label: "Wow", color: "text-purple-500" },

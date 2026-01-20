@@ -73,7 +73,7 @@ export const toggleFollowUser = createAsyncThunk(
       const res = await fetch(`/api/users/follow/${targetUserId}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ currentUserId: user._id }),
+        credentials: "include",
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Follow action failed");

@@ -7,7 +7,7 @@ import { toast, Toaster } from "sonner";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
-import { User, Mail, LockKeyhole, Camera, Trash2, ShieldCheck } from "lucide-react";
+import { User, Mail, LockKeyhole, Camera, Trash2, ShieldCheck, Globe, Twitter, Linkedin, Github, Instagram, Youtube } from "lucide-react";
 
 export default function SettingsPage() {
   const dispatch = useDispatch();
@@ -19,6 +19,14 @@ export default function SettingsPage() {
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [avatar, setAvatar] = useState(null);
+  const [socialLinks, setSocialLinks] = useState({
+    twitter: "",
+    linkedin: "",
+    github: "",
+    instagram: "",
+    website: "",
+    youtube: ""
+  });
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
@@ -26,6 +34,14 @@ export default function SettingsPage() {
     if (user) {
       setName(user.name);
       setEmail(user.email);
+      setSocialLinks({
+        twitter: user.socialLinks?.twitter || "",
+        linkedin: user.socialLinks?.linkedin || "",
+        github: user.socialLinks?.github || "",
+        instagram: user.socialLinks?.instagram || "",
+        website: user.socialLinks?.website || "",
+        youtube: user.socialLinks?.youtube || ""
+      });
     }
   }, [dispatch, user]);
 
@@ -51,6 +67,7 @@ export default function SettingsPage() {
       const formData = new FormData();
       formData.append("name", name);
       formData.append("email", email);
+      formData.append("socialLinks", JSON.stringify(socialLinks));
       if (currentPassword) formData.append("currentPassword", currentPassword);
       if (newPassword) formData.append("newPassword", newPassword);
       if (avatar) formData.append("avatar", avatar);
@@ -152,7 +169,89 @@ export default function SettingsPage() {
             </div>
           </section>
 
-                  <section>
+          {/* Social Links Section */}
+          <section>
+            <h2 className="text-xl font-semibold text-gray-800 mb-4">Social Links</h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <Label className="text-sm font-medium text-gray-700 flex items-center gap-2">
+                  <Twitter className="w-4 h-4 text-blue-400" /> Twitter
+                </Label>
+                <Input
+                  type="text"
+                  placeholder="@username or full URL"
+                  value={socialLinks.twitter}
+                  onChange={(e) => setSocialLinks(prev => ({ ...prev, twitter: e.target.value }))}
+                  className="mt-1"
+                />
+              </div>
+              <div>
+                <Label className="text-sm font-medium text-gray-700 flex items-center gap-2">
+                  <Linkedin className="w-4 h-4 text-blue-600" /> LinkedIn
+                </Label>
+                <Input
+                  type="text"
+                  placeholder="username or full URL"
+                  value={socialLinks.linkedin}
+                  onChange={(e) => setSocialLinks(prev => ({ ...prev, linkedin: e.target.value }))}
+                  className="mt-1"
+                />
+              </div>
+              <div>
+                <Label className="text-sm font-medium text-gray-700 flex items-center gap-2">
+                  <Github className="w-4 h-4 text-gray-800" /> GitHub
+                </Label>
+                <Input
+                  type="text"
+                  placeholder="username or full URL"
+                  value={socialLinks.github}
+                  onChange={(e) => setSocialLinks(prev => ({ ...prev, github: e.target.value }))}
+                  className="mt-1"
+                />
+              </div>
+              <div>
+                <Label className="text-sm font-medium text-gray-700 flex items-center gap-2">
+                  <Instagram className="w-4 h-4 text-pink-500" /> Instagram
+                </Label>
+                <Input
+                  type="text"
+                  placeholder="username or full URL"
+                  value={socialLinks.instagram}
+                  onChange={(e) => setSocialLinks(prev => ({ ...prev, instagram: e.target.value }))}
+                  className="mt-1"
+                />
+              </div>
+              <div>
+                <Label className="text-sm font-medium text-gray-700 flex items-center gap-2">
+                  <Globe className="w-4 h-4 text-green-500" /> Website
+                </Label>
+                <Input
+                  type="url"
+                  placeholder="https://yourwebsite.com"
+                  value={socialLinks.website}
+                  onChange={(e) => setSocialLinks(prev => ({ ...prev, website: e.target.value }))}
+                  className="mt-1"
+                />
+              </div>
+              <div>
+                <Label className="text-sm font-medium text-gray-700 flex items-center gap-2">
+                  <Youtube className="w-4 h-4 text-red-500" /> YouTube
+                </Label>
+                <Input
+                  type="text"
+                  placeholder="channel name or full URL"
+                  value={socialLinks.youtube}
+                  onChange={(e) => setSocialLinks(prev => ({ ...prev, youtube: e.target.value }))}
+                  className="mt-1"
+                />
+              </div>
+            </div>
+            <p className="text-sm text-gray-500 mt-2">
+              Enter your username or full URL. We'll automatically format the links correctly.
+            </p>
+          </section>
+
+          <section>
             <h2 className="text-xl font-semibold text-gray-800 mb-4">Change Password</h2>
             <div className="space-y-4 md:w-1/2">
               <div>

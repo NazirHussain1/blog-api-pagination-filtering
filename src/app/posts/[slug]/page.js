@@ -60,7 +60,9 @@ export default function SinglePost() {
   useEffect(() => {
     const fetchPost = async () => {
       try {
-        const res = await fetch(`/api/posts/${slug}`);
+        const res = await fetch(`/api/posts/${slug}`, {
+          credentials: 'include'
+        });
         if (!res.ok) throw new Error("Post not found");
         const data = await res.json();
         setPost(data);

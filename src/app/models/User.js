@@ -8,6 +8,14 @@ const userSchema = new mongoose.Schema(
     location: { type: String },
     about: { type: String },
     avatar: { type: String },     
+    socialLinks: {
+      twitter: { type: String },
+      linkedin: { type: String },
+      github: { type: String },
+      instagram: { type: String },
+      website: { type: String },
+      youtube: { type: String }
+    },
     followers: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
   following: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
     password: { type: String, required: true },
