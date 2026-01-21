@@ -24,8 +24,6 @@ import { FaWhatsapp } from "react-icons/fa";
 
 export default function Footer() {
   const user = useSelector((state) => state.auth.user);
-
-export default function Footer() {
   const [email, setEmail] = useState("");
   const [isSubscribing, setIsSubscribing] = useState(false);
 
