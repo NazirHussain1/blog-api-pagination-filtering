@@ -28,7 +28,8 @@ import {
   ArrowLeft,
   Facebook,
   Twitter,
-  Github
+  Github,
+  MessageCircle as WhatsApp
 } from "lucide-react";
 import Link from "next/link";
 
@@ -44,7 +45,15 @@ export default function SignupPage() {
     password: "",
     confirmPassword: "",
     agree: false,
-    role: "user"
+    role: "user",
+    socialLinks: {
+      twitter: "",
+      linkedin: "",
+      github: "",
+      instagram: "",
+      website: "",
+      whatsapp: ""
+    }
   });
 
   const [showPassword, setShowPassword] = useState(false);
@@ -72,7 +81,35 @@ export default function SignupPage() {
         });
         return;
       }
+    } else if (step === 2) {
+      if (!form.password || !form.confirmPassword) {
+        toast.error("Please fill in password fields", {
+          icon: <AlertCircle className="text-red-500" />
+        });
+        return;
+      }
+      if (form.password !== form.confirmPassword) {
+        toast.error("Passwords do not match", {
+          icon: <AlertCircle className="text-red-500" />
+        });
+        return;
+      }
+      if (form.password.length < 6) {
+        toast.error("Password must be at least 6 characters", {
+          icon: <AlertCircle className="text-red-500" />
+        });
+        return;
+      }
+    } else if (step === 3) {
+      if (!form.agree) {
+        toast.error("Please accept the terms and conditions", {
+          icon: <AlertCircle className="text-red-500" />
+        });
+        return;
+      }
     }
+    // Step 4 (social links) is optional, no validation needed
+
     setIsAnimating(true);
     setTimeout(() => {
       setStep(step + 1);
@@ -89,7 +126,7 @@ export default function SignupPage() {
   };
 
   const handleSignup = async () => {
-    const { name, email, phone, password, confirmPassword, agree } = form;
+    const { name, email, phone, password, confirmPassword, agree, socialLinks } = form;
 
     if (!name || !email || !phone || !password || !confirmPassword) {
       toast.error("All fields are required", {
@@ -139,7 +176,8 @@ export default function SignupPage() {
         email,
         phone,
         password,
-        role: form.role
+        role: form.role,
+        socialLinks
       })).unwrap();
 
       toast.success("Welcome to InsightHub!", {
@@ -531,6 +569,90 @@ You&apos;ll receive a confirmation email after signup.
 
                         </div>
                       </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* Step 4: Social Links (Optional) */}
+                {step === 4 && (
+                  <div className="space-y-5">
+                    <div className="text-center mb-6">
+                      <h3 className="text-lg font-semibold text-gray-900 mb-2">Add Your Social Links</h3>
+                      <p className="text-sm text-gray-600">Connect your social media accounts (optional)</p>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <Label className="flex items-center text-sm font-semibold text-gray-700 mb-2">
+                          <Twitter className="w-4 h-4 mr-2 text-blue-400" />
+                          Twitter
+                        </Label>
+                        <Input
+                          type="text"
+                          placeholder="@username or full URL"
+                          value={form.socialLinks.twitter}
+                          onChange={(e) => setForm({
+                            ...form,
+                            socialLinks: { ...form.socialLinks, twitter: e.target.value }
+                          })}
+                          className="w-full pl-4 pr-4 py-3 border-2 border-gray-200 focus:border-indigo-500 rounded-xl focus:ring-2 focus:ring-indigo-200 transition-all duration-300"
+                        />
+                      </div>
+                      <div>
+                        <Label className="flex items-center text-sm font-semibold text-gray-700 mb-2">
+                          <Github className="w-4 h-4 mr-2 text-gray-800" />
+                          GitHub
+                        </Label>
+                        <Input
+                          type="text"
+                          placeholder="username or full URL"
+                          value={form.socialLinks.github}
+                          onChange={(e) => setForm({
+                            ...form,
+                            socialLinks: { ...form.socialLinks, github: e.target.value }
+                          })}
+                          className="w-full pl-4 pr-4 py-3 border-2 border-gray-200 focus:border-indigo-500 rounded-xl focus:ring-2 focus:ring-indigo-200 transition-all duration-300"
+                        />
+                      </div>
+                      <div>
+                        <Label className="flex items-center text-sm font-semibold text-gray-700 mb-2">
+                          <Globe className="w-4 h-4 mr-2 text-green-500" />
+                          Website
+                        </Label>
+                        <Input
+                          type="url"
+                          placeholder="https://yourwebsite.com"
+                          value={form.socialLinks.website}
+                          onChange={(e) => setForm({
+                            ...form,
+                            socialLinks: { ...form.socialLinks, website: e.target.value }
+                          })}
+                          className="w-full pl-4 pr-4 py-3 border-2 border-gray-200 focus:border-indigo-500 rounded-xl focus:ring-2 focus:ring-indigo-200 transition-all duration-300"
+                        />
+                      </div>
+                      <div>
+                        <Label className="flex items-center text-sm font-semibold text-gray-700 mb-2">
+                          <WhatsApp className="w-4 h-4 mr-2 text-green-500" />
+                          WhatsApp
+                        </Label>
+                        <Input
+                          type="text"
+                          placeholder="phone number or full URL"
+                          value={form.socialLinks.whatsapp}
+                          onChange={(e) => setForm({
+                            ...form,
+                            socialLinks: { ...form.socialLinks, whatsapp: e.target.value }
+                          })}
+                          className="w-full pl-4 pr-4 py-3 border-2 border-gray-200 focus:border-indigo-500 rounded-xl focus:ring-2 focus:ring-indigo-200 transition-all duration-300"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="bg-gradient-to-r from-blue-50 to-indigo-50 p-4 rounded-xl">
+                      <p className="text-sm text-gray-700">
+                        <Sparkles className="w-4 h-4 inline mr-2 text-indigo-500" />
+                        <strong>Optional:</strong> Add your social links to help others connect with you. You can always add or update these later in your settings.
+                      </p>
                     </div>
                   </div>
                 )}

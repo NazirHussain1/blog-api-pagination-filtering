@@ -227,7 +227,7 @@ export default function AllPostsPage() {
               <span className="text-gray-700 font-medium">Active filters:</span>
               {searchQuery && (
                 <div className="inline-flex items-center bg-white px-3 py-1.5 rounded-full border border-gray-200">
-                  <span className="mr-2 text-gray-600">Search: "{searchQuery}"</span>
+                  <span className="mr-2 text-gray-600">Search: &quot;{searchQuery}&quot;</span>
                   <button onClick={() => setSearchQuery('')} className="text-gray-500 hover:text-red-500">
                     <X className="w-4 h-4" />
                   </button>

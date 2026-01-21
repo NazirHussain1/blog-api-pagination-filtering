@@ -33,6 +33,7 @@ import {
   X
 } from "lucide-react";
 import Link from "next/link";
+import Image from "next/image";
 
 const REACTIONS = {
   like: { icon: Heart, label: "Like", color: "text-red-500" },
@@ -357,11 +358,13 @@ export default function SinglePost() {
                 {/* Featured Image */}
                 {post.image && (
                   <div className="relative h-64 md:h-96 overflow-hidden">
-                    <img
+                    <Image
                       src={post.image}
                       alt={post.title}
+                      width={800}
+                      height={400}
                       className="w-full h-full object-cover"
-                      loading="eager"
+                      priority
                     />
                     <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent"></div>
                   </div>
@@ -467,9 +470,11 @@ export default function SinglePost() {
                     <div className="absolute inset-0 bg-gradient-to-r from-blue-500 to-cyan-400 rounded-full blur opacity-75"></div>
                     <div className="relative w-16 h-16 bg-gradient-to-r from-blue-600 to-cyan-500 rounded-full flex items-center justify-center text-white font-bold text-2xl">
                       {post.author?.avatar ? (
-                        <img 
-                          src={post.author.avatar} 
-                          alt={post.author.name} 
+                        <Image
+                          src={post.author.avatar}
+                          alt={post.author.name}
+                          width={64}
+                          height={64}
                           className="w-full h-full object-cover rounded-full"
                         />
                       ) : (

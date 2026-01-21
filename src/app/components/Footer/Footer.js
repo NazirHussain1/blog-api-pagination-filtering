@@ -4,6 +4,7 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { useState } from "react";
+import { useSelector } from "react-redux";
 import { 
   FaTwitter, 
   FaLinkedin, 
@@ -19,6 +20,10 @@ import {
 } from "react-icons/fa";
 import { FiSend, FiMail } from "react-icons/fi";
 import { HiOutlineSparkles } from "react-icons/hi";
+import { FaWhatsapp } from "react-icons/fa";
+
+export default function Footer() {
+  const user = useSelector((state) => state.auth.user);
 
 export default function Footer() {
   const [email, setEmail] = useState("");
@@ -53,6 +58,71 @@ export default function Footer() {
 
   const currentYear = new Date().getFullYear();
 
+  // Dynamic social links based on user profile
+  const getSocialLinks = () => {
+    if (!user?.socialLinks) return [];
+
+    const links = [];
+
+    if (user.socialLinks.twitter) {
+      links.push({
+        icon: FaTwitter,
+        href: user.socialLinks.twitter.startsWith('http') ? user.socialLinks.twitter : `https://twitter.com/${user.socialLinks.twitter}`,
+        color: "hover:text-blue-400",
+        bg: "hover:bg-blue-500/20"
+      });
+    }
+
+    if (user.socialLinks.linkedin) {
+      links.push({
+        icon: FaLinkedin,
+        href: user.socialLinks.linkedin.startsWith('http') ? user.socialLinks.linkedin : `https://linkedin.com/in/${user.socialLinks.linkedin}`,
+        color: "hover:text-blue-500",
+        bg: "hover:bg-blue-600/20"
+      });
+    }
+
+    if (user.socialLinks.github) {
+      links.push({
+        icon: FaGithub,
+        href: user.socialLinks.github.startsWith('http') ? user.socialLinks.github : `https://github.com/${user.socialLinks.github}`,
+        color: "hover:text-gray-300",
+        bg: "hover:bg-gray-500/20"
+      });
+    }
+
+    if (user.socialLinks.instagram) {
+      links.push({
+        icon: FaInstagram,
+        href: user.socialLinks.instagram.startsWith('http') ? user.socialLinks.instagram : `https://instagram.com/${user.socialLinks.instagram.replace('@', '')}`,
+        color: "hover:text-pink-400",
+        bg: "hover:bg-pink-500/20"
+      });
+    }
+
+    if (user.socialLinks.website) {
+      links.push({
+        icon: FaRss,
+        href: user.socialLinks.website.startsWith('http') ? user.socialLinks.website : `https://${user.socialLinks.website}`,
+        color: "hover:text-green-400",
+        bg: "hover:bg-green-500/20"
+      });
+    }
+
+    if (user.socialLinks.whatsapp) {
+      links.push({
+        icon: FaWhatsapp,
+        href: user.socialLinks.whatsapp.startsWith('http') ? user.socialLinks.whatsapp : `https://wa.me/${user.socialLinks.whatsapp.replace(/[^0-9]/g, '')}`,
+        color: "hover:text-green-500",
+        bg: "hover:bg-green-600/20"
+      });
+    }
+
+    return links;
+  };
+
+  const socialLinks = getSocialLinks();
+
   return (
     <footer className="relative overflow-hidden">
       {/* Background gradient */}
@@ -84,22 +154,35 @@ export default function Footer() {
               tutorials, and transformative perspectives that shape the future.
             </p>
             <div className="flex space-x-4">
-              {[
-                { icon: FaTwitter, color: "hover:text-blue-400", bg: "hover:bg-blue-500/20" },
-                { icon: FaLinkedin, color: "hover:text-blue-500", bg: "hover:bg-blue-600/20" },
-                { icon: FaInstagram, color: "hover:text-pink-400", bg: "hover:bg-pink-500/20" },
-                { icon: FaGithub, color: "hover:text-gray-300", bg: "hover:bg-gray-500/20" },
-                { icon: FaYoutube, color: "hover:text-red-400", bg: "hover:bg-red-500/20" }
-              ].map((social, idx) => (
+              {socialLinks.length > 0 ? socialLinks.map((social, idx) => (
                 <a
                   key={idx}
-                  href="#"
+                  href={social.href}
+                  target="_blank"
+                  rel="noopener noreferrer"
                   aria-label={social.icon.name}
                   className={`w-12 h-12 rounded-xl bg-white/5 backdrop-blur-sm flex items-center justify-center text-gray-300 ${social.color} ${social.bg} transition-all duration-300 transform hover:-translate-y-1 hover:shadow-lg`}
                 >
                   <social.icon className="text-xl" />
                 </a>
-              ))}
+              )) : (
+                // Default social links if user has no social links set
+                [
+                  { icon: FaTwitter, color: "hover:text-blue-400", bg: "hover:bg-blue-500/20" },
+                  { icon: FaLinkedin, color: "hover:text-blue-500", bg: "hover:bg-blue-600/20" },
+                  { icon: FaInstagram, color: "hover:text-pink-400", bg: "hover:bg-pink-500/20" },
+                  { icon: FaGithub, color: "hover:text-gray-300", bg: "hover:bg-gray-500/20" }
+                ].map((social, idx) => (
+                  <a
+                    key={idx}
+                    href="#"
+                    aria-label={social.icon.name}
+                    className={`w-12 h-12 rounded-xl bg-white/5 backdrop-blur-sm flex items-center justify-center text-gray-300 ${social.color} ${social.bg} transition-all duration-300 transform hover:-translate-y-1 hover:shadow-lg`}
+                  >
+                    <social.icon className="text-xl" />
+                  </a>
+                ))
+              )}
             </div>
           </div>
 

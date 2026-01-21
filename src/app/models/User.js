@@ -14,7 +14,7 @@ const userSchema = new mongoose.Schema(
       github: { type: String },
       instagram: { type: String },
       website: { type: String },
-      youtube: { type: String }
+      whatsapp: { type: String }
     },
     followers: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
   following: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],

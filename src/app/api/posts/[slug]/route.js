@@ -31,6 +31,8 @@ const getReactionCounts = async (postId) => {
 };
 
 export async function GET(req, { params }) {
+  await connectDB();
+
   try {
     const { slug } = await params;
 
@@ -79,6 +81,8 @@ export async function GET(req, { params }) {
 }
 
 export async function PUT(req, { params }) {
+  await connectDB();
+
   try {
     const { slug } = await params;
     const data = await req.json();

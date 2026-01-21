@@ -4,9 +4,9 @@ import Comment from "@/app/models/Comment";
 import { NextResponse } from "next/server";
 import jwt from "jsonwebtoken";
 
-await connectDB();
-
 export async function GET(req, { params }) {
+  await connectDB();
+
   try {
     const { slug } = await params;
 
@@ -33,6 +33,8 @@ export async function GET(req, { params }) {
 }
 
 export async function POST(req, { params }) {
+  await connectDB();
+
   try {
     const { slug } = await params;
     const data = await req.json(); 

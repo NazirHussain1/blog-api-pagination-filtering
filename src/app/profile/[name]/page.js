@@ -36,7 +36,8 @@ import {
   Clock,
   Tag,
   ChevronRight,
-  CheckCircle2
+  CheckCircle2,
+  MessageCircle as WhatsApp
 } from "lucide-react";
 
 export default function ProfilePage() {
@@ -280,6 +281,82 @@ export default function ProfilePage() {
                 {user.about && (
                   <div className="mt-6 p-4 bg-white/10 backdrop-blur-sm rounded-xl max-w-3xl">
                     <p className="text-blue-100 leading-relaxed">{user.about}</p>
+                  </div>
+                )}
+
+                {/* Social Links */}
+                {(user.socialLinks?.twitter || user.socialLinks?.linkedin || user.socialLinks?.github || 
+                  user.socialLinks?.instagram || user.socialLinks?.website || user.socialLinks?.youtube) && (
+                  <div className="mt-6">
+                    <h3 className="text-lg font-semibold text-white mb-3">Connect with me</h3>
+                    <div className="flex flex-wrap gap-3">
+                      {user.socialLinks?.twitter && (
+                        <a
+                          href={user.socialLinks.twitter.startsWith('http') ? user.socialLinks.twitter : `https://twitter.com/${user.socialLinks.twitter.replace('@', '')}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center px-4 py-2 bg-blue-500/20 hover:bg-blue-500/30 text-blue-200 hover:text-blue-100 rounded-full transition-all duration-300 backdrop-blur-sm"
+                        >
+                          <Twitter className="w-4 h-4 mr-2" />
+                          Twitter
+                        </a>
+                      )}
+                      {user.socialLinks?.linkedin && (
+                        <a
+                          href={user.socialLinks.linkedin.startsWith('http') ? user.socialLinks.linkedin : `https://linkedin.com/in/${user.socialLinks.linkedin}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center px-4 py-2 bg-blue-600/20 hover:bg-blue-600/30 text-blue-200 hover:text-blue-100 rounded-full transition-all duration-300 backdrop-blur-sm"
+                        >
+                          <Linkedin className="w-4 h-4 mr-2" />
+                          LinkedIn
+                        </a>
+                      )}
+                      {user.socialLinks?.github && (
+                        <a
+                          href={user.socialLinks.github.startsWith('http') ? user.socialLinks.github : `https://github.com/${user.socialLinks.github}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center px-4 py-2 bg-gray-800/20 hover:bg-gray-800/30 text-gray-200 hover:text-gray-100 rounded-full transition-all duration-300 backdrop-blur-sm"
+                        >
+                          <Github className="w-4 h-4 mr-2" />
+                          GitHub
+                        </a>
+                      )}
+                      {user.socialLinks?.instagram && (
+                        <a
+                          href={user.socialLinks.instagram.startsWith('http') ? user.socialLinks.instagram : `https://instagram.com/${user.socialLinks.instagram.replace('@', '')}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center px-4 py-2 bg-pink-500/20 hover:bg-pink-500/30 text-pink-200 hover:text-pink-100 rounded-full transition-all duration-300 backdrop-blur-sm"
+                        >
+                          <Instagram className="w-4 h-4 mr-2" />
+                          Instagram
+                        </a>
+                      )}
+                      {user.socialLinks?.website && (
+                        <a
+                          href={user.socialLinks.website.startsWith('http') ? user.socialLinks.website : `https://${user.socialLinks.website}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center px-4 py-2 bg-green-500/20 hover:bg-green-500/30 text-green-200 hover:text-green-100 rounded-full transition-all duration-300 backdrop-blur-sm"
+                        >
+                          <Globe className="w-4 h-4 mr-2" />
+                          Website
+                        </a>
+                      )}
+                      {user.socialLinks?.whatsapp && (
+                        <a
+                          href={user.socialLinks.whatsapp.startsWith('http') ? user.socialLinks.whatsapp : `https://wa.me/${user.socialLinks.whatsapp.replace(/[^0-9]/g, '')}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center px-4 py-2 bg-green-500/20 hover:bg-green-500/30 text-green-200 hover:text-green-100 rounded-full transition-all duration-300 backdrop-blur-sm"
+                        >
+                          <WhatsApp className="w-4 h-4 mr-2" />
+                          WhatsApp
+                        </a>
+                      )}
+                    </div>
                   </div>
                 )}
               </div>

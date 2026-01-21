@@ -3,10 +3,10 @@ import Post from "@/app/models/Post";
 import Comment from "@/app/models/Comment"; // ✅ NEW
 import jwt from "jsonwebtoken";
 
-await connectDB();
-
 // ----------------- GET POSTS -----------------
 export async function GET(req) {
+  await connectDB();
+
   try {
     const { searchParams } = new URL(req.url);
 
@@ -49,6 +49,8 @@ export async function GET(req) {
 
 // ----------------- CREATE POST -----------------
 export async function POST(req) {
+  await connectDB();
+
   try {
     const bodyData = await req.json();
     const { title, body, tags, image } = bodyData;

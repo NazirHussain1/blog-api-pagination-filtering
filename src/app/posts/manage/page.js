@@ -30,6 +30,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
+import Image from "next/image";
 
 export default function ManagePosts() {
   const dispatch = useDispatch();
@@ -79,7 +80,7 @@ export default function ManagePosts() {
         <AlertCircle className="w-5 h-5 text-red-500 mr-3" />
         <div>
           <div className="font-semibold">Delete Post</div>
-          <div className="text-sm text-gray-600">Are you sure you want to delete "{title}"?</div>
+          <div className="text-sm text-gray-600">Are you sure you want to delete &quot;{title}&quot;?</div>
         </div>
       </div>,
       {
@@ -521,7 +522,7 @@ export default function ManagePosts() {
                 >
                   {preview ? (
                     <div className="relative">
-                      <img src={preview} alt="Preview" className="w-full h-48 object-cover rounded-xl mb-4" />
+                      <Image src={preview} alt="Preview" width={400} height={192} className="w-full h-48 object-cover rounded-xl mb-4" />
                       <button
                         onClick={() => {
                           setNewImage(null);

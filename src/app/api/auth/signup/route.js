@@ -7,7 +7,7 @@ export async function POST(req) {
   await connectDB();
 
   try {
-    const { name, email, phone, password, role } = await req.json();
+    const { name, email, phone, password, role, socialLinks } = await req.json();
 
     if (!name || !email || !phone || !password || !role) {
       return NextResponse.json(
@@ -46,6 +46,7 @@ export async function POST(req) {
       phone,
       password: hashed,
       role,
+      socialLinks: socialLinks || {},
     });
 
     return NextResponse.json({

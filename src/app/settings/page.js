@@ -7,7 +7,8 @@ import { toast, Toaster } from "sonner";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
-import { User, Mail, LockKeyhole, Camera, Trash2, ShieldCheck, Globe, Twitter, Linkedin, Github, Instagram, Youtube } from "lucide-react";
+import { User, Mail, LockKeyhole, Camera, Trash2, ShieldCheck, Globe, Twitter, Linkedin, Github, Instagram, MessageCircle as WhatsApp, MapPin } from "lucide-react";
+import Image from "next/image";
 
 export default function SettingsPage() {
   const dispatch = useDispatch();
@@ -15,6 +16,7 @@ export default function SettingsPage() {
 
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
+  const [location, setLocation] = useState("");
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -25,7 +27,7 @@ export default function SettingsPage() {
     github: "",
     instagram: "",
     website: "",
-    youtube: ""
+    whatsapp: ""
   });
   const [loading, setLoading] = useState(false);
 
@@ -34,13 +36,14 @@ export default function SettingsPage() {
     if (user) {
       setName(user.name);
       setEmail(user.email);
+      setLocation(user.location || "");
       setSocialLinks({
         twitter: user.socialLinks?.twitter || "",
         linkedin: user.socialLinks?.linkedin || "",
         github: user.socialLinks?.github || "",
         instagram: user.socialLinks?.instagram || "",
         website: user.socialLinks?.website || "",
-        youtube: user.socialLinks?.youtube || ""
+        whatsapp: user.socialLinks?.whatsapp || ""
       });
     }
   }, [dispatch, user]);
@@ -67,6 +70,7 @@ export default function SettingsPage() {
       const formData = new FormData();
       formData.append("name", name);
       formData.append("email", email);
+      formData.append("location", location);
       formData.append("socialLinks", JSON.stringify(socialLinks));
       if (currentPassword) formData.append("currentPassword", currentPassword);
       if (newPassword) formData.append("newPassword", newPassword);
@@ -107,15 +111,19 @@ export default function SettingsPage() {
               <div className="flex flex-col items-center gap-2">
                 <div className="w-32 h-32 rounded-full bg-gray-100 relative overflow-hidden flex items-center justify-center">
                   {avatar ? (
-                    <img
+                    <Image
                       src={URL.createObjectURL(avatar)}
                       alt="Avatar"
+                      width={128}
+                      height={128}
                       className="w-full h-full object-cover"
                     />
                   ) : user?.avatar ? (
-                    <img
+                    <Image
                       src={user.avatar}
                       alt="Avatar"
+                      width={128}
+                      height={128}
                       className="w-full h-full object-cover"
                     />
                   ) : (
@@ -162,6 +170,18 @@ export default function SettingsPage() {
                     placeholder="you@example.com"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
+                    className="mt-1"
+                  />
+                </div>
+                <div>
+                  <Label className="text-sm font-medium text-gray-700 flex items-center gap-2">
+                    <MapPin className="w-4 h-4" /> Location
+                  </Label>
+                  <Input
+                    type="text"
+                    placeholder="City, Country"
+                    value={location}
+                    onChange={(e) => setLocation(e.target.value)}
                     className="mt-1"
                   />
                 </div>
@@ -235,19 +255,19 @@ export default function SettingsPage() {
               </div>
               <div>
                 <Label className="text-sm font-medium text-gray-700 flex items-center gap-2">
-                  <Youtube className="w-4 h-4 text-red-500" /> YouTube
+                  <WhatsApp className="w-4 h-4 text-green-500" /> WhatsApp
                 </Label>
                 <Input
                   type="text"
-                  placeholder="channel name or full URL"
-                  value={socialLinks.youtube}
-                  onChange={(e) => setSocialLinks(prev => ({ ...prev, youtube: e.target.value }))}
+                  placeholder="phone number or full URL"
+                  value={socialLinks.whatsapp}
+                  onChange={(e) => setSocialLinks(prev => ({ ...prev, whatsapp: e.target.value }))}
                   className="mt-1"
                 />
               </div>
             </div>
             <p className="text-sm text-gray-500 mt-2">
-              Enter your username or full URL. We'll automatically format the links correctly.
+              Enter your username or full URL. We&apos;ll automatically format the links correctly.
             </p>
           </section>
 

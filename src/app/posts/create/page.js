@@ -20,6 +20,7 @@ import {
   CheckCircle2,
   AlertCircle
 } from "lucide-react";
+import Image from "next/image";
 
 export default function CreatePost() {
   const dispatch = useDispatch();
@@ -288,9 +289,11 @@ export default function CreatePost() {
                 >
                   {preview ? (
                     <div className="relative group">
-                      <img
+                      <Image
                         src={preview}
                         alt="Preview"
+                        width={400}
+                        height={256}
                         className="w-full h-64 object-cover rounded-xl"
                       />
                       <button

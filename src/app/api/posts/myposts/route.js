@@ -5,8 +5,6 @@ import Like from "@/app/models/Like";
 import { NextResponse } from "next/server";
 import jwt from "jsonwebtoken";
 
-await connectDB();
-
 // Helper function to get reaction counts
 const getReactionCounts = async (postId) => {
   const reactions = await Like.aggregate([
@@ -31,6 +29,8 @@ const getReactionCounts = async (postId) => {
 };
 
 export async function GET(req) {
+  await connectDB();
+
   try {
     const token = req.cookies.get("token")?.value;
     if (!token) {

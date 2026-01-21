@@ -4,9 +4,9 @@ import { NextResponse } from "next/server";
 import jwt from "jsonwebtoken";
 import bcrypt from "bcryptjs";
 
-await connectDB();
-
 export async function GET(req) {
+  await connectDB();
+
   try {
     const token = req.cookies.get("token")?.value;
 
@@ -38,6 +38,8 @@ export async function GET(req) {
 
 // Update profile
 export async function PUT(req) {
+  await connectDB();
+
   try {
     const token = req.cookies.get("token")?.value;
 
@@ -57,6 +59,7 @@ export async function PUT(req) {
       body = {
         name: formData.get("name"),
         email: formData.get("email"),
+        location: formData.get("location"),
         currentPassword: formData.get("currentPassword"),
         newPassword: formData.get("newPassword"),
         avatar: formData.get("avatar"),

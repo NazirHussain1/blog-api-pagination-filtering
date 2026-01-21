@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import axios from "axios";
 import { UserCircle, Heart } from "lucide-react";
 
@@ -11,7 +11,7 @@ export default function Comments({ slug, user }) {
   const [replyOpen, setReplyOpen] = useState({});
 
   // Fetch all comments for this post
-  const fetchComments = async () => {
+  const fetchComments = useCallback(async () => {
     if (!slug) return; // prevent fetch if slug not ready
     try {
       const res = await fetch(`/api/posts/${slug}/comments`, { 
@@ -24,10 +24,24 @@ export default function Comments({ slug, user }) {
     } catch (err) {
       console.error("Fetch Comments Error:", err);
     }
-  };
+  }, [slug]);
 
   useEffect(() => {
-    fetchComments();
+    if (!slug) return; // prevent fetch if slug not ready
+    const fetchData = async () => {
+      try {
+        const res = await fetch(`/api/posts/${slug}/comments`, { 
+          credentials: "include" 
+        });
+        if (res.ok) {
+          const data = await res.json();
+          setComments(data);
+        }
+      } catch (err) {
+        console.error("Fetch Comments Error:", err);
+      }
+    };
+    fetchData();
   }, [slug]);
 
     const handleComment = async (parentComment = null) => {
