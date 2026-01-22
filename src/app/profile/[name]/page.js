@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
@@ -37,7 +37,43 @@ import {
   Tag,
   ChevronRight,
   CheckCircle2,
-  MessageCircle as WhatsApp
+  PenTool,
+  Zap,
+  Target,
+  DollarSign,
+  ThumbsUp,
+  MessageSquare,
+  Share,
+  Link as LinkIcon,
+  Copy,
+  Flag,
+  Bell,
+  Settings,
+  Edit3,
+  Shield,
+  BookMarked,
+  ExternalLink,
+  BarChart,
+  PieChart,
+  TrendingUp as TrendingUpIcon,
+  UsersRound,
+  Eye as EyeIcon,
+  Clock as ClockIcon,
+  Medal,
+  Crown,
+  Star,
+  FileText,
+  Video,
+  Mic,
+  Image as ImageIcon,
+  Code,
+  Palette,
+  Terminal,
+  Server,
+  Database,
+  Smartphone,
+  Cloud,
+  Lock
 } from "lucide-react";
 
 export default function ProfilePage() {
@@ -45,6 +81,7 @@ export default function ProfilePage() {
   const router = useRouter();
   const dispatch = useDispatch();
   const loggedInUser = useSelector((state) => state.auth.user);
+  const shareRef = useRef(null);
 
   const [user, setUser] = useState(null);
   const [posts, setPosts] = useState([]);
@@ -53,66 +90,68 @@ export default function ProfilePage() {
   const [activeTab, setActiveTab] = useState("posts");
   const [showMoreOptions, setShowMoreOptions] = useState(false);
   const [isFollowing, setIsFollowing] = useState(false);
+  const [showShareMenu, setShowShareMenu] = useState(false);
+  const [stats, setStats] = useState({
+    posts: 0,
+    views: 0,
+    likes: 0,
+    comments: 0,
+    followers: 0,
+    following: 0,
+    readTime: "5 min",
+    engagement: 72,
+    earnings: 1245
+  });
 
   useEffect(() => {
-    if (!name) {
-      console.log("No name parameter");
-      return;
-    }
-
-    console.log("Fetching profile for:", name);
-
-    const controller = new AbortController();
-    const signal = controller.signal;
+    if (!name) return;
 
     const fetchProfile = async () => {
       setLoading(true);
       try {
-        console.log("Fetching user data...");
-        const userRes = await fetch(`/api/users/profile/${name}`, { signal });
-        console.log("User response status:", userRes.status);
+        const [userRes, postsRes] = await Promise.all([
+          fetch(`/api/users/profile/${name}`),
+          fetch(`/api/posts/user/${name}`)
+        ]);
 
-        if (!userRes.ok) {
-          const errorText = await userRes.text();
-          console.log("User error:", errorText);
-          throw new Error("User not found");
-        }
+        if (!userRes.ok || !postsRes.ok) throw new Error("Failed to fetch");
 
         const userData = await userRes.json();
-        console.log("User data:", userData);
-
-        console.log("Fetching posts...");
-        const postsRes = await fetch(`/api/posts/user/${name}`, { signal });
-        console.log("Posts response status:", postsRes.status);
-
-        if (!postsRes.ok) {
-          const errorText = await postsRes.text();
-          console.log("Posts error:", errorText);
-          throw new Error("Posts not found");
-        }
-
         const postsData = await postsRes.json();
-        console.log("Posts data:", postsData);
 
         setUser(userData);
         setPosts(postsData);
         setFollowersCount(userData.followers?.length || 0);
         setIsFollowing(loggedInUser?.following?.includes(userData._id) || false);
 
+        // Calculate stats
+        const totalViews = postsData.reduce((sum, post) => sum + (post.views || 0), 0);
+        const totalLikes = postsData.reduce((sum, post) => sum + (post.likes || 0), 0);
+        const totalComments = postsData.reduce((sum, post) => sum + (post.comments || 0), 0);
+        const engagementRate = postsData.length > 0 
+          ? Math.min(100, (totalLikes / postsData.length) * 10)
+          : 0;
+
+        setStats({
+          posts: postsData.length,
+          views: totalViews,
+          likes: totalLikes,
+          comments: totalComments,
+          followers: userData.followers?.length || 0,
+          following: userData.following?.length || 0,
+          readTime: "6 min",
+          engagement: Math.round(engagementRate),
+          earnings: Math.round(totalViews * 0.5 + totalLikes * 0.1)
+        });
+
       } catch (error) {
-        if (error.name !== "AbortError") {
-          console.error("Fetch error:", error);
-          toast.error(error.message, {
-            icon: <CheckCircle2 className="text-red-500" />
-          });
-        }
+        toast.error("Failed to load profile");
       } finally {
         setLoading(false);
       }
     };
 
     fetchProfile();
-    return () => controller.abort();
   }, [name, loggedInUser]);
 
   const handleFollow = async () => {
@@ -123,43 +162,66 @@ export default function ProfilePage() {
 
     try {
       await dispatch(toggleFollowUser({ targetUserId: user._id })).unwrap();
-      
       setIsFollowing(!isFollowing);
       setFollowersCount(prev => isFollowing ? prev - 1 : prev + 1);
-      
-      toast.success(isFollowing ? "Unfollowed successfully" : "Following now!", {
-        icon: <UserCheck className="text-green-500" />
-      });
-      
+      toast.success(isFollowing ? "Unfollowed" : "Following!");
     } catch (error) {
-      toast.error(error.message || "Failed to follow user");
+      toast.error("Failed to follow user");
     }
   };
 
-  const userStats = {
-    totalViews: posts.reduce((sum, post) => sum + (post.views || 0), 0),
-    totalLikes: posts.reduce((sum, post) => sum + (post.likes || 0), 0),
-    totalComments: posts.reduce((sum, post) => sum + (post.comments || 0), 0),
-    engagementRate: posts.length > 0 ? ((posts.reduce((sum, post) => sum + (post.likes || 0), 0) / posts.length) * 100).toFixed(1) : 0,
-    avgReadTime: "5 min"
+  const handleShare = async (platform) => {
+    const url = window.location.href;
+    const title = `Check out ${user?.name}'s profile`;
+
+    const shareUrls = {
+      twitter: `https://twitter.com/intent/tweet?text=${encodeURIComponent(title)}&url=${encodeURIComponent(url)}`,
+      linkedin: `https://www.linkedin.com/shareArticle?mini=true&url=${encodeURIComponent(url)}&title=${encodeURIComponent(title)}`,
+      facebook: `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}`,
+      copy: url
+    };
+
+    if (platform === 'copy') {
+      navigator.clipboard.writeText(url);
+      toast.success("Link copied to clipboard");
+      return;
+    }
+
+    window.open(shareUrls[platform], '_blank');
+  };
+
+  const getTopTags = () => {
+    const tagMap = {};
+    posts.forEach(post => {
+      post.tags?.forEach(tag => {
+        tagMap[tag] = (tagMap[tag] || 0) + 1;
+      });
+    });
+    return Object.entries(tagMap)
+      .sort(([,a], [,b]) => b - a)
+      .slice(0, 5)
+      .map(([tag]) => tag);
+  };
+
+  const getPopularPosts = () => {
+    return [...posts]
+      .sort((a, b) => (b.views || 0) - (a.views || 0))
+      .slice(0, 3);
   };
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-b from-gray-50 to-white">
-        <div className="container mx-auto px-6 py-12">
-          <div className="flex items-center justify-center min-h-[60vh]">
+      <div className="min-h-screen bg-gray-50">
+        <div className="container mx-auto px-4 py-12">
+          <div className="flex items-center justify-center min-h-[70vh]">
             <div className="text-center">
-              <div className="inline-flex items-center justify-center w-20 h-20 mb-6">
-                <div className="relative">
-                  <div className="absolute inset-0 bg-gradient-to-r from-indigo-500 to-purple-500 rounded-full blur opacity-75 animate-pulse"></div>
-                  <div className="relative bg-gradient-to-r from-indigo-600 to-purple-600 p-4 rounded-full">
-                    <UserCheck className="w-8 h-8 text-white" />
-                  </div>
-                </div>
+              <div className="relative inline-block mb-8">
+                <div className="w-24 h-24 bg-gradient-to-br from-gray-200 to-gray-300 rounded-full animate-pulse"></div>
+                <div className="absolute -bottom-2 -right-2 w-10 h-10 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full border-4 border-white"></div>
               </div>
-              <h3 className="text-2xl font-bold text-gray-900 mb-4">Loading Profile</h3>
-              <Loader2 className="w-8 h-8 text-indigo-600 animate-spin mx-auto" />
+              <div className="h-8 bg-gray-200 rounded-lg w-48 mb-4 mx-auto animate-pulse"></div>
+              <div className="h-4 bg-gray-200 rounded w-32 mb-2 mx-auto animate-pulse"></div>
+              <div className="h-4 bg-gray-200 rounded w-24 mx-auto animate-pulse"></div>
             </div>
           </div>
         </div>
@@ -169,591 +231,602 @@ export default function ProfilePage() {
 
   if (!user) {
     return (
-      <div className="min-h-screen bg-gradient-to-b from-gray-50 to-white">
-        <div className="container mx-auto px-6 py-12">
-          <div className="max-w-md mx-auto text-center">
-            <div className="inline-flex items-center justify-center w-20 h-20 bg-gradient-to-r from-red-100 to-pink-100 rounded-2xl mb-6">
-              <UserCheck className="w-10 h-10 text-red-500" />
-            </div>
-            <h1 className="text-3xl font-bold text-gray-900 mb-4">User Not Found</h1>
-            <p className="text-gray-600 mb-8">
-              The user profile you are looking for does not exist or has been removed.
-            </p>
-            <Button 
-              onClick={() => router.push("/")}
-              className="inline-flex items-center bg-gradient-to-r from-indigo-600 to-purple-600 text-white hover:shadow-lg"
-            >
-              <ArrowLeft className="w-4 h-4 mr-2" />
-              Back to Home
-            </Button>
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center max-w-md px-4">
+          <div className="w-20 h-20 bg-gradient-to-br from-red-100 to-pink-100 rounded-2xl flex items-center justify-center mx-auto mb-6">
+            <UserCheck className="w-10 h-10 text-red-500" />
           </div>
+          <h1 className="text-2xl font-bold text-gray-900 mb-3">Profile Not Found</h1>
+          <p className="text-gray-600 mb-8">
+            The profile you're looking for doesn't exist or has been removed.
+          </p>
+          <button
+            onClick={() => router.push("/")}
+            className="px-6 py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg font-medium hover:shadow-lg transition-all"
+          >
+            Back to Home
+          </button>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-gray-50 to-white">
-      {/* Background Elements */}
-      <div className="fixed inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute -top-40 -right-40 w-80 h-80 bg-purple-200 rounded-full mix-blend-multiply filter blur-3xl opacity-20"></div>
-        <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-blue-200 rounded-full mix-blend-multiply filter blur-3xl opacity-20"></div>
-      </div>
-
-      <div className="container mx-auto px-4 py-8 md:py-12 relative z-10">
-        {/* Back Button */}
-        <div className="mb-6">
+    <div className="min-h-screen bg-gray-50">
+      {/* Header Background */}
+      <div className="h-64 bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 relative overflow-hidden">
+        <div className="absolute inset-0 bg-black/10"></div>
+        <div className="absolute top-0 right-0 w-64 h-64 bg-white/5 rounded-full -translate-y-32 translate-x-32"></div>
+        <div className="absolute bottom-0 left-0 w-96 h-96 bg-white/5 rounded-full translate-y-48 -translate-x-48"></div>
+        
+        <div className="container mx-auto px-4 h-full flex items-end pb-8 relative">
           <button
             onClick={() => router.back()}
-            className="inline-flex items-center text-gray-600 hover:text-gray-900 transition-colors duration-300"
+            className="absolute top-6 left-4 md:left-6 flex items-center text-white/90 hover:text-white transition-colors"
           >
             <ArrowLeft className="w-5 h-5 mr-2" />
-            Back
+            <span className="font-medium">Back</span>
           </button>
-        </div>
-
-        {/* Profile Header */}
-        <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-indigo-900 via-purple-800 to-pink-700 text-white mb-8">
-          <div className="absolute inset-0 bg-black opacity-20"></div>
-          <div className="absolute -top-20 -right-20 w-40 h-40 bg-white/10 rounded-full"></div>
-          <div className="absolute -bottom-20 -left-20 w-40 h-40 bg-white/10 rounded-full"></div>
           
-          <div className="relative p-8 md:p-12">
-            <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-8">
-              <div className="flex-1">
-                <div className="flex items-start md:items-center gap-6">
-                  {/* Avatar */}
-                  <div className="relative">
-                    <div className="absolute -inset-1 bg-gradient-to-r from-amber-500 to-orange-500 rounded-full blur opacity-75"></div>
-                    <div className="relative w-24 h-24 md:w-32 md:h-32 rounded-full border-4 border-white overflow-hidden shadow-2xl">
-                      <Image
-                        src={user.avatar || "/avatar.png"}
-                        fill
-                        alt={user.name}
-                        className="object-cover"
-                      />
-                    </div>
-                  </div>
-
-                  {/* User Info */}
-                  <div className="flex-1">
-                    <div className="flex items-center gap-3 mb-3">
-                      <h1 className="text-3xl md:text-4xl font-black">{user.name}</h1>
-                      {user.role === "admin" && (
-                        <div className="inline-flex items-center bg-gradient-to-r from-red-500 to-pink-500 text-white px-3 py-1 rounded-full text-sm font-bold">
-                          <Award className="w-3 h-3 mr-1" />
-                          ADMIN
-                        </div>
-                      )}
-                      <div className="inline-flex items-center bg-gradient-to-r from-amber-500 to-orange-500 text-white px-3 py-1 rounded-full text-sm font-bold">
-                        <CheckCircle2 className="w-3 h-3 mr-1" />
-                        VERIFIED
-                      </div>
-                    </div>
-                    
-                    <p className="text-blue-200 mb-4">@{user.username || user.name.toLowerCase().replace(/\s+/g, '_')}</p>
-                    
-                    <div className="flex flex-wrap items-center gap-4 text-sm mb-6">
-                      <div className="flex items-center">
-                        <Calendar className="w-4 h-4 mr-2 text-blue-300" />
-                        <span>Joined {new Date(user.createdAt || Date.now()).toLocaleDateString('en-US', { 
-                          year: 'numeric', 
-                          month: 'long' 
-                        })}</span>
-                      </div>
-                      
-                      {user.location && (
-                        <div className="flex items-center">
-                          <MapPin className="w-4 h-4 mr-2 text-blue-300" />
-                          <span>{user.location}</span>
-                        </div>
-                      )}
-                      
-                      <div className="flex items-center">
-                        <Globe className="w-4 h-4 mr-2 text-blue-300" />
-                        <span>English, espanol</span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Bio */}
-                {user.about && (
-                  <div className="mt-6 p-4 bg-white/10 backdrop-blur-sm rounded-xl max-w-3xl">
-                    <p className="text-blue-100 leading-relaxed">{user.about}</p>
-                  </div>
-                )}
-
-                {/* Social Links */}
-                {(user.socialLinks?.twitter || user.socialLinks?.linkedin || user.socialLinks?.github || 
-                  user.socialLinks?.instagram || user.socialLinks?.website || user.socialLinks?.youtube) && (
-                  <div className="mt-6">
-                    <h3 className="text-lg font-semibold text-white mb-3">Connect with me</h3>
-                    <div className="flex flex-wrap gap-3">
-                      {user.socialLinks?.twitter && (
-                        <a
-                          href={user.socialLinks.twitter.startsWith('http') ? user.socialLinks.twitter : `https://twitter.com/${user.socialLinks.twitter.replace('@', '')}`}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="inline-flex items-center px-4 py-2 bg-blue-500/20 hover:bg-blue-500/30 text-blue-200 hover:text-blue-100 rounded-full transition-all duration-300 backdrop-blur-sm"
-                        >
-                          <Twitter className="w-4 h-4 mr-2" />
-                          Twitter
-                        </a>
-                      )}
-                      {user.socialLinks?.linkedin && (
-                        <a
-                          href={user.socialLinks.linkedin.startsWith('http') ? user.socialLinks.linkedin : `https://linkedin.com/in/${user.socialLinks.linkedin}`}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="inline-flex items-center px-4 py-2 bg-blue-600/20 hover:bg-blue-600/30 text-blue-200 hover:text-blue-100 rounded-full transition-all duration-300 backdrop-blur-sm"
-                        >
-                          <Linkedin className="w-4 h-4 mr-2" />
-                          LinkedIn
-                        </a>
-                      )}
-                      {user.socialLinks?.github && (
-                        <a
-                          href={user.socialLinks.github.startsWith('http') ? user.socialLinks.github : `https://github.com/${user.socialLinks.github}`}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="inline-flex items-center px-4 py-2 bg-gray-800/20 hover:bg-gray-800/30 text-gray-200 hover:text-gray-100 rounded-full transition-all duration-300 backdrop-blur-sm"
-                        >
-                          <Github className="w-4 h-4 mr-2" />
-                          GitHub
-                        </a>
-                      )}
-                      {user.socialLinks?.instagram && (
-                        <a
-                          href={user.socialLinks.instagram.startsWith('http') ? user.socialLinks.instagram : `https://instagram.com/${user.socialLinks.instagram.replace('@', '')}`}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="inline-flex items-center px-4 py-2 bg-pink-500/20 hover:bg-pink-500/30 text-pink-200 hover:text-pink-100 rounded-full transition-all duration-300 backdrop-blur-sm"
-                        >
-                          <Instagram className="w-4 h-4 mr-2" />
-                          Instagram
-                        </a>
-                      )}
-                      {user.socialLinks?.website && (
-                        <a
-                          href={user.socialLinks.website.startsWith('http') ? user.socialLinks.website : `https://${user.socialLinks.website}`}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="inline-flex items-center px-4 py-2 bg-green-500/20 hover:bg-green-500/30 text-green-200 hover:text-green-100 rounded-full transition-all duration-300 backdrop-blur-sm"
-                        >
-                          <Globe className="w-4 h-4 mr-2" />
-                          Website
-                        </a>
-                      )}
-                      {user.socialLinks?.whatsapp && (
-                        <a
-                          href={user.socialLinks.whatsapp.startsWith('http') ? user.socialLinks.whatsapp : `https://wa.me/${user.socialLinks.whatsapp.replace(/[^0-9]/g, '')}`}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="inline-flex items-center px-4 py-2 bg-green-500/20 hover:bg-green-500/30 text-green-200 hover:text-green-100 rounded-full transition-all duration-300 backdrop-blur-sm"
-                        >
-                          <WhatsApp className="w-4 h-4 mr-2" />
-                          WhatsApp
-                        </a>
-                      )}
-                    </div>
-                  </div>
-                )}
+          <div className="flex items-end w-full">
+            <div className="relative -mb-8 mr-6">
+              <div className="w-32 h-32 rounded-2xl border-4 border-white bg-white shadow-xl overflow-hidden">
+                <Image
+                  src={user.avatar || "/avatar.png"}
+                  alt={user.name}
+                  fill
+                  className="object-cover"
+                />
               </div>
-
-              {/* Actions */}
-              <div className="flex flex-col sm:flex-row md:flex-col gap-3">
-                {user._id === loggedInUser?._id ? (
-                  <>
-                    <button className="px-6 py-3 bg-white/20 backdrop-blur-sm text-white font-semibold rounded-xl hover:bg-white/30 transition-all duration-300">
-                      Edit Profile
-                    </button>
-                    <button className="px-6 py-3 bg-white/10 backdrop-blur-sm text-white font-semibold rounded-xl hover:bg-white/20 transition-all duration-300">
-                      Dashboard
-                    </button>
-                  </>
-                ) : (
-                  <>
-                    <button
-                      onClick={handleFollow}
-                      className={`px-6 py-3 font-semibold rounded-xl transition-all duration-300 flex items-center justify-center ${
-                        isFollowing
-                          ? 'bg-gradient-to-r from-gray-600 to-gray-500 text-white hover:from-gray-700 hover:to-gray-600'
-                          : 'bg-gradient-to-r from-blue-500 to-cyan-500 text-white hover:from-blue-600 hover:to-cyan-600 hover:shadow-lg'
-                      }`}
-                    >
-                      {isFollowing ? (
-                        <>
-                          <UserCheck className="w-5 h-5 mr-2" />
-                          Following
-                        </>
-                      ) : (
-                        <>
-                          <UserPlus className="w-5 h-5 mr-2" />
-                          Follow
-                        </>
-                      )}
-                    </button>
-                    <button className="px-6 py-3 bg-white/10 backdrop-blur-sm text-white font-semibold rounded-xl hover:bg-white/20 transition-all duration-300">
-                      <Mail className="w-5 h-5" />
-                    </button>
-                  </>
-                )}
-                
-                <div className="relative">
-                  <button
-                    onClick={() => setShowMoreOptions(!showMoreOptions)}
-                    className="px-6 py-3 bg-white/10 backdrop-blur-sm text-white font-semibold rounded-xl hover:bg-white/20 transition-all duration-300 w-full"
-                  >
-                    <MoreVertical className="w-5 h-5" />
-                  </button>
-                  
-                  {showMoreOptions && (
-                    <div className="absolute right-0 mt-2 w-48 bg-white rounded-xl shadow-2xl border border-gray-100 p-2 z-50 animate-slide-down">
-                      <button className="flex items-center w-full p-3 rounded-lg hover:bg-gray-50 transition-colors duration-200">
-                        <Bookmark className="w-4 h-4 text-gray-600 mr-3" />
-                        <span className="text-gray-700 font-medium">Bookmark</span>
-                      </button>
-                      <button className="flex items-center w-full p-3 rounded-lg hover:bg-gray-50 transition-colors duration-200">
-                        <Share2 className="w-4 h-4 text-gray-600 mr-3" />
-                        <span className="text-gray-700 font-medium">Share Profile</span>
-                      </button>
-                      <button className="flex items-center w-full p-3 rounded-lg hover:bg-gray-50 transition-colors duration-200">
-                        <BarChart3 className="w-4 h-4 text-gray-600 mr-3" />
-                        <span className="text-gray-700 font-medium">Analytics</span>
-                      </button>
+              {user.role === "admin" && (
+                <div className="absolute -top-2 -right-2 w-10 h-10 bg-gradient-to-r from-red-500 to-pink-500 rounded-full flex items-center justify-center shadow-lg">
+                  <Crown className="w-5 h-5 text-white" />
+                </div>
+              )}
+            </div>
+            
+            <div className="flex-1 text-white pb-2">
+              <div className="flex items-center gap-3 mb-2">
+                <h1 className="text-3xl font-bold">{user.name}</h1>
+                <div className="flex items-center gap-2">
+                  <div className="px-3 py-1 bg-white/20 backdrop-blur-sm rounded-full text-sm font-medium flex items-center">
+                    <CheckCircle2 className="w-4 h-4 mr-1" />
+                    Verified
+                  </div>
+                  {user.role === "premium" && (
+                    <div className="px-3 py-1 bg-gradient-to-r from-amber-500 to-orange-500 rounded-full text-sm font-bold flex items-center">
+                      <Star className="w-3 h-3 mr-1" />
+                      PRO
                     </div>
                   )}
                 </div>
               </div>
+              <p className="text-blue-100 mb-4">@{user.username || user.name.toLowerCase().replace(/\s+/g, '')}</p>
+              
+              <div className="flex items-center gap-6">
+                <div className="flex items-center gap-2">
+                  <Calendar className="w-4 h-4 text-blue-200" />
+                  <span className="text-sm">Joined {new Date(user.createdAt).toLocaleDateString('en-US', { month: 'short', year: 'numeric' })}</span>
+                </div>
+                {user.location && (
+                  <div className="flex items-center gap-2">
+                    <MapPin className="w-4 h-4 text-blue-200" />
+                    <span className="text-sm">{user.location}</span>
+                  </div>
+                )}
+                <div className="flex items-center gap-2">
+                  <Globe className="w-4 h-4 text-blue-200" />
+                  <span className="text-sm">English, Español</span>
+                </div>
+              </div>
             </div>
           </div>
         </div>
+      </div>
 
-        {/* Stats Bar */}
-        <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-8">
-          <div className="bg-white rounded-xl shadow-lg border border-gray-100 p-6 text-center hover:shadow-xl transition-all duration-300">
-            <div className="inline-flex items-center justify-center w-12 h-12 mb-3 bg-gradient-to-r from-blue-500 to-cyan-500 rounded-xl">
-              <Users className="w-6 h-6 text-white" />
-            </div>
-            <div className="text-2xl font-black text-gray-900">{followersCount.toLocaleString()}</div>
-            <div className="text-sm text-gray-600">Followers</div>
-          </div>
-          
-          <div className="bg-white rounded-xl shadow-lg border border-gray-100 p-6 text-center hover:shadow-xl transition-all duration-300">
-            <div className="inline-flex items-center justify-center w-12 h-12 mb-3 bg-gradient-to-r from-purple-500 to-pink-500 rounded-xl">
-              <UserCheck className="w-6 h-6 text-white" />
-            </div>
-            <div className="text-2xl font-black text-gray-900">{user.following?.length || 0}</div>
-            <div className="text-sm text-gray-600">Following</div>
-          </div>
-          
-          <div className="bg-white rounded-xl shadow-lg border border-gray-100 p-6 text-center hover:shadow-xl transition-all duration-300">
-            <div className="inline-flex items-center justify-center w-12 h-12 mb-3 bg-gradient-to-r from-green-500 to-emerald-500 rounded-xl">
-              <BookOpen className="w-6 h-6 text-white" />
-            </div>
-            <div className="text-2xl font-black text-gray-900">{posts.length}</div>
-            <div className="text-sm text-gray-600">Articles</div>
-          </div>
-          
-          <div className="bg-white rounded-xl shadow-lg border border-gray-100 p-6 text-center hover:shadow-xl transition-all duration-300">
-            <div className="inline-flex items-center justify-center w-12 h-12 mb-3 bg-gradient-to-r from-amber-500 to-orange-500 rounded-xl">
-              <Eye className="w-6 h-6 text-white" />
-            </div>
-            <div className="text-2xl font-black text-gray-900">{userStats.totalViews.toLocaleString()}</div>
-            <div className="text-sm text-gray-600">Total Views</div>
-          </div>
-          
-          <div className="bg-white rounded-xl shadow-lg border border-gray-100 p-6 text-center hover:shadow-xl transition-all duration-300">
-            <div className="inline-flex items-center justify-center w-12 h-12 mb-3 bg-gradient-to-r from-red-500 to-pink-500 rounded-xl">
-              <Heart className="w-6 h-6 text-white" />
-            </div>
-            <div className="text-2xl font-black text-gray-900">{userStats.totalLikes.toLocaleString()}</div>
-            <div className="text-sm text-gray-600">Total Likes</div>
-          </div>
-        </div>
-
-        {/* Main Content */}
+      {/* Main Content */}
+      <div className="container mx-auto px-4 py-8">
         <div className="grid lg:grid-cols-3 gap-8">
-          {/* Left Column */}
+          {/* Left Column - Profile Info */}
           <div className="lg:col-span-2">
+            {/* Stats Cards */}
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+              <div className="bg-white rounded-xl p-5 shadow-sm border border-gray-100">
+                <div className="flex items-center justify-between mb-3">
+                  <div className="p-2 bg-blue-50 rounded-lg">
+                    <BookOpen className="w-5 h-5 text-blue-600" />
+                  </div>
+                  <span className="text-sm text-gray-500">Posts</span>
+                </div>
+                <div className="text-2xl font-bold text-gray-900">{stats.posts}</div>
+              </div>
+              
+              <div className="bg-white rounded-xl p-5 shadow-sm border border-gray-100">
+                <div className="flex items-center justify-between mb-3">
+                  <div className="p-2 bg-purple-50 rounded-lg">
+                    <Eye className="w-5 h-5 text-purple-600" />
+                  </div>
+                  <span className="text-sm text-gray-500">Views</span>
+                </div>
+                <div className="text-2xl font-bold text-gray-900">{stats.views.toLocaleString()}</div>
+              </div>
+              
+              <div className="bg-white rounded-xl p-5 shadow-sm border border-gray-100">
+                <div className="flex items-center justify-between mb-3">
+                  <div className="p-2 bg-pink-50 rounded-lg">
+                    <Heart className="w-5 h-5 text-pink-600" />
+                  </div>
+                  <span className="text-sm text-gray-500">Likes</span>
+                </div>
+                <div className="text-2xl font-bold text-gray-900">{stats.likes.toLocaleString()}</div>
+              </div>
+              
+              <div className="bg-white rounded-xl p-5 shadow-sm border border-gray-100">
+                <div className="flex items-center justify-between mb-3">
+                  <div className="p-2 bg-green-50 rounded-lg">
+                    <Users className="w-5 h-5 text-green-600" />
+                  </div>
+                  <span className="text-sm text-gray-500">Followers</span>
+                </div>
+                <div className="text-2xl font-bold text-gray-900">{followersCount.toLocaleString()}</div>
+              </div>
+            </div>
+
+            {/* Bio & Actions */}
+            <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 mb-8">
+              <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+                <div className="flex-1">
+                  <h2 className="text-lg font-bold text-gray-900 mb-4">About</h2>
+                  <p className="text-gray-600 leading-relaxed">
+                    {user.about || "No bio yet. This user prefers to keep an air of mystery."}
+                  </p>
+                  
+                  {user.expertise && (
+                    <div className="mt-6">
+                      <h3 className="text-sm font-semibold text-gray-700 mb-3">EXPERTISE</h3>
+                      <div className="flex flex-wrap gap-2">
+                        {user.expertise.split(',').slice(0, 5).map((skill, idx) => (
+                          <span key={idx} className="px-3 py-1.5 bg-gray-50 text-gray-700 rounded-lg text-sm font-medium">
+                            {skill.trim()}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+                
+                <div className="flex items-center gap-3">
+                  {user._id === loggedInUser?._id ? (
+                    <>
+                      <button className="px-5 py-2.5 border border-gray-300 text-gray-700 rounded-lg font-medium hover:bg-gray-50 transition-colors">
+                        <Edit3 className="w-4 h-4 inline mr-2" />
+                        Edit Profile
+                      </button>
+                      <button className="px-5 py-2.5 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg font-medium hover:shadow-md transition-all">
+                        Dashboard
+                      </button>
+                    </>
+                  ) : (
+                    <>
+                      <button
+                        onClick={handleFollow}
+                        className={`px-5 py-2.5 rounded-lg font-medium transition-all ${
+                          isFollowing
+                            ? 'border border-gray-300 text-gray-700 hover:bg-gray-50'
+                            : 'bg-gradient-to-r from-blue-600 to-purple-600 text-white hover:shadow-md'
+                        }`}
+                      >
+                        {isFollowing ? (
+                          <>
+                            <UserCheck className="w-4 h-4 inline mr-2" />
+                            Following
+                          </>
+                        ) : (
+                          <>
+                            <UserPlus className="w-4 h-4 inline mr-2" />
+                            Follow
+                          </>
+                        )}
+                      </button>
+                      <button className="p-2.5 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50">
+                        <Mail className="w-5 h-5" />
+                      </button>
+                      <div className="relative" ref={shareRef}>
+                        <button
+                          onClick={() => setShowShareMenu(!showShareMenu)}
+                          className="p-2.5 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50"
+                        >
+                          <Share2 className="w-5 h-5" />
+                        </button>
+                        
+                        {showShareMenu && (
+                          <div className="absolute right-0 top-full mt-2 w-56 bg-white rounded-xl shadow-lg border border-gray-200 py-2 z-50">
+                            <div className="px-4 py-2 text-sm font-medium text-gray-700 border-b border-gray-100">
+                              Share Profile
+                            </div>
+                            <button
+                              onClick={() => handleShare('twitter')}
+                              className="flex items-center w-full px-4 py-3 hover:bg-gray-50"
+                            >
+                              <Twitter className="w-4 h-4 text-blue-400 mr-3" />
+                              <span>Share on Twitter</span>
+                            </button>
+                            <button
+                              onClick={() => handleShare('linkedin')}
+                              className="flex items-center w-full px-4 py-3 hover:bg-gray-50"
+                            >
+                              <Linkedin className="w-4 h-4 text-blue-600 mr-3" />
+                              <span>Share on LinkedIn</span>
+                            </button>
+                            <button
+                              onClick={() => handleShare('copy')}
+                              className="flex items-center w-full px-4 py-3 hover:bg-gray-50"
+                            >
+                              <Copy className="w-4 h-4 text-gray-500 mr-3" />
+                              <span>Copy Link</span>
+                            </button>
+                          </div>
+                        )}
+                      </div>
+                    </>
+                  )}
+                </div>
+              </div>
+            </div>
+
             {/* Tabs */}
-            <div className="mb-8">
-              <div className="flex flex-wrap gap-2 mb-6">
+            <div className="border-b border-gray-200 mb-8">
+              <nav className="flex space-x-8">
                 {[
-                  { id: "posts", label: "Articles", icon: BookOpen, count: posts.length },
-                  { id: "about", label: "About", icon: UserCheck },
-                  { id: "activity", label: "Activity", icon: TrendingUp },
-                  { id: "analytics", label: "Analytics", icon: BarChart3 }
+                  { id: "posts", label: "Articles", count: posts.length },
+                  { id: "popular", label: "Popular", count: 3 },
+                  { id: "series", label: "Series" },
+                  { id: "bookmarks", label: "Bookmarks" },
+                  { id: "analytics", label: "Analytics" }
                 ].map((tab) => (
                   <button
                     key={tab.id}
                     onClick={() => setActiveTab(tab.id)}
-                    className={`flex items-center px-6 py-3 rounded-xl font-semibold transition-all duration-300 ${
+                    className={`py-3 px-1 font-medium text-sm border-b-2 transition-colors ${
                       activeTab === tab.id
-                        ? 'bg-gradient-to-r from-indigo-600 to-purple-600 text-white shadow-lg'
-                        : 'bg-white text-gray-700 hover:bg-gray-50 shadow border border-gray-100'
+                        ? 'border-blue-600 text-blue-600'
+                        : 'border-transparent text-gray-500 hover:text-gray-700'
                     }`}
                   >
-                    <tab.icon className="w-5 h-5 mr-2" />
                     {tab.label}
                     {tab.count !== undefined && (
-                      <span className="ml-2 px-2 py-1 bg-white/20 text-xs rounded-full">
+                      <span className="ml-2 px-2 py-0.5 bg-gray-100 text-gray-600 rounded-full text-xs">
                         {tab.count}
                       </span>
                     )}
                   </button>
                 ))}
-              </div>
+              </nav>
             </div>
 
             {/* Tab Content */}
-            {activeTab === "posts" && (
-              <div>
-                {posts.length === 0 ? (
-                  <div className="text-center py-16 bg-white rounded-2xl shadow-xl border border-gray-100">
-                    <div className="w-20 h-20 mx-auto mb-6 bg-gradient-to-r from-gray-100 to-gray-200 rounded-full flex items-center justify-center">
-                      <BookOpen className="w-10 h-10 text-gray-400" />
-                    </div>
-                    <h3 className="text-2xl font-bold text-gray-900 mb-3">No Articles Yet</h3>
-                    <p className="text-gray-600 max-w-md mx-auto mb-8">
-                      {user.name} has not published any articles yet. Check back soon!
-                    </p>
-                  </div>
-                ) : (
-                  <div className="grid md:grid-cols-2 gap-6">
-                    {posts.map((post, index) => (
-                      <div 
-                        key={post._id} 
-                        className="transform transition-all duration-500 hover:-translate-y-2"
-                        style={{ animationDelay: `${index * 100}ms` }}
-                      >
-                        <PostCard 
-                          post={{
-                            ...post,
-                            author: post.author || { name: user.name, avatar: user.avatar }
-                          }}
-                        />
+            <div>
+              {activeTab === "posts" && (
+                <div>
+                  {posts.length === 0 ? (
+                    <div className="text-center py-16 bg-white rounded-xl border border-gray-200">
+                      <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <FileText className="w-8 h-8 text-gray-400" />
                       </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-            )}
-
-            {activeTab === "about" && (
-              <div className="bg-white rounded-2xl shadow-xl border border-gray-100 p-8">
-                <div className="space-y-6">
-                  {user.email && (
-                    <div className="flex items-center p-4 bg-blue-50 rounded-xl">
-                      <Mail className="w-6 h-6 text-blue-600 mr-4" />
-                      <div>
-                        <div className="text-sm text-gray-500">Email</div>
-                        <div className="font-medium text-gray-900">{user.email}</div>
-                      </div>
+                      <h3 className="text-xl font-bold text-gray-900 mb-2">No Articles Yet</h3>
+                      <p className="text-gray-600 mb-6">
+                        {user.name} hasn't published any articles yet.
+                      </p>
                     </div>
-                  )}
-                  
-                  {user.location && (
-                    <div className="flex items-center p-4 bg-green-50 rounded-xl">
-                      <MapPin className="w-6 h-6 text-green-600 mr-4" />
-                      <div>
-                        <div className="text-sm text-gray-500">Location</div>
-                        <div className="font-medium text-gray-900">{user.location}</div>
-                      </div>
-                    </div>
-                  )}
-                  
-                  <div className="p-4 bg-purple-50 rounded-xl">
-                    <h4 className="font-bold text-gray-900 mb-4 flex items-center">
-                      <Award className="w-5 h-5 text-purple-600 mr-2" />
-                      Expertise & Skills
-                    </h4>
-                    <div className="flex flex-wrap gap-2">
-                      {['Web Development', 'React', 'Node.js', 'UI/UX Design', 'Content Writing'].map((skill, idx) => (
-                        <span key={idx} className="px-3 py-1.5 bg-gradient-to-r from-purple-100 to-pink-100 text-purple-700 font-medium rounded-full">
-                          {skill}
-                        </span>
+                  ) : (
+                    <div className="space-y-6">
+                      {posts.map((post) => (
+                        <div key={post._id} className="bg-white rounded-xl border border-gray-200 overflow-hidden hover:shadow-md transition-shadow">
+                          <div className="p-6">
+                            <div className="flex items-start justify-between mb-4">
+                              <div>
+                                <div className="flex items-center gap-2 mb-2">
+                                  <span className="px-3 py-1 bg-blue-50 text-blue-600 rounded-full text-sm font-medium">
+                                    {post.category || "Technology"}
+                                  </span>
+                                  <span className="text-sm text-gray-500">
+                                    {new Date(post.createdAt).toLocaleDateString()}
+                                  </span>
+                                </div>
+                                <h3 className="text-xl font-bold text-gray-900 mb-2">
+                                  <Link href={`/post/${post.slug}`} className="hover:text-blue-600">
+                                    {post.title}
+                                  </Link>
+                                </h3>
+                                <p className="text-gray-600 mb-4 line-clamp-2">
+                                  {post.excerpt || post.content?.substring(0, 150)}...
+                                </p>
+                              </div>
+                              {post.image && (
+                                <div className="ml-6 w-32 h-24 rounded-lg overflow-hidden relative flex-shrink-0">
+                                  <Image
+                                    src={post.image}
+                                    alt={post.title}
+                                    fill
+                                    className="object-cover"
+                                  />
+                                </div>
+                              )}
+                            </div>
+                            
+                            <div className="flex items-center justify-between pt-4 border-t border-gray-100">
+                              <div className="flex items-center gap-6 text-sm text-gray-500">
+                                <div className="flex items-center gap-1">
+                                  <Eye className="w-4 h-4" />
+                                  <span>{post.views?.toLocaleString() || 0}</span>
+                                </div>
+                                <div className="flex items-center gap-1">
+                                  <Heart className="w-4 h-4" />
+                                  <span>{post.likes?.toLocaleString() || 0}</span>
+                                </div>
+                                <div className="flex items-center gap-1">
+                                  <MessageCircle className="w-4 h-4" />
+                                  <span>{post.comments?.toLocaleString() || 0}</span>
+                                </div>
+                                <div className="flex items-center gap-1">
+                                  <Clock className="w-4 h-4" />
+                                  <span>{post.readTime || "5 min"}</span>
+                                </div>
+                              </div>
+                              
+                              <div className="flex items-center gap-2">
+                                <button className="p-2 text-gray-500 hover:text-blue-600 hover:bg-blue-50 rounded-lg">
+                                  <Bookmark className="w-4 h-4" />
+                                </button>
+                                <button className="p-2 text-gray-500 hover:text-purple-600 hover:bg-purple-50 rounded-lg">
+                                  <Share2 className="w-4 h-4" />
+                                </button>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
                       ))}
                     </div>
+                  )}
+                </div>
+              )}
+
+              {activeTab === "analytics" && (
+                <div className="grid md:grid-cols-2 gap-6">
+                  <div className="bg-white rounded-xl border border-gray-200 p-6">
+                    <h3 className="font-bold text-gray-900 mb-6 flex items-center">
+                      <TrendingUpIcon className="w-5 h-5 mr-2 text-blue-600" />
+                      Engagement Metrics
+                    </h3>
+                    <div className="space-y-4">
+                      <div>
+                        <div className="flex justify-between text-sm mb-1">
+                          <span className="text-gray-600">Engagement Rate</span>
+                          <span className="font-medium">{stats.engagement}%</span>
+                        </div>
+                        <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
+                          <div 
+                            className="h-full bg-gradient-to-r from-blue-500 to-purple-500 rounded-full"
+                            style={{ width: `${stats.engagement}%` }}
+                          ></div>
+                        </div>
+                      </div>
+                      <div>
+                        <div className="flex justify-between text-sm mb-1">
+                          <span className="text-gray-600">Avg. Read Time</span>
+                          <span className="font-medium">{stats.readTime}</span>
+                        </div>
+                        <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
+                          <div className="w-4/5 h-full bg-gradient-to-r from-green-500 to-emerald-500 rounded-full"></div>
+                        </div>
+                      </div>
+                    </div>
                   </div>
                   
-                  <div className="p-4 bg-amber-50 rounded-xl">
-                    <h4 className="font-bold text-gray-900 mb-4 flex items-center">
-                      <Clock className="w-5 h-5 text-amber-600 mr-2" />
-                      Writing Stats
-                    </h4>
-                    <div className="space-y-3">
-                      <div className="flex justify-between items-center">
-                        <span className="text-gray-700">Articles Published</span>
-                        <span className="font-bold text-gray-900">{posts.length}</span>
+                  <div className="bg-white rounded-xl border border-gray-200 p-6">
+                    <h3 className="font-bold text-gray-900 mb-6 flex items-center">
+                      <BarChart className="w-5 h-5 mr-2 text-purple-600" />
+                      Audience Growth
+                    </h3>
+                    <div className="space-y-4">
+                      <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                        <div className="flex items-center">
+                          <UsersRound className="w-5 h-5 text-blue-600 mr-3" />
+                          <div>
+                            <div className="font-medium">New Followers</div>
+                            <div className="text-sm text-gray-500">This month</div>
+                          </div>
+                        </div>
+                        <div className="text-xl font-bold text-green-600">+124</div>
                       </div>
-                      <div className="flex justify-between items-center">
-                        <span className="text-gray-700">Average Read Time</span>
-                        <span className="font-bold text-gray-900">{userStats.avgReadTime}</span>
-                      </div>
-                      <div className="flex justify-between items-center">
-                        <span className="text-gray-700">Engagement Rate</span>
-                        <span className="font-bold text-gray-900">{userStats.engagementRate}%</span>
+                      <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                        <div className="flex items-center">
+                          <EyeIcon className="w-5 h-5 text-purple-600 mr-3" />
+                          <div>
+                            <div className="font-medium">Profile Views</div>
+                            <div className="text-sm text-gray-500">Last 30 days</div>
+                          </div>
+                        </div>
+                        <div className="text-xl font-bold text-purple-600">2.4k</div>
                       </div>
                     </div>
                   </div>
                 </div>
-              </div>
-            )}
+              )}
+            </div>
           </div>
 
           {/* Right Column */}
-          <div className="lg:col-span-1">
-            <div className="sticky top-8 space-y-8">
-              {/* Social Links */}
-              <div className="bg-white rounded-2xl shadow-xl border border-gray-100 p-6">
-                <h3 className="text-lg font-bold text-gray-900 mb-6 flex items-center">
-                  <Globe className="w-5 h-5 mr-2 text-indigo-500" />
-                  Connect
-                </h3>
-                <div className="grid grid-cols-2 gap-3">
-                  {[
-                    { 
-                      platform: "Twitter", 
-                      icon: Twitter, 
-                      color: "bg-blue-400 text-white", 
-                      link: user?.socialLinks?.twitter ? 
-                        (user.socialLinks.twitter.startsWith('http') ? user.socialLinks.twitter : `https://twitter.com/${user.socialLinks.twitter}`) : null 
-                    },
-                    { 
-                      platform: "LinkedIn", 
-                      icon: Linkedin, 
-                      color: "bg-blue-600 text-white", 
-                      link: user?.socialLinks?.linkedin ? 
-                        (user.socialLinks.linkedin.startsWith('http') ? user.socialLinks.linkedin : `https://linkedin.com/in/${user.socialLinks.linkedin}`) : null 
-                    },
-                    { 
-                      platform: "GitHub", 
-                      icon: Github, 
-                      color: "bg-gray-800 text-white", 
-                      link: user?.socialLinks?.github ? 
-                        (user.socialLinks.github.startsWith('http') ? user.socialLinks.github : `https://github.com/${user.socialLinks.github}`) : null 
-                    },
-                    { 
-                      platform: "Instagram", 
-                      icon: Instagram, 
-                      color: "bg-gradient-to-r from-purple-500 to-pink-500 text-white", 
-                      link: user?.socialLinks?.instagram ? 
-                        (user.socialLinks.instagram.startsWith('http') ? user.socialLinks.instagram : `https://instagram.com/${user.socialLinks.instagram}`) : null 
-                    },
-                    { 
-                      platform: "Website", 
-                      icon: Globe, 
-                      color: "bg-green-500 text-white", 
-                      link: user?.socialLinks?.website ? 
-                        (user.socialLinks.website.startsWith('http') ? user.socialLinks.website : `https://${user.socialLinks.website}`) : null 
-                    },
-                    { 
-                      platform: "YouTube", 
-                      icon: Award, 
-                      color: "bg-red-500 text-white", 
-                      link: user?.socialLinks?.youtube ? 
-                        (user.socialLinks.youtube.startsWith('http') ? user.socialLinks.youtube : `https://youtube.com/${user.socialLinks.youtube}`) : null 
-                    }
-                  ].filter(social => social.link).map((social, idx) => (
-                    <a
-                      key={idx}
-                      href={social.link}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className={`${social.color} p-4 rounded-xl flex flex-col items-center justify-center hover:shadow-lg transition-all duration-300`}
-                    >
-                      <social.icon className="w-6 h-6 mb-2" />
-                      <span className="text-sm font-medium">{social.platform}</span>
-                    </a>
-                  ))}
-                </div>
-                {(!user?.socialLinks || Object.values(user.socialLinks).every(link => !link)) && (
-                  <p className="text-gray-500 text-sm text-center mt-4">
-                    No social links added yet
-                  </p>
+          <div className="space-y-6">
+            {/* Social Links */}
+            <div className="bg-white rounded-xl border border-gray-200 p-6">
+              <h3 className="font-bold text-gray-900 mb-4">Connect</h3>
+              <div className="space-y-3">
+                {user.socialLinks?.twitter && (
+                  <a
+                    href={user.socialLinks.twitter}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center p-3 rounded-lg border border-gray-200 hover:border-blue-200 hover:bg-blue-50 transition-colors group"
+                  >
+                    <div className="w-10 h-10 bg-blue-50 rounded-lg flex items-center justify-center mr-3 group-hover:bg-blue-100">
+                      <Twitter className="w-5 h-5 text-blue-500" />
+                    </div>
+                    <div className="flex-1">
+                      <div className="font-medium">Twitter</div>
+                      <div className="text-sm text-gray-500">@{user.socialLinks.twitter.split('/').pop()}</div>
+                    </div>
+                    <ExternalLink className="w-4 h-4 text-gray-400 group-hover:text-blue-500" />
+                  </a>
+                )}
+                
+                {user.socialLinks?.github && (
+                  <a
+                    href={user.socialLinks.github}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center p-3 rounded-lg border border-gray-200 hover:border-gray-300 hover:bg-gray-50 transition-colors group"
+                  >
+                    <div className="w-10 h-10 bg-gray-50 rounded-lg flex items-center justify-center mr-3 group-hover:bg-gray-100">
+                      <Github className="w-5 h-5 text-gray-800" />
+                    </div>
+                    <div className="flex-1">
+                      <div className="font-medium">GitHub</div>
+                      <div className="text-sm text-gray-500">{user.socialLinks.github.split('/').pop()}</div>
+                    </div>
+                    <ExternalLink className="w-4 h-4 text-gray-400 group-hover:text-gray-600" />
+                  </a>
+                )}
+                
+                {user.socialLinks?.linkedin && (
+                  <a
+                    href={user.socialLinks.linkedin}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center p-3 rounded-lg border border-gray-200 hover:border-blue-300 hover:bg-blue-50 transition-colors group"
+                  >
+                    <div className="w-10 h-10 bg-blue-50 rounded-lg flex items-center justify-center mr-3 group-hover:bg-blue-100">
+                      <Linkedin className="w-5 h-5 text-blue-700" />
+                    </div>
+                    <div className="flex-1">
+                      <div className="font-medium">LinkedIn</div>
+                      <div className="text-sm text-gray-500">Professional profile</div>
+                    </div>
+                    <ExternalLink className="w-4 h-4 text-gray-400 group-hover:text-blue-700" />
+                  </a>
                 )}
               </div>
+            </div>
 
-              {/* Top Tags */}
-              <div className="bg-gradient-to-br from-indigo-50 to-purple-50 rounded-2xl border border-indigo-100 p-6">
-                <h3 className="text-lg font-bold text-gray-900 mb-6 flex items-center">
-                  <Tag className="w-5 h-5 mr-2 text-indigo-500" />
-                  Top Tags
-                </h3>
-                <div className="space-y-3">
-                  {['Technology', 'React', 'Web Development', 'Design', 'Tutorials'].map((tag, idx) => (
-                    <Link
-                      key={idx}
-                      href={`/tag/${tag.toLowerCase()}`}
-                      className="flex items-center justify-between p-3 bg-white rounded-xl hover:shadow-md transition-all duration-300 group"
-                    >
-                      <div className="flex items-center">
-                        <div className="w-3 h-3 bg-gradient-to-r from-indigo-500 to-purple-500 rounded-full mr-3"></div>
-                        <span className="font-medium text-gray-900">#{tag}</span>
+            {/* Top Tags */}
+            <div className="bg-white rounded-xl border border-gray-200 p-6">
+              <h3 className="font-bold text-gray-900 mb-4">Top Tags</h3>
+              <div className="space-y-2">
+                {getTopTags().map((tag, index) => (
+                  <Link
+                    key={tag}
+                    href={`/tag/${tag.toLowerCase()}`}
+                    className="flex items-center justify-between p-3 rounded-lg hover:bg-gray-50 transition-colors group"
+                  >
+                    <div className="flex items-center">
+                      <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-blue-50 to-purple-50 flex items-center justify-center mr-3">
+                        <Tag className="w-4 h-4 text-blue-600" />
                       </div>
-                      <div className="flex items-center">
-                        <span className="text-sm text-gray-500 mr-2">12</span>
-                        <ChevronRight className="w-4 h-4 text-gray-400 group-hover:text-indigo-600 transition-colors" />
-                      </div>
-                    </Link>
-                  ))}
-                </div>
+                      <span className="font-medium">#{tag}</span>
+                    </div>
+                    <ChevronRight className="w-4 h-4 text-gray-400 group-hover:text-blue-600" />
+                  </Link>
+                ))}
               </div>
+            </div>
 
-              {/* Recent Activity */}
-              <div className="bg-white rounded-2xl shadow-xl border border-gray-100 p-6">
-                <h3 className="text-lg font-bold text-gray-900 mb-6 flex items-center">
-                  <Sparkles className="w-5 h-5 mr-2 text-amber-500" />
-                  Recent Activity
-                </h3>
-                <div className="space-y-4">
-                  {[
-                    { action: 'Published', title: 'React Hooks Guide', time: '2 hours ago', icon: BookOpen, color: 'text-green-500' },
-                    { action: 'Liked', title: '5 articles', time: 'Yesterday', icon: Heart, color: 'text-red-500' },
-                    { action: 'Commented on', title: 'Web Trends', time: '2 days ago', icon: MessageCircle, color: 'text-blue-500' },
-                    { action: 'Followed', title: '3 new users', time: '3 days ago', icon: UserPlus, color: 'text-purple-500' }
-                  ].map((activity, idx) => (
-                    <div key={idx} className="flex items-center p-3 rounded-xl hover:bg-gray-50 transition-all duration-300">
-                      <div className={`w-10 h-10 rounded-xl flex items-center justify-center bg-gray-100 ${activity.color} mr-4`}>
-                        <activity.icon className="w-5 h-5" />
-                      </div>
-                      <div>
-                        <div className="font-medium text-gray-900">
-                          {activity.action} <span className="font-bold">{activity.title}</span>
+            {/* Popular Posts */}
+            <div className="bg-white rounded-xl border border-gray-200 p-6">
+              <h3 className="font-bold text-gray-900 mb-4">Popular Articles</h3>
+              <div className="space-y-4">
+                {getPopularPosts().map((post) => (
+                  <Link
+                    key={post._id}
+                    href={`/post/${post.slug}`}
+                    className="block p-3 rounded-lg border border-gray-200 hover:border-blue-200 hover:shadow-sm transition-all group"
+                  >
+                    <div className="flex items-start gap-3">
+                      {post.image && (
+                        <div className="w-16 h-16 rounded-lg overflow-hidden relative flex-shrink-0">
+                          <Image
+                            src={post.image}
+                            alt={post.title}
+                            fill
+                            className="object-cover"
+                          />
                         </div>
-                        <div className="text-sm text-gray-500">{activity.time}</div>
+                      )}
+                      <div className="flex-1">
+                        <h4 className="font-medium text-gray-900 group-hover:text-blue-600 line-clamp-2">
+                          {post.title}
+                        </h4>
+                        <div className="flex items-center gap-3 mt-2 text-sm text-gray-500">
+                          <span className="flex items-center gap-1">
+                            <Eye className="w-3 h-3" />
+                            {post.views?.toLocaleString()}
+                          </span>
+                          <span className="flex items-center gap-1">
+                            <Heart className="w-3 h-3" />
+                            {post.likes?.toLocaleString()}
+                          </span>
+                        </div>
                       </div>
                     </div>
-                  ))}
+                  </Link>
+                ))}
+              </div>
+            </div>
+
+            {/* Writing Stats */}
+            <div className="bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl p-6 text-white">
+              <div className="flex items-center justify-between mb-6">
+                <div>
+                  <h3 className="font-bold text-lg mb-1">Writing Stats</h3>
+                  <p className="text-blue-100 text-sm">Monthly performance</p>
+                </div>
+                <Medal className="w-8 h-8 text-amber-300" />
+              </div>
+              
+              <div className="space-y-4">
+                <div>
+                  <div className="flex justify-between text-sm mb-1">
+                    <span>Articles Published</span>
+                    <span className="font-bold">12</span>
+                  </div>
+                  <div className="h-2 bg-white/20 rounded-full overflow-hidden">
+                    <div className="h-full bg-white rounded-full" style={{ width: '80%' }}></div>
+                  </div>
+                </div>
+                
+                <div>
+                  <div className="flex justify-between text-sm mb-1">
+                    <span>Avg. Reading Time</span>
+                    <span className="font-bold">6 min</span>
+                  </div>
+                  <div className="h-2 bg-white/20 rounded-full overflow-hidden">
+                    <div className="h-full bg-emerald-300 rounded-full" style={{ width: '65%' }}></div>
+                  </div>
+                </div>
+                
+                <div>
+                  <div className="flex justify-between text-sm mb-1">
+                    <span>Reader Engagement</span>
+                    <span className="font-bold">{stats.engagement}%</span>
+                  </div>
+                  <div className="h-2 bg-white/20 rounded-full overflow-hidden">
+                    <div className="h-full bg-amber-300 rounded-full" style={{ width: `${stats.engagement}%` }}></div>
+                  </div>
                 </div>
               </div>
             </div>
           </div>
         </div>
       </div>
-
-      <style jsx global>{`
-        @keyframes slide-down {
-          from { transform: translateY(-10px); opacity: 0; }
-          to { transform: translateY(0); opacity: 1; }
-        }
-        .animate-slide-down {
-          animation: slide-down 0.2s ease-out forwards;
-        }
-      `}</style>
     </div>
   );
 }
-
-// Button component for consistency
-const Button = ({ children, className, onClick, ...props }) => (
-  <button
-    className={`px-4 py-2 rounded-lg transition-all duration-300 ${className}`}
-    onClick={onClick}
-    {...props}
-  >
-    {children}
-  </button>
-);
