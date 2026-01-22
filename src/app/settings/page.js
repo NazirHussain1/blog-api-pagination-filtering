@@ -193,18 +193,7 @@ export default function SettingsPage() {
           <section>
             <h2 className="text-xl font-semibold text-gray-800 mb-4">Social Links</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <Label className="text-sm font-medium text-gray-700 flex items-center gap-2">
-                  <Twitter className="w-4 h-4 text-blue-400" /> Twitter
-                </Label>
-                <Input
-                  type="text"
-                  placeholder="@username or full URL"
-                  value={socialLinks.twitter}
-                  onChange={(e) => setSocialLinks(prev => ({ ...prev, twitter: e.target.value }))}
-                  className="mt-1"
-                />
-              </div>
+              
               <div>
                 <Label className="text-sm font-medium text-gray-700 flex items-center gap-2">
                   <Linkedin className="w-4 h-4 text-blue-600" /> LinkedIn
@@ -253,19 +242,7 @@ export default function SettingsPage() {
                   className="mt-1"
                 />
               </div>
-              <div>
-                <Label className="text-sm font-medium text-gray-700 flex items-center gap-2">
-                  <WhatsApp className="w-4 h-4 text-green-500" /> WhatsApp
-                </Label>
-                <Input
-                  type="text"
-                  placeholder="phone number or full URL"
-                  value={socialLinks.whatsapp}
-                  onChange={(e) => setSocialLinks(prev => ({ ...prev, whatsapp: e.target.value }))}
-                  className="mt-1"
-                />
-              </div>
-            </div>
+                        </div>
             <p className="text-sm text-gray-500 mt-2">
               Enter your username or full URL. We&apos;ll automatically format the links correctly.
             </p>
