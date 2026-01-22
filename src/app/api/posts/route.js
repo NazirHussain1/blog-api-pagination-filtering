@@ -1,9 +1,10 @@
 import { connectDB } from "@/app/lib/db";
 import Post from "@/app/models/Post";
-import Comment from "@/app/models/Comment"; // ✅ NEW
+import Comment from "@/app/models/Comment";
 import jwt from "jsonwebtoken";
 
-// ----------------- GET POSTS -----------------
+export const dynamic = "force-dynamic";
+
 export async function GET(req) {
   await connectDB();
 
@@ -23,22 +24,21 @@ export async function GET(req) {
       .sort({ createdAt: sort })
       .skip((page - 1) * limit)
       .limit(limit)
-      .lean(); 
+      .lean();
 
     const postsWithComments = await Promise.all(
       posts.map(async (post) => {
-        const commentsCount = await Comment.countDocuments({
-          post: post._id,
-        });
-
-        return {
-          ...post,
-          commentsCount,
-        };
+        const commentsCount = await Comment.countDocuments({ post: post._id });
+        return { ...post, commentsCount };
       })
     );
 
-    return new Response(JSON.stringify(postsWithComments), { status: 200 });
+    return new Response(JSON.stringify(postsWithComments), {
+      status: 200,
+      headers: {
+        "Cache-Control": "no-store, max-age=0"
+      }
+    });
   } catch (error) {
     return new Response(
       JSON.stringify({ message: "Server Error", error: error.message }),
@@ -47,7 +47,6 @@ export async function GET(req) {
   }
 }
 
-// ----------------- CREATE POST -----------------
 export async function POST(req) {
   await connectDB();
 
@@ -57,26 +56,15 @@ export async function POST(req) {
 
     const token = req.cookies.get("token")?.value;
     if (!token)
-      return new Response(JSON.stringify({ message: "Unauthorized" }), {
-        status: 401,
-      });
+      return new Response(JSON.stringify({ message: "Unauthorized" }), { status: 401 });
 
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
     const authorId = decoded.id;
 
-    if (!title || !body) {
-      return new Response(
-        JSON.stringify({ message: "Title and body are required" }),
-        { status: 400 }
-      );
-    }
+    if (!title || !body)
+      return new Response(JSON.stringify({ message: "Title and body are required" }), { status: 400 });
 
-    let slug = title
-      .toLowerCase()
-      .trim()
-      .replace(/\s+/g, "-")
-      .replace(/[^\w\-]+/g, "");
-
+    let slug = title.toLowerCase().trim().replace(/\s+/g, "-").replace(/[^\w\-]+/g, "");
     const existingPost = await Post.findOne({ slug });
     if (existingPost) slug = `${slug}-${Date.now()}`;
 
@@ -86,12 +74,10 @@ export async function POST(req) {
       slug,
       tags: tags || [],
       image: image || "",
-      author: authorId,
+      author: authorId
     });
 
-    return new Response(JSON.stringify({ message: "Post Created", post }), {
-      status: 201,
-    });
+    return new Response(JSON.stringify({ message: "Post Created", post }), { status: 201 });
   } catch (error) {
     return new Response(
       JSON.stringify({ message: "Server Error", error: error.message }),
