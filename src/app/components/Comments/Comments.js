@@ -27,7 +27,7 @@ export default function Comments({ slug, user }) {
   }, [slug]);
 
   useEffect(() => {
-    if (!slug) return; // prevent fetch if slug not ready
+    if (!slug) return; 
     const fetchData = async () => {
       try {
         const res = await fetch(`/api/posts/${slug}/comments`, { 
@@ -75,7 +75,7 @@ export default function Comments({ slug, user }) {
     }
   };
 
-  // Like / unlike a comment or reply
+
   const toggleLike = async (commentId) => {
     try {
       if (!user) {

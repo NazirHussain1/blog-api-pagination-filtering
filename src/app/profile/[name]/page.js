@@ -515,7 +515,7 @@ export default function ProfilePage() {
                       </div>
                       <h3 className="text-xl font-bold text-gray-900 mb-2">No Articles Yet</h3>
                       <p className="text-gray-600 mb-6">
-                        {user.name} hasn't published any articles yet.
+                        {user.name} has not published any articles yet.
                       </p>
                     </div>
                   ) : (
