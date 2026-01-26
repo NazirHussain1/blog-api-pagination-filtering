@@ -20,8 +20,10 @@ import {
   Bell,
   ChevronDown,
   BookOpen,
-  Sparkles,
-  Zap,
+  Search,
+  TrendingUp,
+  Bookmark,
+  Shield,
 } from "lucide-react";
 
 export default function Header() {
@@ -29,12 +31,13 @@ export default function Header() {
   const dispatch = useDispatch();
   const menuRef = useRef(null);
   const { user } = useSelector((state) => state.auth);
-  const userPosts = useSelector((state) => state.posts.userPosts); // user-specific posts
+  const userPosts = useSelector((state) => state.posts.userPosts);
   const postCount = userPosts?.length || 0;
 
   const [openMenu, setOpenMenu] = useState(false);
   const [mobileMenu, setMobileMenu] = useState(false);
   const [scrolled, setScrolled] = useState(false);
+  const [searchFocused, setSearchFocused] = useState(false);
 
   useEffect(() => {
     if (!user) dispatch(fetchCurrentUser());
@@ -42,7 +45,7 @@ export default function Header() {
   }, [dispatch, user]);
 
   useEffect(() => {
-    const handleScroll = () => setScrolled(window.scrollY > 10);
+    const handleScroll = () => setScrolled(window.scrollY > 20);
     window.addEventListener("scroll", handleScroll);
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
@@ -62,357 +65,446 @@ export default function Header() {
       await dispatch(logoutUser()).unwrap();
       toast.success("Logged out successfully");
       setOpenMenu(false);
+      setMobileMenu(false);
       router.push("/login");
     } catch {
       toast.error("Logout failed");
     }
   };
 
-  const roleColor = (role) => {
-    switch (role) {
-      case "admin":
-        return "bg-gradient-to-r from-red-500 to-pink-500";
-      case "editor":
-        return "bg-gradient-to-r from-purple-500 to-indigo-500";
-      default:
-        return "bg-gradient-to-r from-blue-500 to-cyan-500";
-    }
+  const getRoleBadge = (role) => {
+    const badges = {
+      admin: { bg: "bg-red-100", text: "text-red-700", label: "Admin" },
+      editor: { bg: "bg-purple-100", text: "text-purple-700", label: "Editor" },
+      user: { bg: "bg-blue-100", text: "text-blue-700", label: "Member" },
+    };
+    return badges[role] || badges.user;
   };
 
   return (
-    <header
-      className={`sticky top-0 z-50 transition-all duration-500 ${
-        scrolled
-          ? "bg-white/90 backdrop-blur-xl shadow-lg border-b border-gray-100"
-          : "bg-gradient-to-r from-indigo-900 via-purple-800 to-pink-700"
-      }`}
-    >
-      <div className="container mx-auto px-4 md:px-6">
-        <div className="flex justify-between items-center py-3 md:py-4">
-          <Link href="/" className="flex items-center space-x-3 group">
-            <div
-              className={`relative p-2 rounded-xl ${
-                scrolled
-                  ? "bg-gradient-to-r from-indigo-600 to-purple-600"
-                  : "bg-white/10 backdrop-blur-sm"
-              }`}
-            >
-              <BookOpen
-                className={`w-6 h-6 ${
-                  scrolled ? "text-white" : "text-amber-300"
-                }`}
-              />
-              <div className="absolute -top-1 -right-1 w-3 h-3 bg-gradient-to-r from-amber-500 to-orange-500 rounded-full animate-ping"></div>
-            </div>
-            <div>
-              <h1
-                className={`text-2xl font-black tracking-tight ${
-                  scrolled
-                    ? "bg-gradient-to-r from-indigo-700 to-purple-700 bg-clip-text text-transparent"
-                    : "text-white"
-                }`}
-              >
+    <>
+      <header
+        className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
+          scrolled
+            ? "bg-white/95 backdrop-blur-md shadow-sm border-b border-gray-200"
+            : "bg-white border-b border-gray-100"
+        }`}
+      >
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex items-center justify-between h-16">
+            {/* Logo */}
+            <Link href="/" className="flex items-center space-x-2 group">
+              <div className="relative">
+                <div className="w-9 h-9 bg-gradient-to-br from-indigo-600 to-purple-600 rounded-lg flex items-center justify-center shadow-md group-hover:shadow-lg transition-shadow">
+                  <BookOpen className="w-5 h-5 text-white" />
+                </div>
+                <div className="absolute -top-1 -right-1 w-2 h-2 bg-green-500 rounded-full border-2 border-white"></div>
+              </div>
+              <span className="text-xl font-bold text-gray-900 hidden sm:block">
                 InsightHub
-              </h1>
-              <p
-                className={`text-xs font-medium ${
-                  scrolled ? "text-gray-500" : "text-blue-200"
-                }`}
-              >
-                Where ideas spark innovation
-              </p>
-            </div>
-          </Link>
+              </span>
+            </Link>
 
-          <div className="hidden lg:flex items-center space-x-1">
-            <nav className="flex items-center space-x-1 mr-4">
+            {/* Desktop Navigation */}
+            <nav className="hidden lg:flex items-center space-x-1">
               <Link
                 href="/"
-                className={`flex items-center space-x-2 px-4 py-2.5 rounded-xl transition-all duration-300 ${
-                  scrolled
-                    ? "hover:bg-gray-50 text-gray-700 hover:text-indigo-600"
-                    : "hover:bg-white/10 text-white/90"
-                }`}
+                className="px-3 py-2 text-sm font-medium text-gray-700 hover:text-gray-900 hover:bg-gray-50 rounded-lg transition-colors"
               >
-                <Home className="w-4 h-4" />
-                <span className="font-semibold">Home</span>
+                Home
               </Link>
-
               <Link
                 href="/posts"
-                className={`flex items-center space-x-2 px-4 py-2.5 rounded-xl transition-all duration-300 ${
-                  scrolled
-                    ? "hover:bg-gray-50 text-gray-700 hover:text-indigo-600"
-                    : "hover:bg-white/10 text-white/90"
-                }`}
+                className="px-3 py-2 text-sm font-medium text-gray-700 hover:text-gray-900 hover:bg-gray-50 rounded-lg transition-colors"
               >
-                <FileText className="w-4 h-4" />
-                <span className="font-semibold">Articles</span>
+                Articles
               </Link>
-
               <Link
-                href={user ? "/posts/create" : "/login"}
-                className={`flex items-center space-x-2 px-4 py-2.5 rounded-xl transition-all duration-300 ${
-                  scrolled
-                    ? "bg-gradient-to-r from-amber-500 to-orange-500 text-white hover:shadow-lg"
-                    : "bg-white/20 backdrop-blur-sm text-white hover:bg-white/30"
-                }`}
+                href="/trending"
+                className="px-3 py-2 text-sm font-medium text-gray-700 hover:text-gray-900 hover:bg-gray-50 rounded-lg transition-colors"
               >
-                <PenSquare className="w-4 h-4" />
-                <span className="font-semibold">Write</span>
+                Trending
               </Link>
             </nav>
 
-            <div className="relative mx-4">
-              <input
-                type="search"
-                placeholder="Search articles..."
-                className={`w-64 pl-10 pr-4 py-2.5 rounded-xl border transition-all duration-300 ${
-                  scrolled
-                    ? "bg-gray-50 border-gray-200 focus:border-indigo-300 focus:ring-2 focus:ring-indigo-200"
-                    : "bg-white/10 backdrop-blur-sm border-white/20 text-white placeholder-white/60 focus:bg-white/20 focus:border-white/30"
-                }`}
-              />
-            </div>
-
-            <div className="flex items-center space-x-3">
-              <button
-                className={`relative p-2.5 rounded-xl transition-all duration-300 ${
-                  scrolled
-                    ? "hover:bg-gray-50 text-gray-600"
-                    : "hover:bg-white/10 text-white/90"
+            {/* Search Bar - Desktop */}
+            <div className="hidden lg:flex flex-1 max-w-md mx-8">
+              <div
+                className={`relative w-full transition-all duration-200 ${
+                  searchFocused ? "scale-105" : ""
                 }`}
               >
-                <Bell className="w-5 h-5" />
-              </button>
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                <input
+                  type="search"
+                  placeholder="Search articles..."
+                  onFocus={() => setSearchFocused(true)}
+                  onBlur={() => setSearchFocused(false)}
+                  className="w-full pl-10 pr-4 py-2 text-sm bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all"
+                />
+              </div>
+            </div>
 
-              <div className="relative" ref={menuRef}>
-                <button
-                  onClick={() => setOpenMenu(!openMenu)}
-                  className="flex items-center space-x-3 group"
-                >
-                  <div
-                    className={`relative w-10 h-10 flex items-center justify-center rounded-full text-white font-bold ${
-                      user
-                        ? roleColor(user.role)
-                        : "bg-gradient-to-r from-gray-600 to-gray-400"
-                    }`}
-                  >
-                    {user ? user.name.charAt(0).toUpperCase() : "G"}
-                  </div>
-                  <div className="hidden lg:block text-left">
-                    <p
-                      className={`font-semibold text-sm ${
-                        scrolled ? "text-gray-900" : "text-white"
-                      }`}
-                    >
-                      {user ? user.name : "Guest"}
-                    </p>
-                    <p
-                      className={`text-xs ${
-                        scrolled ? "text-gray-500" : "text-blue-200"
-                      }`}
-                    >
-                      {user ? user.role.toUpperCase() : "VISITOR"}
-                    </p>
-                  </div>
-                  <ChevronDown
-                    className={`w-4 h-4 transition-transform duration-300 ${
-                      openMenu ? "rotate-180" : ""
-                    } ${scrolled ? "text-gray-400" : "text-white/70"}`}
-                  />
+            {/* Right Side Actions */}
+            <div className="flex items-center space-x-2">
+              {/* Write Button */}
+              <Link
+                href={user ? "/posts/create" : "/login"}
+                className="hidden sm:flex items-center space-x-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium rounded-lg transition-colors shadow-sm hover:shadow"
+              >
+                <PenSquare className="w-4 h-4" />
+                <span>Write</span>
+              </Link>
+
+              {/* Notifications */}
+              {user && (
+                <button className="relative p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-50 rounded-lg transition-colors">
+                  <Bell className="w-5 h-5" />
+                  <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full"></span>
                 </button>
+              )}
 
-                {openMenu && (
-                  <div className="absolute right-0 mt-3 w-72 bg-white rounded-2xl shadow-2xl border border-gray-100 overflow-hidden animate-slide-down">
-                    {!user ? (
-                      <div className="p-4 space-y-2">
-                        <Link
-                          href="/login"
-                          className="block px-4 py-3 bg-gradient-to-r from-indigo-50 to-blue-50 hover:from-indigo-100 hover:to-blue-100 text-indigo-700 font-semibold rounded-xl text-center transition-all duration-300"
-                        >
-                          Sign In
-                        </Link>
-                        <Link
-                          href="/signup"
-                          className="block px-4 py-3 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white font-semibold rounded-xl text-center transition-all duration-300"
-                        >
-                          Join Community
-                        </Link>
+              {/* User Menu */}
+              <div className="hidden lg:block relative" ref={menuRef}>
+                {user ? (
+                  <>
+                    <button
+                      onClick={() => setOpenMenu(!openMenu)}
+                      className="flex items-center space-x-2 p-1.5 hover:bg-gray-50 rounded-lg transition-colors"
+                    >
+                      <div className="w-8 h-8 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-full flex items-center justify-center text-white text-sm font-semibold">
+                        {user.name.charAt(0).toUpperCase()}
                       </div>
-                    ) : (
-                      <>
-                        <div className="p-6 bg-gradient-to-r from-indigo-50 to-purple-50">
-                          <div className="flex items-center space-x-4">
-                            <div
-                              className={`relative w-14 h-14 rounded-xl flex items-center justify-center text-white font-bold text-2xl ${roleColor(
-                                user.role
-                              )} shadow-lg`}
-                            >
+                      <ChevronDown
+                        className={`w-4 h-4 text-gray-600 transition-transform ${
+                          openMenu ? "rotate-180" : ""
+                        }`}
+                      />
+                    </button>
+
+                    {openMenu && (
+                      <div className="absolute right-0 mt-2 w-64 bg-white rounded-xl shadow-lg border border-gray-200 py-2 animate-dropdown">
+                        {/* User Info */}
+                        <div className="px-4 py-3 border-b border-gray-100">
+                          <div className="flex items-center space-x-3">
+                            <div className="w-10 h-10 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-full flex items-center justify-center text-white font-semibold">
                               {user.name.charAt(0).toUpperCase()}
                             </div>
-                            <div>
-                              <h4 className="font-bold text-gray-900 text-lg">
+                            <div className="flex-1 min-w-0">
+                              <p className="text-sm font-semibold text-gray-900 truncate">
                                 {user.name}
-                              </h4>
-                              <div className="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold text-white mt-1">
-                                <div
-                                  className={`px-3 py-1 rounded-full ${
-                                    user.role === "admin"
-                                      ? "bg-gradient-to-r from-red-500 to-pink-500"
-                                      : "bg-gradient-to-r from-blue-500 to-cyan-500"
-                                  }`}
-                                >
-                                  {user.role.toUpperCase()}
-                                </div>
-                              </div>
+                              </p>
+                              <p className="text-xs text-gray-500 truncate">
+                                {user.email}
+                              </p>
                             </div>
+                          </div>
+                          <div className="mt-2">
+                            <span
+                              className={`inline-flex items-center px-2 py-1 rounded-md text-xs font-medium ${
+                                getRoleBadge(user.role).bg
+                              } ${getRoleBadge(user.role).text}`}
+                            >
+                              {getRoleBadge(user.role).label}
+                            </span>
                           </div>
                         </div>
 
-                        <div className="p-4 space-y-1">
+                        {/* Menu Items */}
+                        <div className="py-1">
                           <Link
                             href="/profile"
-                            className="flex items-center justify-between px-4 py-3 rounded-xl hover:bg-gray-50 transition-all duration-300 group"
                             onClick={() => setOpenMenu(false)}
+                            className="flex items-center space-x-3 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
                           >
-                            <div className="flex items-center space-x-3">
-                              <div className="p-2 bg-blue-50 rounded-lg group-hover:bg-blue-100 transition-colors">
-                                <User className="w-4 h-4 text-blue-600" />
-                              </div>
-                              <span className="font-medium text-gray-700">
-                                My Profile
-                              </span>
-                            </div>
-                            <ChevronDown className="w-4 h-4 text-gray-400 rotate-270" />
+                            <User className="w-4 h-4" />
+                            <span>Profile</span>
                           </Link>
-
                           <Link
                             href="/my-posts"
-                            className="flex items-center justify-between px-4 py-3 rounded-xl hover:bg-gray-50 transition-all duration-300 group"
                             onClick={() => setOpenMenu(false)}
+                            className="flex items-center justify-between px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
                           >
                             <div className="flex items-center space-x-3">
-                              <div className="p-2 bg-purple-50 rounded-lg group-hover:bg-purple-100 transition-colors">
-                                <FilePlus2 className="w-4 h-4 text-purple-600" />
-                              </div>
-                              <span className="font-medium text-gray-700">
-                                My Articles
-                              </span>
+                              <FileText className="w-4 h-4" />
+                              <span>My Articles</span>
                             </div>
-                            <div className="px-2 py-1 bg-gradient-to-r from-purple-100 to-pink-100 text-purple-700 text-xs font-bold rounded-full">
-                              ({postCount})
-                            </div>
+                            <span className="text-xs font-semibold text-indigo-600">
+                              {postCount}
+                            </span>
                           </Link>
-
+                          <Link
+                            href="/bookmarks"
+                            onClick={() => setOpenMenu(false)}
+                            className="flex items-center space-x-3 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+                          >
+                            <Bookmark className="w-4 h-4" />
+                            <span>Bookmarks</span>
+                          </Link>
                           <Link
                             href="/settings"
-                            className="flex items-center justify-between px-4 py-3 rounded-xl hover:bg-gray-50 transition-all duration-300 group"
                             onClick={() => setOpenMenu(false)}
+                            className="flex items-center space-x-3 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
                           >
-                            <div className="flex items-center space-x-3">
-                              <div className="p-2 bg-green-50 rounded-lg group-hover:bg-green-100 transition-colors">
-                                <Settings className="w-4 h-4 text-green-600" />
-                              </div>
-                              <span className="font-medium text-gray-700">
-                                Settings
-                              </span>
-                            </div>
-                            <ChevronDown className="w-4 h-4 text-gray-400 rotate-270" />
+                            <Settings className="w-4 h-4" />
+                            <span>Settings</span>
                           </Link>
 
                           {user.role === "admin" && (
-                            <Link
-                              href="/posts/manage"
-                              className="flex items-center justify-between px-4 py-3 rounded-xl hover:bg-gray-50 transition-all duration-300 group"
-                              onClick={() => setOpenMenu(false)}
-                            >
-                              <div className="flex items-center space-x-3">
-                                <div className="p-2 bg-red-50 rounded-lg group-hover:bg-red-100 transition-colors">
-                                  <Sparkles className="w-4 h-4 text-amber-500" />
-                                </div>
-                                <span className="font-medium text-gray-700">
-                                  Manage Content
-                                </span>
-                              </div>
-                            </Link>
+                            <>
+                              <div className="my-1 border-t border-gray-100"></div>
+                              <Link
+                                href="/posts/manage"
+                                onClick={() => setOpenMenu(false)}
+                                className="flex items-center space-x-3 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+                              >
+                                <Shield className="w-4 h-4 text-red-600" />
+                                <span>Admin Panel</span>
+                              </Link>
+                            </>
                           )}
+                        </div>
 
+                        <div className="border-t border-gray-100 mt-1 pt-1">
                           <button
                             onClick={handleLogout}
-                            className="w-full flex items-center justify-between px-4 py-3 rounded-xl hover:bg-red-50 transition-all duration-300 group"
+                            className="flex items-center space-x-3 w-full px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors"
                           >
-                            <div className="flex items-center space-x-3">
-                              <div className="p-2 bg-red-50 rounded-lg group-hover:bg-red-100 transition-colors">
-                                <LogOut className="w-4 h-4 text-red-600" />
-                              </div>
-                              <span className="font-medium text-gray-700">
-                                Sign Out
-                              </span>
-                            </div>
-                            <Zap className="w-4 h-4 text-red-500" />
+                            <LogOut className="w-4 h-4" />
+                            <span>Sign out</span>
                           </button>
                         </div>
-                      </>
+                      </div>
                     )}
+                  </>
+                ) : (
+                  <div className="flex items-center space-x-2">
+                    <Link
+                      href="/login"
+                      className="px-4 py-2 text-sm font-medium text-gray-700 hover:text-gray-900 transition-colors"
+                    >
+                      Sign in
+                    </Link>
+                    <Link
+                      href="/signup"
+                      className="px-4 py-2 bg-gray-900 hover:bg-gray-800 text-white text-sm font-medium rounded-lg transition-colors"
+                    >
+                      Sign up
+                    </Link>
                   </div>
                 )}
               </div>
+
+              {/* Mobile Menu Button */}
+              <button
+                onClick={() => setMobileMenu(!mobileMenu)}
+                className="lg:hidden p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-50 rounded-lg transition-colors"
+              >
+                {mobileMenu ? (
+                  <X className="w-6 h-6" />
+                ) : (
+                  <Menu className="w-6 h-6" />
+                )}
+              </button>
             </div>
           </div>
-
-          <button
-            className="lg:hidden"
-            onClick={() => setMobileMenu(!mobileMenu)}
-          >
-            {mobileMenu ? (
-              <X
-                className={`w-7 h-7 ${
-                  scrolled ? "text-gray-700" : "text-white"
-                }`}
-              />
-            ) : (
-              <Menu
-                className={`w-7 h-7 ${
-                  scrolled ? "text-gray-700" : "text-white"
-                }`}
-              />
-            )}
-          </button>
         </div>
-      </div>
+
+        {/* Mobile Search */}
+        <div className="lg:hidden border-t border-gray-100 px-4 py-3">
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+            <input
+              type="search"
+              placeholder="Search..."
+              className="w-full pl-10 pr-4 py-2 text-sm bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+            />
+          </div>
+        </div>
+      </header>
+
+      {/* Mobile Menu */}
+      {mobileMenu && (
+        <div className="lg:hidden fixed inset-0 z-40 pt-16">
+          <div
+            className="absolute inset-0 bg-black/20 backdrop-blur-sm"
+            onClick={() => setMobileMenu(false)}
+          />
+          <div className="absolute right-0 top-16 bottom-0 w-full max-w-sm bg-white shadow-xl overflow-y-auto animate-slide-left">
+            <div className="p-4">
+              {/* User Section */}
+              {user ? (
+                <div className="mb-4 p-4 bg-gradient-to-br from-indigo-50 to-purple-50 rounded-xl">
+                  <div className="flex items-center space-x-3 mb-3">
+                    <div className="w-12 h-12 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-full flex items-center justify-center text-white font-semibold text-lg">
+                      {user.name.charAt(0).toUpperCase()}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="font-semibold text-gray-900 truncate">
+                        {user.name}
+                      </p>
+                      <p className="text-sm text-gray-600 truncate">
+                        {user.email}
+                      </p>
+                    </div>
+                  </div>
+                  <span
+                    className={`inline-flex items-center px-2.5 py-1 rounded-md text-xs font-medium ${
+                      getRoleBadge(user.role).bg
+                    } ${getRoleBadge(user.role).text}`}
+                  >
+                    {getRoleBadge(user.role).label}
+                  </span>
+                </div>
+              ) : (
+                <div className="mb-4 space-y-2">
+                  <Link
+                    href="/login"
+                    onClick={() => setMobileMenu(false)}
+                    className="block w-full px-4 py-3 text-center bg-white border-2 border-gray-200 text-gray-900 font-medium rounded-lg hover:bg-gray-50 transition-colors"
+                  >
+                    Sign in
+                  </Link>
+                  <Link
+                    href="/signup"
+                    onClick={() => setMobileMenu(false)}
+                    className="block w-full px-4 py-3 text-center bg-indigo-600 text-white font-medium rounded-lg hover:bg-indigo-700 transition-colors"
+                  >
+                    Sign up
+                  </Link>
+                </div>
+              )}
+
+              {/* Navigation Links */}
+              <nav className="space-y-1 mb-4">
+                <Link
+                  href="/"
+                  onClick={() => setMobileMenu(false)}
+                  className="flex items-center space-x-3 px-4 py-3 text-gray-700 hover:bg-gray-50 rounded-lg transition-colors"
+                >
+                  <Home className="w-5 h-5" />
+                  <span className="font-medium">Home</span>
+                </Link>
+                <Link
+                  href="/posts"
+                  onClick={() => setMobileMenu(false)}
+                  className="flex items-center space-x-3 px-4 py-3 text-gray-700 hover:bg-gray-50 rounded-lg transition-colors"
+                >
+                  <FileText className="w-5 h-5" />
+                  <span className="font-medium">Articles</span>
+                </Link>
+                <Link
+                  href="/trending"
+                  onClick={() => setMobileMenu(false)}
+                  className="flex items-center space-x-3 px-4 py-3 text-gray-700 hover:bg-gray-50 rounded-lg transition-colors"
+                >
+                  <TrendingUp className="w-5 h-5" />
+                  <span className="font-medium">Trending</span>
+                </Link>
+                <Link
+                  href={user ? "/posts/create" : "/login"}
+                  onClick={() => setMobileMenu(false)}
+                  className="flex items-center space-x-3 px-4 py-3 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors"
+                >
+                  <PenSquare className="w-5 h-5" />
+                  <span className="font-medium">Write Article</span>
+                </Link>
+              </nav>
+
+              {user && (
+                <>
+                  <div className="border-t border-gray-200 my-4"></div>
+                  <nav className="space-y-1">
+                    <Link
+                      href="/profile"
+                      onClick={() => setMobileMenu(false)}
+                      className="flex items-center space-x-3 px-4 py-3 text-gray-700 hover:bg-gray-50 rounded-lg transition-colors"
+                    >
+                      <User className="w-5 h-5" />
+                      <span className="font-medium">Profile</span>
+                    </Link>
+                    <Link
+                      href="/my-posts"
+                      onClick={() => setMobileMenu(false)}
+                      className="flex items-center justify-between px-4 py-3 text-gray-700 hover:bg-gray-50 rounded-lg transition-colors"
+                    >
+                      <div className="flex items-center space-x-3">
+                        <FileText className="w-5 h-5" />
+                        <span className="font-medium">My Articles</span>
+                      </div>
+                      <span className="text-sm font-semibold text-indigo-600">
+                        {postCount}
+                      </span>
+                    </Link>
+                    <Link
+                      href="/bookmarks"
+                      onClick={() => setMobileMenu(false)}
+                      className="flex items-center space-x-3 px-4 py-3 text-gray-700 hover:bg-gray-50 rounded-lg transition-colors"
+                    >
+                      <Bookmark className="w-5 h-5" />
+                      <span className="font-medium">Bookmarks</span>
+                    </Link>
+                    <Link
+                      href="/settings"
+                      onClick={() => setMobileMenu(false)}
+                      className="flex items-center space-x-3 px-4 py-3 text-gray-700 hover:bg-gray-50 rounded-lg transition-colors"
+                    >
+                      <Settings className="w-5 h-5" />
+                      <span className="font-medium">Settings</span>
+                    </Link>
+
+                    {user.role === "admin" && (
+                      <Link
+                        href="/posts/manage"
+                        onClick={() => setMobileMenu(false)}
+                        className="flex items-center space-x-3 px-4 py-3 text-gray-700 hover:bg-gray-50 rounded-lg transition-colors"
+                      >
+                        <Shield className="w-5 h-5 text-red-600" />
+                        <span className="font-medium">Admin Panel</span>
+                      </Link>
+                    )}
+
+                    <button
+                      onClick={handleLogout}
+                      className="flex items-center space-x-3 w-full px-4 py-3 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                    >
+                      <LogOut className="w-5 h-5" />
+                      <span className="font-medium">Sign out</span>
+                    </button>
+                  </nav>
+                </>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
 
       <style jsx global>{`
-        @keyframes slide-down {
+        @keyframes dropdown {
           from {
-            transform: translateY(-10px);
             opacity: 0;
+            transform: translateY(-8px);
           }
           to {
-            transform: translateY(0);
             opacity: 1;
+            transform: translateY(0);
           }
         }
         @keyframes slide-left {
           from {
             transform: translateX(100%);
-            opacity: 0;
           }
           to {
             transform: translateX(0);
-            opacity: 1;
           }
         }
-        .animate-slide-down {
-          animation: slide-down 0.3s ease-out forwards;
+        .animate-dropdown {
+          animation: dropdown 0.15s ease-out;
         }
         .animate-slide-left {
-          animation: slide-left 0.3s ease-out forwards;
-        }
-        .rotate-270 {
-          transform: rotate(-90deg);
+          animation: slide-left 0.2s ease-out;
         }
       `}</style>
-    </header>
+    </>
   );
 }

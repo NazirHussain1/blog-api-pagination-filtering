@@ -1,13 +1,15 @@
 "use client";
 
 import { useEffect, useState, useRef } from "react";
-import { useSelector } from "react-redux";
+import { useSelector, useDispatch } from "react-redux";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
+import Link from "next/link";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { toast, Toaster } from "sonner";
-import PostCard from "@/app/components/PostCard/PostCard";
+import { fetchCurrentUser } from "@/redux/features/auth/authSlice";
+import { fetchUserPosts } from "@/redux/features/posts/postSlice";
 import {
   User,
   Mail,
@@ -17,7 +19,6 @@ import {
   Save,
   X,
   Camera,
-  Upload,
   Shield,
   Award,
   Calendar,
@@ -37,95 +38,103 @@ import {
   CheckCircle2,
   Loader2,
   Sparkles,
-  Plus
+  Plus,
+  MessageCircle,
+  Share2,
+  MoreHorizontal,
+  ChevronRight,
+  Trash2,
+  Edit3,
+  ExternalLink,
+  Facebook,
+  AlertCircle,
 } from "lucide-react";
-
-const EMPTY_PROFILE = {
-  name: "",
-  email: "",
-  phone: "",
-  location: "",
-  about: "",
-  avatar: "",
-};
 
 export default function MyProfilePage() {
   const router = useRouter();
+  const dispatch = useDispatch();
   const { user, loading: authLoading } = useSelector((state) => state.auth);
+  const { userPosts: posts, loading: postsLoading } = useSelector((state) => state.posts);
 
-  const [profile, setProfile] = useState(EMPTY_PROFILE);
-  const [originalProfile, setOriginalProfile] = useState(EMPTY_PROFILE);
+  const [profile, setProfile] = useState({
+    name: "",
+    email: "",
+    phone: "",
+    location: "",
+    about: "",
+    website: "",
+    avatar: "",
+  });
+  
+  const [originalProfile, setOriginalProfile] = useState(null);
   const [editing, setEditing] = useState(false);
   const [newAvatar, setNewAvatar] = useState(null);
   const [preview, setPreview] = useState(null);
   const [updating, setUpdating] = useState(false);
   const [activeTab, setActiveTab] = useState("overview");
   const [isDragging, setIsDragging] = useState(false);
-  const [posts, setPosts] = useState([]);
-  const [postsLoading, setPostsLoading] = useState(true);
 
   const fileInputRef = useRef(null);
 
+  // Redirect if not authenticated
   useEffect(() => {
-    if (!authLoading && !user) router.push("/login");
+    if (!authLoading && !user) {
+      toast.error("Please login to view your profile");
+      router.push("/login");
+    }
   }, [authLoading, user, router]);
 
+  // Fetch user data
   useEffect(() => {
-    if (!user) return;
+    if (!user) {
+      dispatch(fetchCurrentUser());
+    }
+  }, [dispatch, user]);
 
-    const fetchProfile = async () => {
-      try {
-        const res = await fetch("/api/users/profile", { credentials: "include" });
-        if (!res.ok) throw new Error("Failed to fetch profile");
-
-        const data = await res.json();
-        const cleanProfile = {
-          name: data.name || "",
-          email: data.email || "",
-          phone: data.phone || "",
-          location: data.location || "",
-          about: data.about || "",
-          avatar: data.avatar || "",
-        };
-
-        setProfile(cleanProfile);
-        setOriginalProfile(cleanProfile);
-        setPreview(cleanProfile.avatar || "/avatar.png");
-      } catch (err) {
-        toast.error(err.message);
-      }
-    };
-
-    fetchProfile();
-  }, [user]);
-
+  // Fetch user posts
   useEffect(() => {
-    if (!user) return;
+    if (user) {
+      dispatch(fetchUserPosts());
+    }
+  }, [dispatch, user]);
 
-    const fetchPosts = async () => {
-      try {
-        const res = await fetch("/api/posts/myposts", { credentials: "include" });
-        if (!res.ok) throw new Error("Failed to fetch posts");
-        const data = await res.json();
-        setPosts(data);
-      } catch (err) {
-        console.error("Failed to fetch posts:", err);
-      } finally {
-        setPostsLoading(false);
-      }
-    };
-
-    fetchPosts();
+  // Initialize profile data
+  useEffect(() => {
+    if (user) {
+      const userData = {
+        name: user.name || "",
+        email: user.email || "",
+        phone: user.phone || "",
+        location: user.location || "",
+        about: user.about || user.bio || "",
+        website: user.website || "",
+        avatar: user.avatar || "",
+      };
+      setProfile(userData);
+      setOriginalProfile(userData);
+      setPreview(user.avatar || null);
+    }
   }, [user]);
 
   const handleAvatarChange = (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
+
+    // Validate file size (5MB max)
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error("Image size should be less than 5MB");
+      return;
+    }
+
+    // Validate file type
+    if (!file.type.startsWith('image/')) {
+      toast.error("Please upload an image file");
+      return;
+    }
+
     setNewAvatar(file);
     setPreview(URL.createObjectURL(file));
-    toast.success("New avatar selected!", {
-      description: "Click Save to update your profile picture"
-    });
+    toast.success("New avatar selected! Click Save to update.");
   };
 
   const handleDragOver = (e) => {
@@ -133,13 +142,24 @@ export default function MyProfilePage() {
     setIsDragging(true);
   };
 
-  const handleDragLeave = () => setIsDragging(false);
+  const handleDragLeave = () => {
+    setIsDragging(false);
+  };
 
   const handleDrop = (e) => {
     e.preventDefault();
     setIsDragging(false);
+    
     const file = e.dataTransfer.files[0];
-    if (file && file.type.startsWith('image/')) {
+    if (file) {
+      if (!file.type.startsWith('image/')) {
+        toast.error("Please drop an image file");
+        return;
+      }
+      if (file.size > 5 * 1024 * 1024) {
+        toast.error("Image size should be less than 5MB");
+        return;
+      }
       setNewAvatar(file);
       setPreview(URL.createObjectURL(file));
       toast.success("Image dropped successfully!");
@@ -150,23 +170,54 @@ export default function MyProfilePage() {
     if (!newAvatar) return profile.avatar;
 
     const formData = new FormData();
-    formData.append("image", newAvatar);
+    formData.append("avatar", newAvatar);
 
-    const res = await fetch("/api/users/upload-avatar", {
-      method: "POST",
-      body: formData,
-      credentials: "include",
-    });
+    try {
+      const res = await fetch("/api/users/upload-avatar", {
+        method: "POST",
+        body: formData,
+        credentials: "include",
+      });
 
-    const data = await res.json();
-    if (!res.ok) throw new Error(data.error || "Avatar upload failed");
-    return data.url;
+      if (!res.ok) {
+        const error = await res.json();
+        throw new Error(error.message || "Avatar upload failed");
+      }
+
+      const data = await res.json();
+      return data.url || data.avatar;
+    } catch (error) {
+      console.error("Avatar upload error:", error);
+      throw error;
+    }
+  };
+
+  const validateProfile = () => {
+    if (!profile.name.trim()) {
+      toast.error("Name is required");
+      return false;
+    }
+
+    if (!profile.email.trim() || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(profile.email)) {
+      toast.error("Valid email is required");
+      return false;
+    }
+
+    if (profile.website && !/^https?:\/\/.+/.test(profile.website)) {
+      toast.error("Website must be a valid URL");
+      return false;
+    }
+
+    return true;
   };
 
   const handleUpdate = async () => {
+    if (!validateProfile()) return;
+
     setUpdating(true);
     try {
-      const avatarUrl = await uploadAvatar();
+      const avatarUrl = newAvatar ? await uploadAvatar() : profile.avatar;
+      
       const res = await fetch("/api/users/profile", {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
@@ -174,33 +225,28 @@ export default function MyProfilePage() {
         body: JSON.stringify({ ...profile, avatar: avatarUrl }),
       });
 
-      if (!res.ok) throw new Error("Profile update failed");
+      if (!res.ok) {
+        const error = await res.json();
+        throw new Error(error.message || "Profile update failed");
+      }
+
       const updated = await res.json();
       setProfile(updated);
       setOriginalProfile(updated);
-      setPreview(updated.avatar || "/avatar.png");
+      setPreview(updated.avatar || null);
       setEditing(false);
       setNewAvatar(null);
       
+      // Refresh user data
+      dispatch(fetchCurrentUser());
+      
       toast.success("Profile Updated!", {
         description: "Your profile has been successfully updated",
-        icon: <CheckCircle2 className="text-green-500" />,
-        duration: 5000
+        icon: <CheckCircle2 className="w-5 h-5 text-green-500" />,
       });
-      
-      if (typeof window !== 'undefined') {
-        const confetti = import('canvas-confetti');
-        confetti.then((confetti) => {
-          confetti.default({
-            particleCount: 100,
-            spread: 70,
-            origin: { y: 0.6 }
-          });
-        });
-      }
     } catch (err) {
-      toast.error(err.message, {
-        icon: <X className="text-red-500" />
+      toast.error(err.message || "Failed to update profile", {
+        icon: <AlertCircle className="w-5 h-5 text-red-500" />
       });
     } finally {
       setUpdating(false);
@@ -209,15 +255,16 @@ export default function MyProfilePage() {
 
   const handleCancel = () => {
     setProfile(originalProfile);
-    setPreview(originalProfile.avatar || "/avatar.png");
+    setPreview(originalProfile.avatar || null);
     setNewAvatar(null);
     setEditing(false);
   };
 
   const profileStats = {
-    posts: posts.length,
-    views: posts.reduce((sum, post) => sum + (post.views || 0), 0),
-    likes: posts.reduce((sum, post) => sum + (post.likes || 0), 0),
+    posts: posts?.length || 0,
+    views: posts?.reduce((sum, post) => sum + (post.views || 0), 0) || 0,
+    likes: posts?.reduce((sum, post) => sum + (post.likes?.length || post.likes || 0), 0) || 0,
+    comments: posts?.reduce((sum, post) => sum + (post.comments?.length || post.commentsCount || 0), 0) || 0,
     followers: user?.followers?.length || 0,
     following: user?.following?.length || 0,
     joined: user?.createdAt ? new Date(user.createdAt).toLocaleDateString('en-US', { 
@@ -228,73 +275,71 @@ export default function MyProfilePage() {
   };
 
   const socialLinks = [
-    { platform: "Twitter", icon: Twitter, color: "text-blue-400", link: "#" },
-    { platform: "LinkedIn", icon: Linkedin, color: "text-blue-600", link: "#" },
-    { platform: "GitHub", icon: Github, color: "text-gray-800", link: "#" },
-    { platform: "Instagram", icon: Instagram, color: "text-pink-500", link: "#" }
-  ];
+    { platform: "Twitter", icon: Twitter, color: "text-blue-400 hover:bg-blue-50", link: user?.socialLinks?.twitter },
+    { platform: "LinkedIn", icon: Linkedin, color: "text-blue-600 hover:bg-blue-50", link: user?.socialLinks?.linkedin },
+    { platform: "GitHub", icon: Github, color: "text-gray-800 hover:bg-gray-100", link: user?.socialLinks?.github },
+    { platform: "Instagram", icon: Instagram, color: "text-pink-500 hover:bg-pink-50", link: user?.socialLinks?.instagram },
+  ].filter(link => link.link);
 
   if (authLoading || !user) {
     return (
-      <div className="min-h-screen bg-gradient-to-b from-gray-50 to-white flex items-center justify-center">
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
-          <div className="inline-flex items-center justify-center w-20 h-20 mb-6">
-            <div className="relative">
-              <div className="absolute inset-0 bg-gradient-to-r from-indigo-500 to-purple-500 rounded-full blur opacity-75 animate-pulse"></div>
-              <div className="relative bg-gradient-to-r from-indigo-600 to-purple-600 p-4 rounded-full">
-                <User className="w-8 h-8 text-white" />
-              </div>
-            </div>
-          </div>
-          <h3 className="text-2xl font-bold text-gray-900 mb-4">Loading Profile</h3>
-          <Loader2 className="w-8 h-8 text-indigo-600 animate-spin mx-auto" />
+          <Loader2 className="w-12 h-12 text-indigo-600 animate-spin mx-auto mb-4" />
+          <h3 className="text-xl font-semibold text-gray-900">Loading Profile...</h3>
         </div>
       </div>
     );
   }
 
-  return (
-    <div className="min-h-screen bg-gradient-to-b from-gray-50 to-white">
-      <Toaster richColors position="top-right" />
-      
-          <div className="fixed inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute -top-40 -right-40 w-80 h-80 bg-purple-200 rounded-full mix-blend-multiply filter blur-3xl opacity-20"></div>
-        <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-blue-200 rounded-full mix-blend-multiply filter blur-3xl opacity-20"></div>
-      </div>
+  const tabs = [
+    { id: "overview", label: "Overview", icon: User },
+    { id: "posts", label: "Articles", icon: BookOpen, badge: profileStats.posts },
+    { id: "activity", label: "Activity", icon: TrendingUp },
+    { id: "stats", label: "Analytics", icon: Award },
+  ];
 
-      <div className="container mx-auto px-4 py-8 md:py-12 relative z-10">
+  return (
+    <div className="min-h-screen bg-gray-50">
+      <Toaster richColors position="top-right" />
+
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Header */}
-        <div className="mb-8 md:mb-12">
-          <div className="flex items-center justify-between mb-6">
+        <div className="mb-8">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div>
-              <h1 className="text-3xl md:text-4xl font-black text-gray-900">My Profile</h1>
-              <p className="text-gray-600 mt-2">Manage your personal information and account settings</p>
+              <h1 className="text-3xl font-bold text-gray-900">My Profile</h1>
+              <p className="text-gray-600 mt-1">Manage your personal information and content</p>
             </div>
             <div className="flex items-center space-x-3">
-              <button className="p-3 bg-white rounded-xl shadow-lg border border-gray-100 hover:shadow-xl transition-all duration-300">
-                <Bell className="w-5 h-5 text-gray-700" />
-              </button>
-              <button className="p-3 bg-white rounded-xl shadow-lg border border-gray-100 hover:shadow-xl transition-all duration-300">
+              <Link
+                href="/settings"
+                className="p-2.5 bg-white rounded-lg border border-gray-200 hover:bg-gray-50 transition-colors"
+              >
                 <Settings className="w-5 h-5 text-gray-700" />
+              </Link>
+              <button className="p-2.5 bg-white rounded-lg border border-gray-200 hover:bg-gray-50 transition-colors relative">
+                <Bell className="w-5 h-5 text-gray-700" />
+                <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full"></span>
               </button>
             </div>
           </div>
 
-          {/* Stats Bar */}
-          <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4 mb-8">
+          {/* Stats Grid */}
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4 mt-8">
             {[
-              { icon: BookOpen, label: 'Articles', value: profileStats.posts, color: 'from-blue-500 to-cyan-500' },
-              { icon: Eye, label: 'Views', value: profileStats.views.toLocaleString(), color: 'from-purple-500 to-pink-500' },
-              { icon: Heart, label: 'Likes', value: profileStats.likes.toLocaleString(), color: 'from-red-500 to-orange-500' },
-              { icon: User, label: 'Followers', value: profileStats.followers, color: 'from-green-500 to-emerald-500' },
-              { icon: User, label: 'Following', value: profileStats.following, color: 'from-indigo-500 to-blue-500' },
-              { icon: Award, label: 'Level', value: 'Pro', color: 'from-amber-500 to-orange-500' }
+              { icon: BookOpen, label: 'Articles', value: profileStats.posts, color: 'bg-blue-500' },
+              { icon: Eye, label: 'Views', value: profileStats.views.toLocaleString(), color: 'bg-purple-500' },
+              { icon: Heart, label: 'Likes', value: profileStats.likes.toLocaleString(), color: 'bg-red-500' },
+              { icon: MessageCircle, label: 'Comments', value: profileStats.comments, color: 'bg-green-500' },
+              { icon: User, label: 'Followers', value: profileStats.followers, color: 'bg-indigo-500' },
+              { icon: Star, label: 'Following', value: profileStats.following, color: 'bg-amber-500' },
             ].map((stat, idx) => (
-              <div key={idx} className="bg-white rounded-xl shadow-lg border border-gray-100 p-4 text-center hover:shadow-xl transition-all duration-300">
-                <div className={`inline-flex items-center justify-center w-12 h-12 mb-3 bg-gradient-to-r ${stat.color} rounded-xl`}>
-                  <stat.icon className="w-6 h-6 text-white" />
+              <div key={idx} className="bg-white rounded-xl border border-gray-200 p-4">
+                <div className={`inline-flex items-center justify-center w-10 h-10 ${stat.color} rounded-lg mb-3`}>
+                  <stat.icon className="w-5 h-5 text-white" />
                 </div>
-                <div className="text-2xl font-black text-gray-900">{stat.value}</div>
+                <div className="text-2xl font-bold text-gray-900">{stat.value}</div>
                 <div className="text-sm text-gray-600">{stat.label}</div>
               </div>
             ))}
@@ -302,191 +347,264 @@ export default function MyProfilePage() {
         </div>
 
         <div className="grid lg:grid-cols-3 gap-8">
-          {/* Left Column - Profile Card */}
+          {/* Profile Card */}
           <div className="lg:col-span-1">
-            <div className="bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden sticky top-8">
+            <div className="bg-white rounded-xl border border-gray-200 overflow-hidden sticky top-8">
               {/* Profile Header */}
-              <div className="bg-gradient-to-r from-indigo-600 to-purple-600 p-8 text-center relative overflow-hidden">
-                <div className="absolute -top-20 -right-20 w-40 h-40 bg-white/10 rounded-full"></div>
-                <div className="absolute -bottom-20 -left-20 w-40 h-40 bg-white/10 rounded-full"></div>
-                
-                <div className="relative z-10">
-                  {/* Avatar */}
-                  <div 
-                    className="relative w-32 h-32 mx-auto mb-6 group"
-                    onDragOver={handleDragOver}
-                    onDragLeave={handleDragLeave}
-                    onDrop={handleDrop}
-                  >
-                    <div className={`absolute inset-0 bg-gradient-to-r from-amber-500 to-orange-500 rounded-full transition-all duration-500 ${isDragging ? 'scale-110 blur-md' : ''}`}></div>
-                    <div className={`relative w-full h-full rounded-full border-4 border-white shadow-2xl transition-transform duration-500 ${editing ? 'group-hover:scale-105' : ''}`}>
-                      {preview ? (
-                        <Image
-                          src={preview}
-                          fill
-                          alt="Avatar"
-                          className="rounded-full object-cover"
-                        />
-                      ) : (
-                        <div className="w-full h-full bg-gradient-to-r from-blue-500 to-cyan-500 rounded-full flex items-center justify-center">
-                          <User className="w-16 h-16 text-white" />
-                        </div>
-                      )}
-                      
-                      {editing && (
-                        <div className="absolute inset-0 bg-black/50 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
-                          <Camera className="w-8 h-8 text-white" />
-                          <input
-                            ref={fileInputRef}
-                            type="file"
-                            accept="image/*"
-                            onChange={handleAvatarChange}
-                            className="absolute inset-0 opacity-0 cursor-pointer"
-                          />
-                        </div>
-                      )}
-                    </div>
-                    
-                    {editing && (
-                      <div className="absolute -bottom-2 -right-2 bg-gradient-to-r from-indigo-600 to-purple-600 text-white p-2 rounded-full shadow-lg">
-                        <Edit2 className="w-4 h-4" />
+              <div className="bg-gradient-to-r from-indigo-600 to-purple-600 p-6 text-center relative">
+                {/* Avatar */}
+                <div 
+                  className="relative w-24 h-24 mx-auto mb-4 group"
+                  onDragOver={handleDragOver}
+                  onDragLeave={handleDragLeave}
+                  onDrop={handleDrop}
+                >
+                  <div className="relative w-full h-full rounded-full border-4 border-white shadow-lg overflow-hidden">
+                    {preview ? (
+                      <Image
+                        src={preview}
+                        fill
+                        alt="Avatar"
+                        className="object-cover"
+                      />
+                    ) : (
+                      <div className="w-full h-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center">
+                        <User className="w-12 h-12 text-white" />
                       </div>
                     )}
+                    
+                    {editing && (
+                      <>
+                        <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer flex items-center justify-center">
+                          <Camera className="w-6 h-6 text-white" />
+                        </div>
+                        <input
+                          ref={fileInputRef}
+                          type="file"
+                          accept="image/*"
+                          onChange={handleAvatarChange}
+                          className="absolute inset-0 opacity-0 cursor-pointer"
+                        />
+                      </>
+                    )}
                   </div>
-
-                  <h2 className="text-2xl font-black text-white mb-2">{profile.name || "Anonymous User"}</h2>
-                  <p className="text-blue-100">@{(profile.name || "user").toLowerCase().replace(/\s+/g, '_')}</p>
                   
-                  <div className="inline-flex items-center bg-white/20 backdrop-blur-sm px-4 py-2 rounded-full mt-4">
-                    <Shield className="w-4 h-4 text-amber-300 mr-2" />
-                    <span className="text-sm font-semibold text-white">Verified Member</span>
-                  </div>
+                  {editing && (
+                    <div className="absolute -bottom-1 -right-1 bg-indigo-600 text-white p-1.5 rounded-full shadow-lg">
+                      <Camera className="w-3 h-3" />
+                    </div>
+                  )}
                 </div>
+
+                <h2 className="text-xl font-bold text-white mb-1">{profile.name || "Anonymous User"}</h2>
+                <p className="text-indigo-100 text-sm">@{(profile.name || "user").toLowerCase().replace(/\s+/g, '_')}</p>
+                
+                {user?.role === "admin" && (
+                  <div className="inline-flex items-center bg-amber-400/20 backdrop-blur-sm px-3 py-1 rounded-full mt-3">
+                    <Shield className="w-3 h-3 text-amber-300 mr-1.5" />
+                    <span className="text-xs font-semibold text-white">Admin</span>
+                  </div>
+                )}
               </div>
 
-              {/* Profile Info */}
-              <div className="p-6">
-                <div className="space-y-4">
-                  <div className="flex items-center p-3 bg-blue-50 rounded-xl">
-                    <Mail className="w-5 h-5 text-blue-600 mr-3" />
+              {/* Profile Details */}
+              <div className="p-6 space-y-4">
+                {editing ? (
+                  <>
                     <div>
-                      <div className="text-sm text-gray-500">Email</div>
-                      <div className="font-medium text-gray-900">{profile.email}</div>
+                      <label className="text-xs font-medium text-gray-700 mb-1 block">Full Name</label>
+                      <Input
+                        value={profile.name}
+                        onChange={(e) => setProfile({ ...profile, name: e.target.value })}
+                        placeholder="Your name"
+                      />
                     </div>
-                  </div>
-
-                  {profile.phone && (
-                    <div className="flex items-center p-3 bg-green-50 rounded-xl">
-                      <Phone className="w-5 h-5 text-green-600 mr-3" />
-                      <div>
-                        <div className="text-sm text-gray-500">Phone</div>
-                        <div className="font-medium text-gray-900">{profile.phone}</div>
-                      </div>
-                    </div>
-                  )}
-
-                  {profile.location && (
-                    <div className="flex items-center p-3 bg-purple-50 rounded-xl">
-                      <MapPin className="w-5 h-5 text-purple-600 mr-3" />
-                      <div>
-                        <div className="text-sm text-gray-500">Location</div>
-                        <div className="font-medium text-gray-900">{profile.location}</div>
-                      </div>
-                    </div>
-                  )}
-
-                  <div className="flex items-center p-3 bg-amber-50 rounded-xl">
-                    <Calendar className="w-5 h-5 text-amber-600 mr-3" />
                     <div>
-                      <div className="text-sm text-gray-500">Member Since</div>
-                      <div className="font-medium text-gray-900">
-                        {new Date(profileStats.joined).toLocaleDateString('en-US', { 
-                          year: 'numeric', 
-                          month: 'long' 
-                        })}
+                      <label className="text-xs font-medium text-gray-700 mb-1 block">Email</label>
+                      <Input
+                        type="email"
+                        value={profile.email}
+                        onChange={(e) => setProfile({ ...profile, email: e.target.value })}
+                        placeholder="your@email.com"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-xs font-medium text-gray-700 mb-1 block">Phone</label>
+                      <Input
+                        value={profile.phone}
+                        onChange={(e) => setProfile({ ...profile, phone: e.target.value })}
+                        placeholder="+1 (555) 000-0000"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-xs font-medium text-gray-700 mb-1 block">Location</label>
+                      <Input
+                        value={profile.location}
+                        onChange={(e) => setProfile({ ...profile, location: e.target.value })}
+                        placeholder="City, Country"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-xs font-medium text-gray-700 mb-1 block">Website</label>
+                      <Input
+                        value={profile.website}
+                        onChange={(e) => setProfile({ ...profile, website: e.target.value })}
+                        placeholder="https://yourwebsite.com"
+                      />
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <div className="flex items-start space-x-3 p-3 bg-gray-50 rounded-lg">
+                      <Mail className="w-4 h-4 text-gray-600 mt-0.5" />
+                      <div className="flex-1 min-w-0">
+                        <div className="text-xs text-gray-500">Email</div>
+                        <div className="text-sm font-medium text-gray-900 truncate">{profile.email}</div>
                       </div>
                     </div>
-                  </div>
 
-                  {/* Social Links */}
-                  <div className="pt-4 border-t border-gray-100">
-                    <h4 className="font-semibold text-gray-900 mb-3">Social Profiles</h4>
-                    <div className="flex space-x-3">
+                    {profile.phone && (
+                      <div className="flex items-start space-x-3 p-3 bg-gray-50 rounded-lg">
+                        <Phone className="w-4 h-4 text-gray-600 mt-0.5" />
+                        <div className="flex-1 min-w-0">
+                          <div className="text-xs text-gray-500">Phone</div>
+                          <div className="text-sm font-medium text-gray-900">{profile.phone}</div>
+                        </div>
+                      </div>
+                    )}
+
+                    {profile.location && (
+                      <div className="flex items-start space-x-3 p-3 bg-gray-50 rounded-lg">
+                        <MapPin className="w-4 h-4 text-gray-600 mt-0.5" />
+                        <div className="flex-1 min-w-0">
+                          <div className="text-xs text-gray-500">Location</div>
+                          <div className="text-sm font-medium text-gray-900">{profile.location}</div>
+                        </div>
+                      </div>
+                    )}
+
+                    {profile.website && (
+                      <div className="flex items-start space-x-3 p-3 bg-gray-50 rounded-lg">
+                        <Globe className="w-4 h-4 text-gray-600 mt-0.5" />
+                        <div className="flex-1 min-w-0">
+                          <div className="text-xs text-gray-500">Website</div>
+                          <a 
+                            href={profile.website}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-sm font-medium text-indigo-600 hover:text-indigo-700 truncate block"
+                          >
+                            {profile.website.replace(/^https?:\/\//, '')}
+                          </a>
+                        </div>
+                      </div>
+                    )}
+
+                    <div className="flex items-start space-x-3 p-3 bg-gray-50 rounded-lg">
+                      <Calendar className="w-4 h-4 text-gray-600 mt-0.5" />
+                      <div className="flex-1 min-w-0">
+                        <div className="text-xs text-gray-500">Joined</div>
+                        <div className="text-sm font-medium text-gray-900">{profileStats.joined}</div>
+                      </div>
+                    </div>
+                  </>
+                )}
+
+                {/* Social Links */}
+                {!editing && socialLinks.length > 0 && (
+                  <div className="pt-4 border-t border-gray-200">
+                    <h4 className="text-sm font-semibold text-gray-900 mb-3">Social</h4>
+                    <div className="flex flex-wrap gap-2">
                       {socialLinks.map((social) => (
                         <a
                           key={social.platform}
                           href={social.link}
-                          className={`w-10 h-10 rounded-xl bg-gray-100 flex items-center justify-center ${social.color} hover:scale-110 hover:shadow-lg transition-all duration-300`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className={`w-9 h-9 rounded-lg bg-gray-100 flex items-center justify-center ${social.color} transition-all`}
                         >
-                          <social.icon className="w-5 h-5" />
+                          <social.icon className="w-4 h-4" />
                         </a>
                       ))}
                     </div>
                   </div>
+                )}
 
-                  {/* Action Buttons */}
-                  <div className="pt-6 border-t border-gray-100 space-y-3">
-                    {editing ? (
-                      <div className="grid grid-cols-2 gap-3">
-                        <Button
-                          onClick={handleCancel}
-                          variant="outline"
-                          className="w-full"
-                        >
-                          <X className="w-4 h-4 mr-2" />
-                          Cancel
-                        </Button>
-                        <Button
-                          onClick={handleUpdate}
-                          disabled={updating}
-                          className="w-full bg-gradient-to-r from-indigo-600 to-purple-600 hover:shadow-lg"
-                        >
-                          {updating ? (
-                            <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                           ) : (
-                            <Save className="w-4 h-4 mr-2" />
-                          )}
-                          {updating ? "Saving..." : "Save"}
-                        </Button>
-                      </div>
-                    ) : (
+                {/* Action Buttons */}
+                <div className="pt-4 border-t border-gray-200 space-y-2">
+                  {editing ? (
+                    <div className="grid grid-cols-2 gap-2">
+                      <Button
+                        onClick={handleCancel}
+                        variant="outline"
+                        size="sm"
+                        className="w-full"
+                      >
+                        <X className="w-4 h-4 mr-1" />
+                        Cancel
+                      </Button>
+                      <Button
+                        onClick={handleUpdate}
+                        disabled={updating}
+                        size="sm"
+                        className="w-full bg-indigo-600 hover:bg-indigo-700"
+                      >
+                        {updating ? (
+                          <Loader2 className="w-4 h-4 mr-1 animate-spin" />
+                        ) : (
+                          <Save className="w-4 h-4 mr-1" />
+                        )}
+                        Save
+                      </Button>
+                    </div>
+                  ) : (
+                    <>
                       <Button
                         onClick={() => setEditing(true)}
-                        className="w-full bg-gradient-to-r from-gray-900 to-gray-800 hover:shadow-lg"
+                        size="sm"
+                        className="w-full bg-gray-900 hover:bg-gray-800"
                       >
                         <Edit2 className="w-4 h-4 mr-2" />
                         Edit Profile
                       </Button>
-                    )}
-                    
-                    <Button
-                      variant="outline"
-                      className="w-full"
-                      onClick={() => router.push('/settings')}
-                    >
-                      <Settings className="w-4 h-4 mr-2" />
-                      Account Settings
-                    </Button>
-                  </div>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="w-full"
+                        onClick={() => router.push('/settings')}
+                      >
+                        <Settings className="w-4 h-4 mr-2" />
+                        Settings
+                      </Button>
+                    </>
+                  )}
                 </div>
               </div>
             </div>
           </div>
 
-          {/* Right Column - Content */}
+          {/* Content Area */}
           <div className="lg:col-span-2">
             {/* Tabs */}
-            <div className="mb-8">
-              <div className="flex flex-wrap gap-2 mb-6">
-                {['overview', 'posts', 'activity', 'settings', 'analytics'].map((tab) => (
+            <div className="bg-white rounded-xl border border-gray-200 mb-6">
+              <div className="flex overflow-x-auto">
+                {tabs.map((tab) => (
                   <button
-                    key={tab}
-                    onClick={() => setActiveTab(tab)}
-                    className={`px-6 py-3 rounded-xl font-semibold transition-all duration-300 ${activeTab === tab 
-                      ? 'bg-gradient-to-r from-indigo-600 to-purple-600 text-white shadow-lg' 
-                      : 'bg-white text-gray-700 hover:bg-gray-50 shadow border border-gray-100'}`}
+                    key={tab.id}
+                    onClick={() => setActiveTab(tab.id)}
+                    className={`flex items-center space-x-2 px-6 py-4 text-sm font-medium border-b-2 transition-colors whitespace-nowrap ${
+                      activeTab === tab.id
+                        ? "border-indigo-600 text-indigo-600"
+                        : "border-transparent text-gray-600 hover:text-gray-900"
+                    }`}
                   >
-                    {tab.charAt(0).toUpperCase() + tab.slice(1)}
+                    <tab.icon className="w-4 h-4" />
+                    <span>{tab.label}</span>
+                    {tab.badge !== undefined && (
+                      <span className="px-2 py-0.5 bg-gray-100 text-gray-700 text-xs rounded-full">
+                        {tab.badge}
+                      </span>
+                    )}
                   </button>
                 ))}
               </div>
@@ -494,147 +612,131 @@ export default function MyProfilePage() {
 
             {/* Tab Content */}
             {activeTab === 'overview' && (
-              <div className="space-y-8">
+              <div className="space-y-6">
                 {/* About Section */}
-                <div className="bg-white rounded-2xl shadow-xl border border-gray-100 p-8">
-                  <h3 className="text-xl font-bold text-gray-900 mb-6 flex items-center">
-                    <User className="w-6 h-6 mr-3 text-indigo-600" />
-                    About Me
-                  </h3>
-                  
+                <div className="bg-white rounded-xl border border-gray-200 p-6">
+                  <h3 className="text-lg font-semibold text-gray-900 mb-4">About</h3>
                   {editing ? (
                     <textarea
                       rows={6}
-                      className="w-full p-4 border-2 border-gray-200 rounded-xl focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 transition-all duration-300 resize-none"
+                      className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent resize-none"
                       placeholder="Tell us about yourself..."
                       value={profile.about}
                       onChange={(e) => setProfile({ ...profile, about: e.target.value })}
                     />
                   ) : (
-                    <div className="text-gray-700 leading-relaxed">
+                    <div className="text-gray-700">
                       {profile.about || (
-                        <div className="text-center py-8">
-                          <div className="w-16 h-16 mx-auto mb-4 bg-gradient-to-r from-gray-100 to-gray-200 rounded-full flex items-center justify-center">
-                            <Edit2 className="w-8 h-8 text-gray-400" />
-                          </div>
-                          <p className="text-gray-500">No bio yet. Click Edit Profile to add one.</p>
+                        <div className="text-center py-8 text-gray-500">
+                          <Edit3 className="w-8 h-8 mx-auto mb-2 text-gray-400" />
+                          <p>No bio yet. Click Edit Profile to add one.</p>
                         </div>
                       )}
                     </div>
                   )}
                 </div>
 
-                {/* Recent Activity */}
-                <div className="bg-white rounded-2xl shadow-xl border border-gray-100 p-8">
-                  <h3 className="text-xl font-bold text-gray-900 mb-6 flex items-center">
-                    <TrendingUp className="w-6 h-6 mr-3 text-amber-500" />
-                    Recent Activity
-                  </h3>
-                  <div className="space-y-4">
-                    {[
-                      { action: 'Published article', title: 'React Hooks Complete Guide', time: '2 hours ago', color: 'bg-green-100 text-green-700' },
-                      { action: 'Received', title: '124 Likes on your post', time: 'Yesterday', color: 'bg-pink-100 text-pink-700' },
-                      { action: 'Commented on', title: 'Web Development Trends', time: '2 days ago', color: 'bg-blue-100 text-blue-700' },
-                      { action: 'Followed', title: 'Sarah Johnson', time: '3 days ago', color: 'bg-purple-100 text-purple-700' }
-                    ].map((activity, idx) => (
-                      <div key={idx} className="flex items-center p-4 rounded-xl hover:bg-gray-50 transition-all duration-300 group">
-                        <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${activity.color} mr-4`}>
-                          <Star className="w-6 h-6" />
-                        </div>
-                        <div className="flex-1">
-                          <div className="font-medium text-gray-900">{activity.action} <span className="font-bold">{activity.title}</span></div>
-                          <div className="text-sm text-gray-500">{activity.time}</div>
-                        </div>
-                        <Sparkles className="w-5 h-5 text-gray-400 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                {/* Quick Actions */}
+                <div className="bg-white rounded-xl border border-gray-200 p-6">
+                  <h3 className="text-lg font-semibold text-gray-900 mb-4">Quick Actions</h3>
+                  <div className="grid grid-cols-2 gap-3">
+                    <Link
+                      href="/posts/create"
+                      className="flex items-center space-x-3 p-4 border border-gray-200 rounded-lg hover:border-indigo-300 hover:bg-indigo-50 transition-all group"
+                    >
+                      <div className="w-10 h-10 bg-indigo-100 rounded-lg flex items-center justify-center group-hover:bg-indigo-200">
+                        <Plus className="w-5 h-5 text-indigo-600" />
                       </div>
-                    ))}
+                      <div>
+                        <div className="font-medium text-gray-900">New Article</div>
+                        <div className="text-xs text-gray-500">Write & publish</div>
+                      </div>
+                    </Link>
+
+                    <Link
+                      href="/my-posts"
+                      className="flex items-center space-x-3 p-4 border border-gray-200 rounded-lg hover:border-purple-300 hover:bg-purple-50 transition-all group"
+                    >
+                      <div className="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center group-hover:bg-purple-200">
+                        <BookOpen className="w-5 h-5 text-purple-600" />
+                      </div>
+                      <div>
+                        <div className="font-medium text-gray-900">My Articles</div>
+                        <div className="text-xs text-gray-500">{profileStats.posts} published</div>
+                      </div>
+                    </Link>
                   </div>
                 </div>
-
-              
               </div>
             )}
 
             {activeTab === 'posts' && (
-              <div className="space-y-8">
-                <div className="bg-white rounded-2xl shadow-xl border border-gray-100 p-8">
-                  <h3 className="text-xl font-bold text-gray-900 mb-6 flex items-center">
-                    <BookOpen className="w-6 h-6 mr-3 text-indigo-600" />
-                    My Articles ({posts.length})
-                  </h3>
-                  
-                  {postsLoading ? (
-                    <div className="text-center py-12">
-                      <Loader2 className="w-8 h-8 text-indigo-600 animate-spin mx-auto mb-4" />
-                      <p className="text-gray-600">Loading your articles...</p>
-                    </div>
-                  ) : posts.length === 0 ? (
-                    <div className="text-center py-12">
-                      <div className="w-16 h-16 mx-auto mb-4 bg-gradient-to-r from-gray-100 to-gray-200 rounded-full flex items-center justify-center">
-                        <BookOpen className="w-8 h-8 text-gray-400" />
+              <div className="space-y-6">
+                {postsLoading ? (
+                  <div className="bg-white rounded-xl border border-gray-200 p-12 text-center">
+                    <Loader2 className="w-8 h-8 text-indigo-600 animate-spin mx-auto mb-4" />
+                    <p className="text-gray-600">Loading articles...</p>
+                  </div>
+                ) : posts && posts.length > 0 ? (
+                  <div className="space-y-4">
+                    {posts.map((post) => (
+                      <div key={post._id} className="bg-white rounded-xl border border-gray-200 p-6 hover:border-indigo-300 hover:shadow-md transition-all">
+                        <Link href={`/posts/${post._id}`} className="block">
+                          <h3 className="text-lg font-semibold text-gray-900 hover:text-indigo-600 mb-2">
+                            {post.title}
+                          </h3>
+                          <p className="text-gray-600 text-sm mb-4 line-clamp-2">
+                            {post.description || post.content?.substring(0, 150) + "..."}
+                          </p>
+                          <div className="flex items-center justify-between text-sm text-gray-500">
+                            <div className="flex items-center space-x-4">
+                              <span className="flex items-center">
+                                <Eye className="w-4 h-4 mr-1" />
+                                {post.views || 0}
+                              </span>
+                              <span className="flex items-center">
+                                <Heart className="w-4 h-4 mr-1" />
+                                {post.likes?.length || post.likes || 0}
+                              </span>
+                              <span className="flex items-center">
+                                <MessageCircle className="w-4 h-4 mr-1" />
+                                {post.comments?.length || post.commentsCount || 0}
+                              </span>
+                            </div>
+                            <span>{new Date(post.createdAt).toLocaleDateString()}</span>
+                          </div>
+                        </Link>
                       </div>
-                      <h4 className="text-lg font-semibold text-gray-900 mb-2">No articles yet</h4>
-                      <p className="text-gray-600 mb-6">Start sharing your knowledge with the community.</p>
-                      <Button
-                        onClick={() => router.push('/posts/create')}
-                        className="bg-gradient-to-r from-green-500 to-emerald-500 hover:shadow-lg"
-                      >
-                        <Plus className="w-4 h-4 mr-2" />
-                        Create Your First Article
-                      </Button>
-                    </div>
-                  ) : (
-                    <div className="grid gap-6 md:grid-cols-2">
-                      {posts.map((post) => (
-                        <div key={post._id} className="transform transition-all duration-300 hover:-translate-y-2">
-                          <PostCard 
-                            post={{
-                              ...post,
-                              author: user,
-                              likes: post.likes || 0,
-                              views: post.views || 0,
-                              commentsCount: post.comments || 0,
-                            }} 
-                            user={user}
-                          />
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="bg-white rounded-xl border border-gray-200 p-12 text-center">
+                    <BookOpen className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+                    <h4 className="text-lg font-semibold text-gray-900 mb-2">No articles yet</h4>
+                    <p className="text-gray-600 mb-6">Start sharing your knowledge with the community.</p>
+                    <Button
+                      onClick={() => router.push('/posts/create')}
+                      className="bg-indigo-600 hover:bg-indigo-700"
+                    >
+                      <Plus className="w-4 h-4 mr-2" />
+                      Create Your First Article
+                    </Button>
+                  </div>
+                )}
               </div>
             )}
 
-            {/* Security Settings Preview */}
-            {activeTab === 'settings' && (
-              <div className="bg-white rounded-2xl shadow-xl border border-gray-100 p-8">
-                <h3 className="text-xl font-bold text-gray-900 mb-6 flex items-center">
-                  <Lock className="w-6 h-6 mr-3 text-indigo-600" />
-                  Security Settings
-                </h3>
-                <div className="space-y-4">
-                  {[
-                    { icon: Mail, label: 'Email', value: profile.email, action: 'Change' },
-                    { icon: Lock, label: 'Password', value: '••••••••', action: 'Update' },
-                    { icon: Globe, label: 'Privacy', value: 'Public Profile', action: 'Edit' },
-                    { icon: Bell, label: 'Notifications', value: 'Enabled', action: 'Manage' }
-                  ].map((item, idx) => (
-                    <div key={idx} className="flex items-center justify-between p-4 rounded-xl border border-gray-200 hover:border-indigo-300 transition-all duration-300">
-                      <div className="flex items-center">
-                        <div className="w-10 h-10 bg-gradient-to-r from-gray-100 to-gray-200 rounded-xl flex items-center justify-center mr-4">
-                          <item.icon className="w-5 h-5 text-gray-700" />
-                        </div>
-                        <div>
-                          <div className="font-medium text-gray-900">{item.label}</div>
-                          <div className="text-sm text-gray-600">{item.value}</div>
-                        </div>
-                      </div>
-                      <Button variant="outline" size="sm">
-                        {item.action}
-                      </Button>
-                    </div>
-                  ))}
-                </div>
+            {activeTab === 'activity' && (
+              <div className="bg-white rounded-xl border border-gray-200 p-6">
+                <h3 className="text-lg font-semibold text-gray-900 mb-4">Recent Activity</h3>
+                <p className="text-gray-600 text-center py-8">Activity feed coming soon...</p>
+              </div>
+            )}
+
+            {activeTab === 'stats' && (
+              <div className="bg-white rounded-xl border border-gray-200 p-6">
+                <h3 className="text-lg font-semibold text-gray-900 mb-4">Analytics</h3>
+                <p className="text-gray-600 text-center py-8">Detailed analytics coming soon...</p>
               </div>
             )}
           </div>
