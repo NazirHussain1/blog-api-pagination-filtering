@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { useRouter } from "next/navigation"; // ← added for redirect
+import { useRouter } from "next/navigation";
 import { createPost } from "@/redux/features/posts/postSlice";
 import { toast } from "sonner";
 import { Input } from "@/components/ui/input";
@@ -18,19 +18,26 @@ import {
   Loader2,
   X,
   CheckCircle2,
-  AlertCircle
+  AlertCircle,
+  Eye,
+  Edit3,
+  ArrowLeft,
+  Info,
+  Zap,
 } from "lucide-react";
 import Image from "next/image";
+import Link from "next/link";
 
-export default function CreatePost() {
+export default function CreatePostPage() {
   const dispatch = useDispatch();
-  const router = useRouter(); // ← initialized router
+  const router = useRouter();
   const { loading } = useSelector((state) => state.posts);
+  const { user } = useSelector((state) => state.auth);
 
   const [form, setForm] = useState({
     title: "",
-    body: "",
-    author: "",
+    content: "",
+    description: "",
     tags: "",
   });
 
@@ -39,17 +46,47 @@ export default function CreatePost() {
   const [uploading, setUploading] = useState(false);
   const [errors, setErrors] = useState({});
   const [isDragging, setIsDragging] = useState(false);
+  const [showPreview, setShowPreview] = useState(false);
+
+  const handleImageChange = (file) => {
+    if (!file) return;
+
+    // Validate file type
+    if (!file.type.startsWith('image/')) {
+      toast.error("Please upload an image file");
+      return;
+    }
+
+    // Validate file size (5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error("Image size should be less than 5MB");
+      return;
+    }
+
+    setImageFile(file);
+    setPreview(URL.createObjectURL(file));
+  };
 
   const handleImageUpload = async () => {
     if (!imageFile) return "";
+    
     setUploading(true);
     try {
       const formData = new FormData();
       formData.append("image", imageFile);
-      const res = await fetch("/api/posts/upload", { method: "POST", body: formData });
+      
+      const res = await fetch("/api/posts/upload", { 
+        method: "POST", 
+        body: formData 
+      });
+      
+      if (!res.ok) {
+        const error = await res.json();
+        throw new Error(error.message || "Upload failed");
+      }
+      
       const data = await res.json();
-      if (!res.ok || data.error) throw new Error(data.error || "Upload failed");
-      return data.url;
+      return data.url || data.imageUrl;
     } catch (err) {
       toast.error(err.message || "Image upload failed");
       throw err;
@@ -58,56 +95,73 @@ export default function CreatePost() {
     }
   };
 
+  const validateForm = () => {
+    const newErrors = {};
+
+    if (!form.title.trim()) {
+      newErrors.title = "Title is required";
+    } else if (form.title.length < 10) {
+      newErrors.title = "Title must be at least 10 characters";
+    } else if (form.title.length > 200) {
+      newErrors.title = "Title must be less than 200 characters";
+    }
+
+    if (!form.content.trim()) {
+      newErrors.content = "Content is required";
+    } else if (form.content.length < 50) {
+      newErrors.content = "Content must be at least 50 characters";
+    }
+
+    if (form.description && form.description.length > 300) {
+      newErrors.description = "Description must be less than 300 characters";
+    }
+
+    if (form.tags) {
+      const tags = form.tags.split(",").map(t => t.trim()).filter(Boolean);
+      if (tags.length > 5) {
+        newErrors.tags = "Maximum 5 tags allowed";
+      }
+    }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setErrors({});
-    const newErrors = {};
-    if (!form.title.trim()) newErrors.title = "Title is required";
-    if (!form.body.trim()) newErrors.body = "Body is required";
-    if (!form.author.trim()) newErrors.author = "Author is required";
-    if (Object.keys(newErrors).length) {
-      setErrors(newErrors);
-      toast.error("Please fill all required fields", {
-        icon: <AlertCircle className="text-red-500" />
+
+    if (!validateForm()) {
+      toast.error("Please fix the errors before submitting", {
+        icon: <AlertCircle className="w-5 h-5 text-red-500" />
       });
       return;
     }
 
     try {
-      const imageUrl = await handleImageUpload();
+      const imageUrl = imageFile ? await handleImageUpload() : "";
+      
       const postData = {
-        ...form,
-        tags: form.tags.split(",").map((t) => t.trim()).filter(Boolean),
+        title: form.title.trim(),
+        content: form.content.trim(),
+        description: form.description.trim() || form.content.substring(0, 150).trim() + "...",
+        tags: form.tags.split(",").map(t => t.trim()).filter(Boolean),
         image: imageUrl,
+        author: user?._id,
       };
+
       await dispatch(createPost(postData)).unwrap();
       
       toast.success("Post Published!", {
         description: "Your article is now live on InsightHub",
-        icon: <CheckCircle2 className="text-green-500" />,
-        duration: 5000
+        icon: <CheckCircle2 className="w-5 h-5 text-green-500" />,
       });
       
-      setForm({ title: "", body: "", author: "", tags: "" });
-      setImageFile(null);
-      setPreview(null);
+      // Redirect to posts page or home
+      router.push("/posts");
 
-      if (typeof window !== 'undefined') {
-        const confetti = import('canvas-confetti');
-        confetti.then((confetti) => {
-          confetti.default({
-            particleCount: 150,
-            spread: 70,
-            origin: { y: 0.6 }
-          });
-        });
-      }
-
-      router.push("/"); // ← Redirect to Home after post creation
-
-    } catch {
-      toast.error("Failed to create post", {
-        icon: <AlertCircle className="text-red-500" />
+    } catch (error) {
+      toast.error(error.message || "Failed to create post", {
+        icon: <AlertCircle className="w-5 h-5 text-red-500" />
       });
     }
   };
@@ -117,167 +171,260 @@ export default function CreatePost() {
     setIsDragging(true);
   };
 
-  const handleDragLeave = () => setIsDragging(false);
+  const handleDragLeave = () => {
+    setIsDragging(false);
+  };
 
   const handleDrop = (e) => {
     e.preventDefault();
     setIsDragging(false);
     const file = e.dataTransfer.files[0];
-    if (file && file.type.startsWith('image/')) {
-      setImageFile(file);
-      setPreview(URL.createObjectURL(file));
+    if (file) {
+      handleImageChange(file);
     }
   };
 
-  return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50 py-8 md:py-12 px-4">
-      <div className="max-w-4xl mx-auto">
-        {/* Header */}
-        <div className="text-center mb-8 md:mb-12">
-          <div className="inline-flex items-center justify-center p-4 bg-gradient-to-r from-indigo-500 to-purple-500 rounded-2xl shadow-xl mb-6">
-            <Sparkles className="w-8 h-8 text-white" />
-          </div>
-          <h1 className="text-3xl md:text-4xl font-black text-gray-900 mb-4">
-            Create Your <span className="bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">Masterpiece</span>
-          </h1>
-          <p className="text-gray-600 max-w-2xl mx-auto">
-            Share your insights, knowledge, and perspectives with our global community of learners and innovators.
-          </p>
-        </div>
+  const getCharCount = (text, max) => {
+    const count = text.length;
+    const percentage = (count / max) * 100;
+    let color = "text-gray-500";
+    
+    if (percentage > 90) color = "text-red-600";
+    else if (percentage > 75) color = "text-amber-600";
+    
+    return { count, color };
+  };
 
+  return (
+    <div className="min-h-screen bg-gray-50">
+      {/* Header */}
+      <div className="bg-white border-b border-gray-200 sticky top-0 z-10">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex items-center justify-between h-16">
+            <div className="flex items-center space-x-4">
+              <Link
+                href="/"
+                className="flex items-center text-gray-600 hover:text-gray-900 transition-colors"
+              >
+                <ArrowLeft className="w-5 h-5 mr-2" />
+                <span className="font-medium">Back</span>
+              </Link>
+              <div className="hidden sm:block w-px h-6 bg-gray-300"></div>
+              <h1 className="hidden sm:block text-lg font-semibold text-gray-900">
+                Create New Article
+              </h1>
+            </div>
+
+            <div className="flex items-center space-x-3">
+              <button
+                type="button"
+                onClick={() => setShowPreview(!showPreview)}
+                className="hidden md:flex items-center px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
+              >
+                {showPreview ? (
+                  <>
+                    <Edit3 className="w-4 h-4 mr-2" />
+                    <span>Edit</span>
+                  </>
+                ) : (
+                  <>
+                    <Eye className="w-4 h-4 mr-2" />
+                    <span>Preview</span>
+                  </>
+                )}
+              </button>
+
+              <Button
+                onClick={handleSubmit}
+                disabled={loading || uploading}
+                className="bg-indigo-600 hover:bg-indigo-700 text-white"
+              >
+                {loading || uploading ? (
+                  <>
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    {uploading ? "Uploading..." : "Publishing..."}
+                  </>
+                ) : (
+                  <>
+                    <Sparkles className="w-4 h-4 mr-2" />
+                    Publish
+                  </>
+                )}
+              </Button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="grid lg:grid-cols-3 gap-8">
-          {/* Main Form */}
+          {/* Main Editor */}
           <div className="lg:col-span-2">
-            <div className="bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden">
-              <div className="p-6 md:p-8">
-                <form onSubmit={handleSubmit} className="space-y-6">
-                  {/* Title Field */}
-                  <div>
-                    <label className="flex items-center text-sm font-semibold text-gray-700 mb-3">
-                      <Type className="w-4 h-4 mr-2 text-indigo-500" />
-                      Article Title
-                      <span className="text-red-500 ml-1">*</span>
-                    </label>
-                    <div className="relative">
+            <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
+              {!showPreview ? (
+                <div className="p-6 md:p-8">
+                  <form onSubmit={handleSubmit} className="space-y-6">
+                    {/* Title */}
+                    <div>
+                      <label className="flex items-center text-sm font-semibold text-gray-900 mb-2">
+                        <Type className="w-4 h-4 mr-2 text-indigo-600" />
+                        Title
+                        <span className="text-red-500 ml-1">*</span>
+                      </label>
                       <Input
-                        placeholder="Craft a compelling title..."
+                        placeholder="Write an attention-grabbing title..."
                         value={form.title}
                         onChange={(e) => setForm({ ...form, title: e.target.value })}
-                        className={`w-full px-4 py-3.5 text-lg border-2 ${errors.title ? 'border-red-300 focus:border-red-500' : 'border-gray-200 focus:border-indigo-500'} rounded-xl focus:ring-2 focus:ring-indigo-200 transition-all duration-300`}
+                        className={`text-xl font-semibold border-2 ${
+                          errors.title ? 'border-red-300' : 'border-gray-200'
+                        } focus:border-indigo-500 rounded-lg`}
+                        maxLength={200}
                       />
-                      {errors.title && (
-                        <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
-                          <AlertCircle className="w-5 h-5 text-red-500" />
-                        </div>
-                      )}
+                      <div className="flex justify-between mt-2">
+                        {errors.title && (
+                          <p className="text-sm text-red-600">{errors.title}</p>
+                        )}
+                        <p className={`text-xs ml-auto ${getCharCount(form.title, 200).color}`}>
+                          {getCharCount(form.title, 200).count}/200
+                        </p>
+                      </div>
                     </div>
-                    {errors.title && (
-                      <p className="mt-2 text-sm text-red-600">{errors.title}</p>
-                    )}
-                  </div>
 
-                  {/* Body Field */}
-                  <div>
-                    <label className="flex items-center text-sm font-semibold text-gray-700 mb-3">
-                      <FileText className="w-4 h-4 mr-2 text-indigo-500" />
-                      Content
-                      <span className="text-red-500 ml-1">*</span>
-                    </label>
-                    <div className="relative">
-                      <textarea
-                        placeholder="Share your story, insights, or knowledge..."
-                        value={form.body}
-                        onChange={(e) => setForm({ ...form, body: e.target.value })}
-                        rows={12}
-                        className={`w-full p-4 border-2 ${errors.body ? 'border-red-300 focus:border-red-500' : 'border-gray-200 focus:border-indigo-500'} rounded-xl focus:ring-2 focus:ring-indigo-200 transition-all duration-300 resize-none`}
-                      />
-                      {errors.body && (
-                        <div className="absolute right-3 top-3">
-                          <AlertCircle className="w-5 h-5 text-red-500" />
-                        </div>
-                      )}
-                    </div>
-                    {errors.body && (
-                      <p className="mt-2 text-sm text-red-600">{errors.body}</p>
-                    )}
-                    <div className="flex justify-between items-center mt-3 text-sm text-gray-500">
-                      <span>Supports markdown formatting</span>
-                      <span>{form.body.length} characters</span>
-                    </div>
-                  </div>
-
-                  {/* Author Field */}
-                  <div>
-                    <label className="flex items-center text-sm font-semibold text-gray-700 mb-3">
-                      <User className="w-4 h-4 mr-2 text-indigo-500" />
-                      Author Name
-                      <span className="text-red-500 ml-1">*</span>
-                    </label>
-                    <div className="relative">
+                    {/* Description */}
+                    <div>
+                      <label className="flex items-center text-sm font-semibold text-gray-900 mb-2">
+                        <FileText className="w-4 h-4 mr-2 text-indigo-600" />
+                        Description (Optional)
+                      </label>
                       <Input
-                        placeholder="Your name or pseudonym"
-                        value={form.author}
-                        onChange={(e) => setForm({ ...form, author: e.target.value })}
-                        className={`w-full px-4 py-3.5 border-2 ${errors.author ? 'border-red-300 focus:border-red-500' : 'border-gray-200 focus:border-indigo-500'} rounded-xl focus:ring-2 focus:ring-indigo-200 transition-all duration-300`}
+                        placeholder="Brief description for search engines and previews..."
+                        value={form.description}
+                        onChange={(e) => setForm({ ...form, description: e.target.value })}
+                        className={`border-2 ${
+                          errors.description ? 'border-red-300' : 'border-gray-200'
+                        } focus:border-indigo-500 rounded-lg`}
+                        maxLength={300}
                       />
-                      {errors.author && (
-                        <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
-                          <AlertCircle className="w-5 h-5 text-red-500" />
+                      <div className="flex justify-between mt-2">
+                        {errors.description && (
+                          <p className="text-sm text-red-600">{errors.description}</p>
+                        )}
+                        <p className={`text-xs ml-auto ${getCharCount(form.description, 300).color}`}>
+                          {getCharCount(form.description, 300).count}/300
+                        </p>
+                      </div>
+                    </div>
+
+                    {/* Content */}
+                    <div>
+                      <label className="flex items-center text-sm font-semibold text-gray-900 mb-2">
+                        <Edit3 className="w-4 h-4 mr-2 text-indigo-600" />
+                        Content
+                        <span className="text-red-500 ml-1">*</span>
+                      </label>
+                      <textarea
+                        placeholder="Write your article content here... (Markdown supported)"
+                        value={form.content}
+                        onChange={(e) => setForm({ ...form, content: e.target.value })}
+                        rows={16}
+                        className={`w-full p-4 border-2 ${
+                          errors.content ? 'border-red-300' : 'border-gray-200'
+                        } focus:border-indigo-500 rounded-lg focus:ring-2 focus:ring-indigo-100 transition-all resize-none`}
+                      />
+                      <div className="flex justify-between mt-2">
+                        {errors.content && (
+                          <p className="text-sm text-red-600">{errors.content}</p>
+                        )}
+                        <div className="flex items-center space-x-4 ml-auto text-xs text-gray-500">
+                          <span>{form.content.length} characters</span>
+                          <span>~{Math.ceil(form.content.split(/\s+/).length / 200)} min read</span>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Tags */}
+                    <div>
+                      <label className="flex items-center text-sm font-semibold text-gray-900 mb-2">
+                        <Tag className="w-4 h-4 mr-2 text-indigo-600" />
+                        Tags
+                      </label>
+                      <Input
+                        placeholder="technology, programming, design (comma separated, max 5)"
+                        value={form.tags}
+                        onChange={(e) => setForm({ ...form, tags: e.target.value })}
+                        className={`border-2 ${
+                          errors.tags ? 'border-red-300' : 'border-gray-200'
+                        } focus:border-indigo-500 rounded-lg`}
+                      />
+                      {errors.tags && (
+                        <p className="mt-2 text-sm text-red-600">{errors.tags}</p>
+                      )}
+                      {form.tags && (
+                        <div className="flex flex-wrap gap-2 mt-3">
+                          {form.tags.split(",").map((tag, i) => (
+                            tag.trim() && (
+                              <span
+                                key={i}
+                                className="px-3 py-1 bg-indigo-100 text-indigo-700 rounded-full text-sm font-medium"
+                              >
+                                #{tag.trim()}
+                              </span>
+                            )
+                          ))}
                         </div>
                       )}
                     </div>
-                    {errors.author && (
-                      <p className="mt-2 text-sm text-red-600">{errors.author}</p>
+                  </form>
+                </div>
+              ) : (
+                /* Preview Mode */
+                <div className="p-6 md:p-8">
+                  <div className="prose max-w-none">
+                    {preview && (
+                      <div className="mb-6 rounded-xl overflow-hidden">
+                        <Image
+                          src={preview}
+                          alt="Article preview"
+                          width={800}
+                          height={400}
+                          className="w-full h-64 object-cover"
+                        />
+                      </div>
                     )}
-                  </div>
-
-                  {/* Tags Field */}
-                  <div>
-                    <label className="flex items-center text-sm font-semibold text-gray-700 mb-3">
-                      <Tag className="w-4 h-4 mr-2 text-indigo-500" />
-                      Tags
-                    </label>
-                    <Input
-                      placeholder="technology, web-development, AI, design (comma separated)"
-                      value={form.tags}
-                      onChange={(e) => setForm({ ...form, tags: e.target.value })}
-                      className="w-full px-4 py-3.5 border-2 border-gray-200 focus:border-indigo-500 rounded-xl focus:ring-2 focus:ring-indigo-200 transition-all duration-300"
-                    />
-                    <p className="mt-2 text-sm text-gray-500">
-                      Add up to 5 tags to help readers discover your content
-                    </p>
-                  </div>
-
-                  {/* Submit Button */}
-                  <Button
-                    type="submit"
-                    disabled={loading || uploading}
-                    className="w-full bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white font-bold py-4 rounded-xl transition-all duration-300 hover:shadow-xl hover:shadow-indigo-500/25 disabled:opacity-50 disabled:cursor-not-allowed group"
-                  >
-                    {loading || uploading ? (
-                      <span className="flex items-center justify-center">
-                        <Loader2 className="w-5 h-5 mr-3 animate-spin" />
-                        {uploading ? "Uploading Image..." : "Publishing..."}
-                      </span>
-                    ) : (
-                      <span className="flex items-center justify-center">
-                        <Sparkles className="w-5 h-5 mr-3 group-hover:rotate-12 transition-transform duration-300" />
-                        Publish Article
-                      </span>
+                    <h1 className="text-4xl font-bold text-gray-900 mb-4">
+                      {form.title || "Your title will appear here"}
+                    </h1>
+                    {form.description && (
+                      <p className="text-xl text-gray-600 mb-6">{form.description}</p>
                     )}
-                  </Button>
-                </form>
-              </div>
+                    <div className="flex items-center space-x-2 mb-6">
+                      {form.tags && form.tags.split(",").map((tag, i) => (
+                        tag.trim() && (
+                          <span
+                            key={i}
+                            className="px-3 py-1 bg-gray-100 text-gray-700 rounded-full text-sm"
+                          >
+                            #{tag.trim()}
+                          </span>
+                        )
+                      ))}
+                    </div>
+                    <div className="text-gray-700 whitespace-pre-wrap">
+                      {form.content || "Your content will appear here..."}
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
 
-          {/* Image Upload Sidebar */}
+          {/* Sidebar */}
           <div className="lg:col-span-1">
-            <div className="sticky top-8 space-y-8">
-              {/* Image Upload Section */}
-              <div className="bg-white rounded-2xl shadow-xl border border-gray-100 p-6">
-                <h3 className="text-lg font-bold text-gray-900 mb-6 flex items-center">
-                  <ImageIcon className="w-5 h-5 mr-2 text-indigo-500" />
+            <div className="sticky top-24 space-y-6">
+              {/* Featured Image */}
+              <div className="bg-white rounded-xl border border-gray-200 p-6">
+                <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+                  <ImageIcon className="w-5 h-5 mr-2 text-indigo-600" />
                   Featured Image
                 </h3>
                 
@@ -285,7 +432,11 @@ export default function CreatePost() {
                   onDragOver={handleDragOver}
                   onDragLeave={handleDragLeave}
                   onDrop={handleDrop}
-                  className={`relative border-2 ${isDragging ? 'border-indigo-500 bg-indigo-50' : 'border-dashed border-gray-300'} rounded-2xl transition-all duration-300 ${!preview ? 'p-8' : 'p-4'}`}
+                  className={`relative border-2 border-dashed rounded-xl transition-all ${
+                    isDragging 
+                      ? 'border-indigo-500 bg-indigo-50' 
+                      : 'border-gray-300 hover:border-gray-400'
+                  }`}
                 >
                   {preview ? (
                     <div className="relative group">
@@ -294,92 +445,87 @@ export default function CreatePost() {
                         alt="Preview"
                         width={400}
                         height={256}
-                        className="w-full h-64 object-cover rounded-xl"
+                        className="w-full h-48 object-cover rounded-lg"
                       />
                       <button
                         onClick={() => {
                           setImageFile(null);
                           setPreview(null);
                         }}
-                        className="absolute top-3 right-3 w-10 h-10 bg-red-500 text-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300 hover:bg-red-600"
+                        className="absolute top-2 right-2 w-8 h-8 bg-red-500 text-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-600"
                       >
-                        <X className="w-5 h-5" />
+                        <X className="w-4 h-4" />
                       </button>
                     </div>
                   ) : (
-                    <div className="text-center">
-                      <div className="w-16 h-16 mx-auto mb-4 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-full flex items-center justify-center">
-                        <Upload className="w-8 h-8 text-indigo-500" />
-                      </div>
-                      <p className="text-gray-700 font-medium mb-2">
-                        Drag & drop your image
+                    <label className="cursor-pointer block p-8 text-center">
+                      <input
+                        type="file"
+                        accept="image/*"
+                        onChange={(e) => handleImageChange(e.target.files?.[0])}
+                        className="hidden"
+                      />
+                      <Upload className="w-10 h-10 text-gray-400 mx-auto mb-3" />
+                      <p className="text-sm font-medium text-gray-700 mb-1">
+                        Click to upload or drag and drop
                       </p>
-                      <p className="text-sm text-gray-500 mb-6">
-                        or click to browse files
+                      <p className="text-xs text-gray-500">
+                        PNG, JPG, WebP up to 5MB
                       </p>
-                      <label className="cursor-pointer">
-                        <input
-                          type="file"
-                          accept="image/*"
-                          onChange={(e) => {
-                            const file = e.target.files?.[0];
-                            if (!file) return;
-                            setImageFile(file);
-                            setPreview(URL.createObjectURL(file));
-                          }}
-                          className="hidden"
-                        />
-                        <div className="inline-flex items-center px-6 py-3 bg-gradient-to-r from-gray-100 to-gray-200 text-gray-800 font-semibold rounded-xl hover:from-gray-200 hover:to-gray-300 transition-all duration-300">
-                          <Upload className="w-4 h-4 mr-2" />
-                          Select Image
-                        </div>
-                      </label>
-                    </div>
+                    </label>
                   )}
                 </div>
                 
-                <div className="mt-6 text-sm text-gray-500">
+                <div className="mt-4 space-y-1 text-xs text-gray-500">
                   <p>• Recommended: 1200×630 pixels</p>
                   <p>• Max file size: 5MB</p>
-                  <p>• Formats: JPG, PNG, WebP</p>
+                  <p>• Supported: JPG, PNG, WebP</p>
                 </div>
               </div>
 
-              {/* Tips Section */}
-              <div className="bg-gradient-to-br from-indigo-50 to-purple-50 rounded-2xl border border-indigo-100 p-6">
-                <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center">
-                  <Sparkles className="w-5 h-5 mr-2 text-amber-500" />
-                  Pro Tips
+              {/* Publishing Tips */}
+              <div className="bg-gradient-to-br from-indigo-50 to-purple-50 rounded-xl border border-indigo-200 p-6">
+                <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+                  <Zap className="w-5 h-5 mr-2 text-amber-500" />
+                  Publishing Tips
                 </h3>
-                <ul className="space-y-4">
-                  <li className="flex items-start">
-                    <div className="w-2 h-2 bg-indigo-500 rounded-full mt-2 mr-3"></div>
-                    <span className="text-gray-700 text-sm">
-                      <strong>Catchy titles</strong> get 73% more clicks
-                    </span>
+                <ul className="space-y-3">
+                  <li className="flex items-start text-sm text-gray-700">
+                    <CheckCircle2 className="w-4 h-4 text-green-600 mr-2 mt-0.5 flex-shrink-0" />
+                    <span>Use a clear, descriptive title (10-60 characters)</span>
                   </li>
-                  <li className="flex items-start">
-                    <div className="w-2 h-2 bg-indigo-500 rounded-full mt-2 mr-3"></div>
-                    <span className="text-gray-700 text-sm">
-                      Use <strong>3-5 relevant tags</strong> for better reach
-                    </span>
+                  <li className="flex items-start text-sm text-gray-700">
+                    <CheckCircle2 className="w-4 h-4 text-green-600 mr-2 mt-0.5 flex-shrink-0" />
+                    <span>Add 3-5 relevant tags for better discoverability</span>
                   </li>
-                  <li className="flex items-start">
-                    <div className="w-2 h-2 bg-indigo-500 rounded-full mt-2 mr-3"></div>
-                    <span className="text-gray-700 text-sm">
-                      Articles with <strong>images</strong> get 94% more views
-                    </span>
+                  <li className="flex items-start text-sm text-gray-700">
+                    <CheckCircle2 className="w-4 h-4 text-green-600 mr-2 mt-0.5 flex-shrink-0" />
+                    <span>Include a featured image to increase engagement</span>
                   </li>
-                  <li className="flex items-start">
-                    <div className="w-2 h-2 bg-indigo-500 rounded-full mt-2 mr-3"></div>
-                    <span className="text-gray-700 text-sm">
-                      <strong>Proofread</strong> before publishing
-                    </span>
+                  <li className="flex items-start text-sm text-gray-700">
+                    <CheckCircle2 className="w-4 h-4 text-green-600 mr-2 mt-0.5 flex-shrink-0" />
+                    <span>Proofread your content before publishing</span>
                   </li>
                 </ul>
               </div>
 
-                     </div>
+              {/* Info Box */}
+              <div className="bg-blue-50 rounded-xl border border-blue-200 p-4">
+                <div className="flex items-start">
+                  <Info className="w-5 h-5 text-blue-600 mr-3 mt-0.5 flex-shrink-0" />
+                  <div className="text-sm text-blue-900">
+                    <p className="font-semibold mb-1">Need help?</p>
+                    <p className="text-blue-700">
+                      Check out our{" "}
+                      <a href="/guide" className="underline font-medium">
+                        writing guide
+                      </a>{" "}
+                      for best practices and tips.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </div>

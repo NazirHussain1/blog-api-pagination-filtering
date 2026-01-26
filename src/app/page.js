@@ -4,226 +4,346 @@ import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { fetchPosts } from "@/redux/features/posts/postSlice";
 import Link from "next/link";
+import Image from "next/image";
 import {
-  FaArrowRight,
-  FaBlogger,
-  FaSearch,
-  FaCalendarAlt,
-  FaUser,
-  FaTags,
-  FaFire,
-} from "react-icons/fa";
-import { FiTrendingUp } from "react-icons/fi";
+  ArrowRight,
+  BookOpen,
+  Search,
+  Calendar,
+  User,
+  Tag,
+  Flame,
+  TrendingUp,
+  Eye,
+  Heart,
+  MessageCircle,
+  Sparkles,
+  Zap,
+  Star,
+  Award,
+  Users,
+  Clock,
+  ChevronRight,
+  Feather,
+  Target,
+  Lightbulb,
+} from "lucide-react";
 
-export default function Home() {
+export default function HomePage() {
   const dispatch = useDispatch();
   const { list: posts, loading } = useSelector((state) => state.posts);
   const [isLoaded, setIsLoaded] = useState(false);
 
   useEffect(() => {
-    dispatch(fetchPosts({ page: 1, limit: 3, sort: "newest" }));
+    dispatch(fetchPosts({ page: 1, limit: 6 }));
     setTimeout(() => setIsLoaded(true), 100);
   }, [dispatch]);
 
-  return (
-    <main
-      className={`min-h-screen bg-gradient-to-br from-gray-50 to-blue-50 transition-all duration-500 ${
-        isLoaded ? "opacity-100" : "opacity-0"
-      }`}
-    >
-      {/* Background */}
-      <div className="fixed inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute -top-40 -right-40 w-80 h-80 bg-purple-200 rounded-full mix-blend-multiply filter blur-xl opacity-20 animate-pulse"></div>
-        <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-blue-200 rounded-full mix-blend-multiply filter blur-xl opacity-20 animate-pulse delay-1000"></div>
-      </div>
+  const features = [
+    {
+      icon: Lightbulb,
+      title: "Expert Insights",
+      description: "Learn from industry professionals and thought leaders",
+      color: "from-amber-500 to-orange-500",
+    },
+    {
+      icon: Target,
+      title: "Focused Content",
+      description: "Carefully curated articles on topics that matter",
+      color: "from-blue-500 to-cyan-500",
+    },
+    {
+      icon: Users,
+      title: "Active Community",
+      description: "Connect with writers and readers from around the world",
+      color: "from-purple-500 to-pink-500",
+    },
+  ];
 
+  const stats = [
+    { label: "Articles", value: "1,200+", icon: BookOpen },
+    { label: "Writers", value: "250+", icon: Feather },
+    { label: "Readers", value: "50K+", icon: Users },
+    { label: "Categories", value: "15+", icon: Tag },
+  ];
+
+  return (
+    <main className={`min-h-screen bg-white transition-opacity duration-700 ${isLoaded ? "opacity-100" : "opacity-0"}`}>
       {/* Hero Section */}
-      <section className="relative py-20 md:py-28 bg-gradient-to-br from-indigo-900 via-purple-800 to-pink-700 text-white overflow-hidden">
-        <div className="absolute inset-0 bg-black opacity-20"></div>
-        <div className="container mx-auto px-6 relative z-10">
+      <section className="relative bg-gradient-to-br from-indigo-600 via-purple-600 to-pink-600 text-white overflow-hidden">
+        {/* Background Pattern */}
+        <div className="absolute inset-0 opacity-10">
+          <div className="absolute top-0 left-0 w-96 h-96 bg-white rounded-full -translate-x-1/2 -translate-y-1/2"></div>
+          <div className="absolute bottom-0 right-0 w-96 h-96 bg-white rounded-full translate-x-1/2 translate-y-1/2"></div>
+        </div>
+
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-20 md:py-32 relative z-10">
           <div className="max-w-4xl mx-auto text-center">
-            <div className="inline-flex items-center justify-center p-4 bg-gradient-to-r from-amber-500 to-orange-500 rounded-2xl mb-8 shadow-2xl animate-float">
-              <FaBlogger className="text-4xl" />
+            {/* Badge */}
+            <div className="inline-flex items-center space-x-2 bg-white/20 backdrop-blur-sm px-4 py-2 rounded-full mb-8 animate-fade-in">
+              <Sparkles className="w-4 h-4 text-amber-300" />
+              <span className="text-sm font-semibold">Welcome to InsightHub</span>
             </div>
-            <h1 className="text-5xl md:text-6xl lg:text-7xl font-black mb-8 leading-tight bg-clip-text text-transparent bg-gradient-to-r from-amber-300 to-pink-300 animate-slide-up">
-              The Insight Hub
+
+            {/* Heading */}
+            <h1 className="text-5xl md:text-6xl lg:text-7xl font-bold mb-6 leading-tight animate-slide-up">
+              Where Ideas Come to Life
             </h1>
-            <p className="text-xl md:text-2xl text-blue-100 mb-12 max-w-3xl mx-auto leading-relaxed font-light animate-slide-up delay-150">
-              Where ideas spark innovation. Explore cutting-edge articles,
-              expert tutorials, and transformative insights from visionary
-              thinkers.
+            
+            <p className="text-xl md:text-2xl text-indigo-100 mb-12 max-w-3xl mx-auto leading-relaxed animate-slide-up animation-delay-200">
+              Discover insightful articles, expert tutorials, and transformative ideas from passionate writers around the world.
             </p>
-            <div className="flex flex-col sm:flex-row gap-6 justify-center animate-slide-up delay-300">
+
+            {/* CTA Buttons */}
+            <div className="flex flex-col sm:flex-row gap-4 justify-center animate-slide-up animation-delay-400">
               <Link
                 href="/posts"
-                className="group inline-flex items-center justify-center bg-gradient-to-r from-amber-500 to-orange-500 text-white font-bold py-4 px-10 rounded-xl hover:shadow-2xl hover:scale-105 transition-all duration-300 shadow-xl"
+                className="group inline-flex items-center justify-center bg-white text-indigo-600 font-semibold py-4 px-8 rounded-xl hover:bg-gray-50 hover:shadow-xl transition-all duration-300"
               >
-                <span className="mr-3">Discover Articles</span>
-                <FaArrowRight className="group-hover:translate-x-2 transition-transform duration-300" />
+                <span>Explore Articles</span>
+                <ArrowRight className="ml-2 w-5 h-5 group-hover:translate-x-1 transition-transform" />
               </Link>
+              
               <Link
-                href="#latest"
-                className="group inline-flex items-center justify-center bg-white/10 backdrop-blur-lg border-2 border-white/30 text-white font-bold py-4 px-10 rounded-xl hover:bg-white/20 transition-all duration-300"
+                href="/trending"
+                className="group inline-flex items-center justify-center bg-white/10 backdrop-blur-sm border-2 border-white/30 text-white font-semibold py-4 px-8 rounded-xl hover:bg-white/20 transition-all duration-300"
               >
-                <FaFire className="mr-3 text-amber-300" />
-                Trending Now
+                <Flame className="mr-2 w-5 h-5 text-amber-300" />
+                <span>Trending Now</span>
               </Link>
             </div>
           </div>
         </div>
 
-        {/* Hero bottom wave */}
+        {/* Wave Divider */}
         <div className="absolute bottom-0 left-0 right-0">
-          <svg
-            className="w-full h-20 md:h-28 text-gray-50"
-            viewBox="0 0 1200 120"
-            preserveAspectRatio="none"
-          >
+          <svg className="w-full h-16 md:h-24 text-white" viewBox="0 0 1200 120" preserveAspectRatio="none">
             <path
-              d="M0,0V46.29c47.79,22.2,103.59,32.17,158,28,70.36-5.37,136.33-33.31,206.8-37.5C438.64,32.43,512.34,53.67,583,72.05c69.27,18,138.3,24.88,209.4,13.08,36.15-6,69.85-17.84,104.45-29.34C989.49,25,1113-14.29,1200,52.47V0Z"
-              opacity=".25"
-              fill="currentColor"
-            ></path>
-            <path
-              d="M0,0V15.81C13,36.92,27.64,56.86,47.69,72.05,99.41,111.27,165,111,224.58,91.58c31.15-10.15,60.09-26.07,89.67-39.8,40.92-19,84.73-46,130.83-49.67,36.26-2.85,70.9,9.42,98.6,31.56,31.77,25.39,62.32,62,103.63,73,40.44,10.79,81.35,6.36,117.35-5.65C939.06,29.08,1053,4,1200,0V0Z"
+              d="M321.39,56.44c58-10.79,114.16-30.13,172-41.86,82.39-16.72,168.19-17.73,250.45-.39C823.78,31,906.67,72,985.66,92.83c70.05,18.48,146.53,26.09,214.34,3V0H0V27.35A600.21,600.21,0,0,0,321.39,56.44Z"
               fill="currentColor"
             ></path>
           </svg>
         </div>
       </section>
 
-      {/* Latest Posts Section */}
-      <section className="py-16 md:py-24 px-6" id="latest">
-        <div className="container mx-auto max-w-7xl">
-          <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center mb-16 gap-8">
-            <div className="flex-1">
-              <div className="inline-flex items-center bg-gradient-to-r from-blue-100 to-indigo-100 text-indigo-800 font-bold py-2 px-4 rounded-full mb-4">
-                <FiTrendingUp className="mr-2" />
-                FRESH CONTENT
+      {/* Stats Section */}
+      <section className="py-12 bg-gray-50 border-b border-gray-200">
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
+            {stats.map((stat, index) => (
+              <div key={index} className="text-center">
+                <div className="inline-flex items-center justify-center w-12 h-12 bg-indigo-100 rounded-xl mb-3">
+                  <stat.icon className="w-6 h-6 text-indigo-600" />
+                </div>
+                <div className="text-3xl font-bold text-gray-900 mb-1">{stat.value}</div>
+                <div className="text-sm text-gray-600">{stat.label}</div>
               </div>
-              <h2 className="text-4xl md:text-5xl font-black text-gray-900 mb-4">
-                Latest{" "}
-                <span className="bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">
-                  Insights
-                </span>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Features Section */}
+      <section className="py-16 md:py-24">
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-16">
+            <div className="inline-flex items-center space-x-2 bg-indigo-100 text-indigo-600 px-4 py-2 rounded-full mb-4">
+              <Star className="w-4 h-4" />
+              <span className="text-sm font-semibold">WHY CHOOSE US</span>
+            </div>
+            <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-4">
+              Everything You Need
+            </h2>
+            <p className="text-xl text-gray-600 max-w-2xl mx-auto">
+              Join thousands of readers and writers in our thriving community
+            </p>
+          </div>
+
+          <div className="grid md:grid-cols-3 gap-8">
+            {features.map((feature, index) => (
+              <div
+                key={index}
+                className="bg-white rounded-2xl border border-gray-200 p-8 hover:shadow-xl hover:-translate-y-1 transition-all duration-300"
+              >
+                <div className={`inline-flex items-center justify-center w-14 h-14 bg-gradient-to-r ${feature.color} rounded-xl mb-6`}>
+                  <feature.icon className="w-7 h-7 text-white" />
+                </div>
+                <h3 className="text-xl font-bold text-gray-900 mb-3">{feature.title}</h3>
+                <p className="text-gray-600">{feature.description}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Latest Posts Section */}
+      <section className="py-16 md:py-24 bg-gray-50">
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center mb-12 gap-6">
+            <div>
+              <div className="inline-flex items-center space-x-2 bg-indigo-100 text-indigo-600 px-4 py-2 rounded-full mb-4">
+                <TrendingUp className="w-4 h-4" />
+                <span className="text-sm font-semibold">LATEST ARTICLES</span>
+              </div>
+              <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-4">
+                Recent Posts
               </h2>
-              <p className="text-xl text-gray-600 max-w-2xl">
-                Dive into our most recent articles covering technology, design,
-                development, and innovation trends.
+              <p className="text-xl text-gray-600">
+                Fresh insights and perspectives from our community
               </p>
             </div>
 
             <Link
               href="/posts"
-              className="group inline-flex items-center justify-center bg-gradient-to-r from-gray-900 to-gray-800 text-white font-bold py-4 px-8 rounded-xl hover:shadow-2xl hover:scale-105 transition-all duration-300 shadow-lg"
+              className="group inline-flex items-center text-indigo-600 hover:text-indigo-700 font-semibold"
             >
-              <span className="mr-3">Browse All Articles</span>
-              <FaArrowRight className="group-hover:translate-x-2 transition-transform duration-300" />
+              <span>View All Articles</span>
+              <ChevronRight className="ml-1 w-5 h-5 group-hover:translate-x-1 transition-transform" />
             </Link>
           </div>
 
           {/* Posts Grid */}
           {loading ? (
             <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-              {[...Array(3)].map((_, index) => (
-                <div
-                  key={`placeholder-${index}`}
-                  className="bg-white rounded-2xl shadow-lg p-6 animate-pulse"
-                >
-                  <div className="h-48 bg-gray-200 rounded-xl mb-6"></div>
-                  <div className="h-6 bg-gray-200 rounded mb-4"></div>
-                  <div className="h-4 bg-gray-200 rounded mb-2"></div>
-                  <div className="h-4 bg-gray-200 rounded mb-6"></div>
-                  <div className="h-10 bg-gray-200 rounded"></div>
-                </div>
-              ))}
-            </div>
-          ) : (
-            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-              {posts.map((post, index) => (
-                <div
-                  key={post._id ? post._id : `post-${index}`} // unique key
-                  className="group transform transition-all duration-500 hover:-translate-y-2"
-                  style={{ animationDelay: `${index * 150}ms` }}
-                >
-                  <div className="relative overflow-hidden bg-white rounded-2xl shadow-xl group-hover:shadow-2xl transition-all duration-300 h-full border border-gray-100">
-                    <div className="absolute top-6 right-6 z-10">
-                      <div className="bg-gradient-to-r from-amber-500 to-orange-500 text-white font-bold py-2 px-4 rounded-full text-sm shadow-lg">
-                        NEW
-                      </div>
-                    </div>
-                    <div className="p-8 h-full flex flex-col">
-                      <div className="mb-6">
-                        <div className="flex items-center text-sm text-gray-500 mb-4">
-                          <FaCalendarAlt className="mr-2" />
-                          <span>Just Published</span>
-                        </div>
-                        <h3 className="text-2xl font-bold text-gray-900 mb-4 group-hover:text-indigo-600 transition-colors duration-300 line-clamp-2">
-                          {post.title}
-                        </h3>
-                        <p className="text-gray-600 mb-6 line-clamp-3 flex-grow">
-                          {post.excerpt ||
-                            "Explore this insightful article packed with valuable information and expert perspectives."}
-                        </p>
-                      </div>
-
-                      <div className="mt-auto pt-6 border-t border-gray-100">
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center">
-                            <div className="w-10 h-10 bg-gradient-to-r from-blue-500 to-cyan-400 rounded-full flex items-center justify-center text-white font-bold">
-                              <FaUser />
-                            </div>
-                            <div className="ml-3">
-                              <div className="font-semibold text-gray-900">
-                                {post.author?.name || "Admin"}
-                              </div>
-                              <div className="text-sm text-gray-500">
-                                Expert Writer
-                              </div>
-                            </div>
-                          </div>
-                          <Link
-                            href={`/posts/${post.slug || post._id}`}
-                            className="inline-flex items-center text-indigo-600 font-semibold hover:text-indigo-800 transition-colors duration-300"
-                          >
-                            Read More
-                            <FaArrowRight className="ml-2 group-hover:translate-x-2 transition-transform duration-300" />
-                          </Link>
-                        </div>
-                      </div>
-                    </div>
+              {[1, 2, 3].map((i) => (
+                <div key={i} className="bg-white rounded-xl border border-gray-200 overflow-hidden animate-pulse">
+                  <div className="h-48 bg-gray-200"></div>
+                  <div className="p-6">
+                    <div className="h-4 bg-gray-200 rounded mb-4"></div>
+                    <div className="h-4 bg-gray-200 rounded w-3/4 mb-4"></div>
+                    <div className="h-3 bg-gray-200 rounded w-1/2"></div>
                   </div>
                 </div>
               ))}
             </div>
-          )}
+          ) : posts && posts.length > 0 ? (
+            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+              {posts.slice(0, 6).map((post, index) => (
+                <article
+                  key={post._id || index}
+                  className="group bg-white rounded-xl border border-gray-200 overflow-hidden hover:shadow-xl hover:-translate-y-1 transition-all duration-300"
+                >
+                  {/* Post Image */}
+                  <Link href={`/posts/${post._id}`} className="block relative h-48 bg-gradient-to-br from-indigo-100 to-purple-100 overflow-hidden">
+                    {post.image ? (
+                      <Image
+                        src={post.image}
+                        alt={post.title}
+                        fill
+                        className="object-cover group-hover:scale-105 transition-transform duration-300"
+                      />
+                    ) : (
+                      <div className="absolute inset-0 flex items-center justify-center">
+                        <BookOpen className="w-12 h-12 text-indigo-300" />
+                      </div>
+                    )}
+                    <div className="absolute top-4 right-4">
+                      <span className="px-3 py-1 bg-white/90 backdrop-blur-sm text-indigo-600 text-xs font-semibold rounded-full">
+                        NEW
+                      </span>
+                    </div>
+                  </Link>
 
-          {/* Search / Categories Section */}
-          <div className="mt-20 p-8 bg-gradient-to-r from-indigo-50 to-purple-50 rounded-2xl border border-indigo-100">
-            <div className="text-center max-w-3xl mx-auto">
-              <FaSearch className="text-4xl text-indigo-600 mb-6 mx-auto" />
-              <h3 className="text-3xl font-bold text-gray-900 mb-4">
-                Can not Find What You are Looking For?
-              </h3>
-              <p className="text-lg text-gray-600 mb-8">
-                Explore our complete archive of articles, tutorials, and
-                resources. Use our advanced search to find exactly what you
-                need.
+                  {/* Post Content */}
+                  <div className="p-6">
+                    <div className="flex items-center text-sm text-gray-500 mb-3">
+                      <Calendar className="w-4 h-4 mr-1" />
+                      <span>{new Date(post.createdAt).toLocaleDateString()}</span>
+                      <span className="mx-2">•</span>
+                      <Clock className="w-4 h-4 mr-1" />
+                      <span>5 min read</span>
+                    </div>
+
+                    <Link href={`/posts/${post._id}`}>
+                      <h3 className="text-xl font-bold text-gray-900 mb-3 group-hover:text-indigo-600 transition-colors line-clamp-2">
+                        {post.title}
+                      </h3>
+                    </Link>
+
+                    <p className="text-gray-600 mb-4 line-clamp-2">
+                      {post.description || post.content?.substring(0, 120) + "..."}
+                    </p>
+
+                    <div className="flex items-center justify-between pt-4 border-t border-gray-100">
+                      <div className="flex items-center space-x-1">
+                        <div className="w-8 h-8 bg-gradient-to-r from-indigo-500 to-purple-600 rounded-full flex items-center justify-center text-white text-sm font-semibold">
+                          {post.author?.name?.charAt(0) || "A"}
+                        </div>
+                        <span className="text-sm font-medium text-gray-900 ml-2">
+                          {post.author?.name || "Anonymous"}
+                        </span>
+                      </div>
+
+                      <div className="flex items-center space-x-3 text-sm text-gray-500">
+                        <span className="flex items-center">
+                          <Eye className="w-4 h-4 mr-1" />
+                          {post.views || 0}
+                        </span>
+                        <span className="flex items-center">
+                          <Heart className="w-4 h-4 mr-1" />
+                          {post.likes?.length || post.likes || 0}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                </article>
+              ))}
+            </div>
+          ) : (
+            <div className="text-center py-16 bg-white rounded-xl border border-gray-200">
+              <BookOpen className="w-16 h-16 text-gray-400 mx-auto mb-4" />
+              <h3 className="text-xl font-semibold text-gray-900 mb-2">No Articles Yet</h3>
+              <p className="text-gray-600 mb-6">Be the first to share your insights!</p>
+              <Link
+                href="/posts/create"
+                className="inline-flex items-center bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-3 px-6 rounded-lg transition-colors"
+              >
+                <Feather className="w-4 h-4 mr-2" />
+                Write an Article
+              </Link>
+            </div>
+          )}
+        </div>
+      </section>
+
+      {/* CTA Section */}
+      <section className="py-16 md:py-24">
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="bg-gradient-to-r from-indigo-600 to-purple-600 rounded-3xl p-8 md:p-16 text-center text-white relative overflow-hidden">
+            {/* Background Pattern */}
+            <div className="absolute inset-0 opacity-10">
+              <div className="absolute top-0 right-0 w-64 h-64 bg-white rounded-full translate-x-1/2 -translate-y-1/2"></div>
+              <div className="absolute bottom-0 left-0 w-64 h-64 bg-white rounded-full -translate-x-1/2 translate-y-1/2"></div>
+            </div>
+
+            <div className="relative z-10 max-w-3xl mx-auto">
+              <div className="inline-flex items-center justify-center w-16 h-16 bg-white/20 backdrop-blur-sm rounded-2xl mb-6">
+                <Zap className="w-8 h-8" />
+              </div>
+              
+              <h2 className="text-3xl md:text-5xl font-bold mb-6">
+                Ready to Start Your Journey?
+              </h2>
+              
+              <p className="text-xl text-indigo-100 mb-8 max-w-2xl mx-auto">
+                Join our community of writers and readers. Share your knowledge and learn from others.
               </p>
+
               <div className="flex flex-col sm:flex-row gap-4 justify-center">
                 <Link
-                  href="/categories"
-                  className="inline-flex items-center justify-center bg-white text-gray-900 font-bold py-3 px-6 rounded-xl hover:shadow-lg transition-all duration-300 border border-gray-200"
+                  href="/posts/create"
+                  className="inline-flex items-center justify-center bg-white text-indigo-600 font-semibold py-4 px-8 rounded-xl hover:bg-gray-50 hover:shadow-xl transition-all duration-300"
                 >
-                  <FaTags className="mr-3 text-indigo-600" />
-                  Browse Categories
+                  <Feather className="mr-2 w-5 h-5" />
+                  <span>Start Writing</span>
                 </Link>
+                
                 <Link
-                  href="/search"
-                  className="inline-flex items-center justify-center bg-indigo-600 text-white font-bold py-3 px-6 rounded-xl hover:bg-indigo-700 hover:shadow-lg transition-all duration-300"
+                  href="/posts"
+                  className="inline-flex items-center justify-center bg-white/10 backdrop-blur-sm border-2 border-white/30 text-white font-semibold py-4 px-8 rounded-xl hover:bg-white/20 transition-all duration-300"
                 >
-                  <FaSearch className="mr-3" />
-                  Advanced Search
+                  <Search className="mr-2 w-5 h-5" />
+                  <span>Explore Content</span>
                 </Link>
               </div>
             </div>
@@ -231,18 +351,18 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Global Styles */}
+      {/* Styles */}
       <style jsx global>{`
-        @keyframes float {
-          0%,
-          100% {
-            transform: translateY(0px);
+        @keyframes fade-in {
+          from {
+            opacity: 0;
           }
-          50% {
-            transform: translateY(-20px);
+          to {
+            opacity: 1;
           }
         }
-        @keyframes slideUp {
+        
+        @keyframes slide-up {
           from {
             transform: translateY(30px);
             opacity: 0;
@@ -252,23 +372,30 @@ export default function Home() {
             opacity: 1;
           }
         }
-        .animate-float {
-          animation: float 6s ease-in-out infinite;
+        
+        .animate-fade-in {
+          animation: fade-in 0.6s ease-out;
         }
+        
         .animate-slide-up {
-          animation: slideUp 0.8s ease-out forwards;
+          animation: slide-up 0.8s ease-out forwards;
         }
+        
+        .animation-delay-200 {
+          animation-delay: 0.2s;
+          opacity: 0;
+        }
+        
+        .animation-delay-400 {
+          animation-delay: 0.4s;
+          opacity: 0;
+        }
+        
         .line-clamp-2 {
-          overflow: hidden;
           display: -webkit-box;
           -webkit-line-clamp: 2;
           -webkit-box-orient: vertical;
-        }
-        .line-clamp-3 {
           overflow: hidden;
-          display: -webkit-box;
-          -webkit-line-clamp: 3;
-          -webkit-box-orient: vertical;
         }
       `}</style>
     </main>
