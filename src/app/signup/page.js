@@ -7,29 +7,20 @@ import { signupUser } from "@/redux/features/auth/authSlice";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
-import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
-import { toast, Toaster } from "sonner";
+import { toast } from "sonner";
 import {
   User,
   Mail,
-  Phone,
   Lock,
   Eye,
   EyeOff,
-  Shield,
-  Sparkles,
-  ArrowRight,
+  ArrowLeft,
   CheckCircle2,
   AlertCircle,
-  Users,
-  Globe,
-  Award,
-  ArrowLeft,
-  Facebook,
-  Twitter,
-  Github,
-  MessageCircle as WhatsApp
+  Sparkles,
+  Shield,
+  Loader2,
 } from "lucide-react";
 import Link from "next/link";
 
@@ -41,686 +32,412 @@ export default function SignupPage() {
   const [form, setForm] = useState({
     name: "",
     email: "",
-    phone: "",
     password: "",
     confirmPassword: "",
-    agree: false,
-    role: "user",
-    socialLinks: {
-      twitter: "",
-      linkedin: "",
-      github: "",
-      instagram: "",
-      website: "",
-      whatsapp: ""
-    }
+    agreeToTerms: false,
   });
 
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  const [step, setStep] = useState(1);
-  const [isAnimating, setIsAnimating] = useState(false);
+  const [errors, setErrors] = useState({});
 
-  const handleNextStep = () => {
-    if (step === 1) {
-      if (!form.name || !form.email || !form.phone) {
-        toast.error("Please fill in all personal details", {
-          icon: <AlertCircle className="text-red-500" />
-        });
-        return;
-      }
-      if (!/^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i.test(form.email)) {
-        toast.error("Please enter a valid email address", {
-          icon: <AlertCircle className="text-red-500" />
-        });
-        return;
-      }
-      if (!/^[0-9]{10,15}$/.test(form.phone)) {
-        toast.error("Please enter a valid phone number", {
-          icon: <AlertCircle className="text-red-500" />
-        });
-        return;
-      }
-    } else if (step === 2) {
-      if (!form.password || !form.confirmPassword) {
-        toast.error("Please fill in password fields", {
-          icon: <AlertCircle className="text-red-500" />
-        });
-        return;
-      }
-      if (form.password !== form.confirmPassword) {
-        toast.error("Passwords do not match", {
-          icon: <AlertCircle className="text-red-500" />
-        });
-        return;
-      }
-      if (form.password.length < 6) {
-        toast.error("Password must be at least 6 characters", {
-          icon: <AlertCircle className="text-red-500" />
-        });
-        return;
-      }
-    } else if (step === 3) {
-      if (!form.agree) {
-        toast.error("Please accept the terms and conditions", {
-          icon: <AlertCircle className="text-red-500" />
-        });
-        return;
-      }
+  const validateForm = () => {
+    const newErrors = {};
+
+    // Name validation
+    if (!form.name.trim()) {
+      newErrors.name = "Name is required";
+    } else if (form.name.trim().length < 2) {
+      newErrors.name = "Name must be at least 2 characters";
     }
-    // Step 4 (social links) is optional, no validation needed
 
-    setIsAnimating(true);
-    setTimeout(() => {
-      setStep(step + 1);
-      setIsAnimating(false);
-    }, 300);
+    // Email validation
+    if (!form.email) {
+      newErrors.email = "Email is required";
+    } else if (!/^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i.test(form.email)) {
+      newErrors.email = "Invalid email address";
+    }
+
+    // Password validation
+    if (!form.password) {
+      newErrors.password = "Password is required";
+    } else if (form.password.length < 8) {
+      newErrors.password = "Password must be at least 8 characters";
+    } else if (!/(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/.test(form.password)) {
+      newErrors.password = "Password must contain uppercase, lowercase, and numbers";
+    }
+
+    // Confirm password validation
+    if (!form.confirmPassword) {
+      newErrors.confirmPassword = "Please confirm your password";
+    } else if (form.password !== form.confirmPassword) {
+      newErrors.confirmPassword = "Passwords do not match";
+    }
+
+    // Terms validation
+    if (!form.agreeToTerms) {
+      newErrors.agreeToTerms = "You must accept the terms and conditions";
+    }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
   };
 
-  const handlePrevStep = () => {
-    setIsAnimating(true);
-    setTimeout(() => {
-      setStep(step - 1);
-      setIsAnimating(false);
-    }, 300);
+  const getPasswordStrength = () => {
+    const password = form.password;
+    if (!password) return { strength: 0, label: "", color: "" };
+
+    let strength = 0;
+    if (password.length >= 8) strength++;
+    if (password.length >= 12) strength++;
+    if (/[a-z]/.test(password) && /[A-Z]/.test(password)) strength++;
+    if (/\d/.test(password)) strength++;
+    if (/[^A-Za-z0-9]/.test(password)) strength++;
+
+    if (strength <= 2) return { strength: 33, label: "Weak", color: "bg-red-500" };
+    if (strength <= 3) return { strength: 66, label: "Medium", color: "bg-amber-500" };
+    return { strength: 100, label: "Strong", color: "bg-green-500" };
   };
 
-  const handleSignup = async () => {
-    const { name, email, phone, password, confirmPassword, agree, socialLinks } = form;
+  const handleSignup = async (e) => {
+    e.preventDefault();
 
-    if (!name || !email || !phone || !password || !confirmPassword) {
-      toast.error("All fields are required", {
-        icon: <AlertCircle className="text-red-500" />
-      });
-      return;
-    }
-
-    if (!/^[0-9]{10,15}$/.test(phone)) {
-      toast.error("Enter a valid phone number (10-15 digits)", {
-        icon: <AlertCircle className="text-red-500" />
-      });
-      return;
-    }
-
-    if (password.length < 8) {
-      toast.error("Password must be at least 8 characters", {
-        icon: <AlertCircle className="text-red-500" />
-      });
-      return;
-    }
-
-    if (!/(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/.test(password)) {
-      toast.error("Password must contain uppercase, lowercase & numbers", {
-        icon: <AlertCircle className="text-red-500" />
-      });
-      return;
-    }
-
-    if (password !== confirmPassword) {
-      toast.error("Passwords do not match", {
-        icon: <AlertCircle className="text-red-500" />
-      });
-      return;
-    }
-
-    if (!agree) {
-      toast.error("You must agree to Terms & Privacy Policy", {
-        icon: <AlertCircle className="text-red-500" />
-      });
+    if (!validateForm()) {
+      toast.error("Please fix the errors in the form");
       return;
     }
 
     try {
       await dispatch(signupUser({
-        name,
-        email,
-        phone,
-        password,
-        role: form.role,
-        socialLinks
+        name: form.name.trim(),
+        email: form.email.trim().toLowerCase(),
+        password: form.password,
       })).unwrap();
 
-      toast.success("Welcome to InsightHub!", {
-        description: "Your account has been created successfully",
+      toast.success("Account created successfully!", {
+        description: "Redirecting to login...",
         icon: <CheckCircle2 className="text-green-500" />,
-        duration: 5000
       });
-      
-      // Confetti celebration
-      if (typeof window !== 'undefined') {
-        const confetti = import('canvas-confetti');
-        confetti.then((confetti) => {
-          confetti.default({
-            particleCount: 150,
-            spread: 70,
-            origin: { y: 0.6 }
-          });
-        });
-      }
 
       setTimeout(() => {
         router.push("/login");
-      }, 2000);
+      }, 1500);
     } catch (err) {
-      toast.error(err?.error || "Signup failed", {
+      toast.error(err?.message || "Signup failed. Please try again.", {
         icon: <AlertCircle className="text-red-500" />
       });
     }
   };
 
-  const steps = [
-    { number: 1, title: "Personal Info", icon: User },
-    { number: 2, title: "Security", icon: Shield },
-    { number: 3, title: "Account Type", icon: Award }
-  ];
+  const passwordStrength = getPasswordStrength();
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50 flex items-center justify-center p-4 relative overflow-hidden">
-      {/* Background Elements */}
+    <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-white to-purple-50 flex items-center justify-center p-4">
+      {/* Background Decoration */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute -top-40 -right-40 w-80 h-80 bg-purple-200 rounded-full mix-blend-multiply filter blur-3xl opacity-30"></div>
-        <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-blue-200 rounded-full mix-blend-multiply filter blur-3xl opacity-30"></div>
-        <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-gradient-to-r from-indigo-100 to-purple-100 rounded-full opacity-10"></div>
+        <div className="absolute top-0 right-0 w-96 h-96 bg-purple-200 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-blob"></div>
+        <div className="absolute bottom-0 left-0 w-96 h-96 bg-indigo-200 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-blob animation-delay-2000"></div>
       </div>
 
       {/* Back Button */}
-      <button
-        onClick={() => router.push("/")}
-        className="absolute top-6 left-6 flex items-center text-gray-600 hover:text-gray-900 transition-colors duration-300 z-10"
+      <Link
+        href="/"
+        className="absolute top-6 left-6 flex items-center text-gray-600 hover:text-gray-900 transition-colors z-10"
       >
         <ArrowLeft className="w-5 h-5 mr-2" />
-        Back to Home
-      </button>
+        <span className="font-medium">Back to Home</span>
+      </Link>
 
-      <div className="w-full max-w-4xl z-10">
-        <div className="grid md:grid-cols-2 gap-8 items-center">
-          {/* Left Side - Branding & Info */}
-          <div className="hidden md:block">
-            <div className="space-y-8">
-              <div className="inline-flex items-center space-x-3 p-4 bg-gradient-to-r from-indigo-500 to-purple-500 rounded-2xl shadow-2xl">
-                <div className="p-3 bg-white/20 backdrop-blur-sm rounded-xl">
-                  <Sparkles className="w-8 h-8 text-white" />
-                </div>
-                <div>
-                  <h1 className="text-2xl font-black text-white">InsightHub</h1>
-                  <p className="text-blue-100 text-sm">Join our community</p>
-                </div>
+      <div className="w-full max-w-6xl grid lg:grid-cols-2 gap-12 items-center relative z-10">
+        {/* Left Side - Branding */}
+        <div className="hidden lg:block">
+          <div className="space-y-8">
+            {/* Logo */}
+            <div className="inline-flex items-center space-x-3 p-4 bg-gradient-to-r from-indigo-600 to-purple-600 rounded-2xl shadow-xl">
+              <div className="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center">
+                <Sparkles className="w-6 h-6 text-white" />
               </div>
-
-              <div className="space-y-6">
-                <h2 className="text-4xl font-black text-gray-900 leading-tight">
-                  Join Thousands of <span className="bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">Creators</span>
-                </h2>
-                <p className="text-gray-600 text-lg">
-                  Share your knowledge, connect with experts, and grow your audience in our professional community.
-                </p>
-                
-                <div className="space-y-4">
-                  {[
-                    { icon: Users, text: "Join 50,000+ active members" },
-                    { icon: Globe, text: "Global community of experts" },
-                    { icon: Award, text: "Build your professional reputation" }
-                  ].map((item, idx) => (
-                    <div key={idx} className="flex items-center space-x-3">
-                      <div className="w-10 h-10 bg-gradient-to-r from-green-100 to-emerald-100 rounded-xl flex items-center justify-center">
-                        <item.icon className="w-5 h-5 text-green-600" />
-                      </div>
-                      <span className="text-gray-700 font-medium">{item.text}</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              {/* Social Login */}
-              <div className="pt-8 border-t border-gray-200">
-                <p className="text-gray-600 mb-4">Or sign up with</p>
-                <div className="flex space-x-4">
-                  {[
-                    { icon: Facebook, color: "bg-blue-600 hover:bg-blue-700", label: "Facebook" },
-                    { icon: Twitter, color: "bg-sky-500 hover:bg-sky-600", label: "Twitter" },
-                    { icon: Github, color: "bg-gray-800 hover:bg-gray-900", label: "GitHub" }
-                  ].map((social, idx) => (
-                    <button
-                      key={idx}
-                      className={`${social.color} text-white p-3 rounded-xl flex items-center justify-center hover:shadow-lg transition-all duration-300 flex-1`}
-                    >
-                      <social.icon className="w-5 h-5" />
-                      <span className="ml-2 font-medium hidden sm:inline">{social.label}</span>
-                    </button>
-                  ))}
-                </div>
+              <div>
+                <h1 className="text-2xl font-bold text-white">InsightHub</h1>
+                <p className="text-indigo-100 text-sm">Join our community</p>
               </div>
             </div>
+
+            {/* Headline */}
+            <div>
+              <h2 className="text-5xl font-bold text-gray-900 mb-4 leading-tight">
+                Start Your Journey with{" "}
+                <span className="bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">
+                  InsightHub
+                </span>
+              </h2>
+              <p className="text-xl text-gray-600">
+                Join thousands of creators sharing knowledge and building their audience.
+              </p>
+            </div>
+
+            {/* Features */}
+            <div className="space-y-4">
+              {[
+                { icon: CheckCircle2, text: "Share your insights with the world", color: "text-green-600" },
+                { icon: Shield, text: "Secure and private by default", color: "text-blue-600" },
+                { icon: Sparkles, text: "Connect with like-minded creators", color: "text-purple-600" },
+              ].map((feature, idx) => (
+                <div key={idx} className="flex items-center space-x-3">
+                  <div className={`w-10 h-10 bg-gray-100 rounded-xl flex items-center justify-center`}>
+                    <feature.icon className={`w-5 h-5 ${feature.color}`} />
+                  </div>
+                  <span className="text-gray-700 font-medium">{feature.text}</span>
+                </div>
+              ))}
+            </div>
+
+            {/* Stats */}
+            <div className="grid grid-cols-3 gap-6 pt-8 border-t border-gray-200">
+              {[
+                { value: "50K+", label: "Active Users" },
+                { value: "100K+", label: "Articles" },
+                { value: "4.9/5", label: "Rating" },
+              ].map((stat, idx) => (
+                <div key={idx}>
+                  <div className="text-3xl font-bold text-gray-900">{stat.value}</div>
+                  <div className="text-sm text-gray-600">{stat.label}</div>
+                </div>
+              ))}
+            </div>
           </div>
+        </div>
 
-          {/* Right Side - Signup Form */}
-          <div className={`transition-all duration-500 transform ${isAnimating ? 'opacity-0 scale-95' : 'opacity-100 scale-100'}`}>
-            <Card className="border-0 shadow-2xl bg-white/90 backdrop-blur-sm">
-              <CardHeader className="pb-6">
-                <div className="flex items-center justify-between mb-6">
-                  <div>
-                    <CardTitle className="text-2xl font-black text-gray-900">Create Account</CardTitle>
-                    <p className="text-gray-500 mt-1">Join our community in {4 - step} simple steps</p>
-                  </div>
-                  <div className="text-right">
-                    <div className="text-sm font-semibold text-gray-500">STEP {step}/3</div>
-                    <div className="text-2xl font-black text-indigo-600">{step}</div>
-                  </div>
+        {/* Right Side - Form */}
+        <div className="w-full">
+          <div className="bg-white rounded-2xl shadow-2xl border border-gray-100 p-8 md:p-10">
+            {/* Header */}
+            <div className="text-center mb-8">
+              <h2 className="text-3xl font-bold text-gray-900 mb-2">Create Account</h2>
+              <p className="text-gray-600">Get started with InsightHub today</p>
+            </div>
+
+            <form onSubmit={handleSignup} className="space-y-6">
+              {/* Name Field */}
+              <div>
+                <Label className="text-sm font-semibold text-gray-900 mb-2 flex items-center">
+                  <User className="w-4 h-4 mr-2 text-indigo-600" />
+                  Full Name
+                </Label>
+                <div className="relative">
+                  <Input
+                    placeholder="John Doe"
+                    value={form.name}
+                    onChange={(e) => {
+                      setForm({ ...form, name: e.target.value });
+                      if (errors.name) setErrors({ ...errors, name: "" });
+                    }}
+                    className={`pl-4 py-6 text-base ${errors.name ? 'border-red-300' : ''}`}
+                  />
                 </div>
-
-                {/* Progress Steps */}
-                <div className="flex items-center justify-between mb-2">
-                  {steps.map((s, idx) => (
-                    <div key={s.number} className="flex items-center flex-1">
-                      <div className={`w-10 h-10 rounded-full flex items-center justify-center transition-all duration-300 ${
-                        step >= s.number 
-                          ? 'bg-gradient-to-r from-indigo-600 to-purple-600 text-white shadow-lg' 
-                          : 'bg-gray-100 text-gray-400'
-                      }`}>
-                        <s.icon className="w-5 h-5" />
-                      </div>
-                      {idx < steps.length - 1 && (
-                        <div className={`flex-1 h-1 mx-2 transition-all duration-300 ${
-                          step > s.number 
-                            ? 'bg-gradient-to-r from-indigo-500 to-purple-500' 
-                            : 'bg-gray-200'
-                        }`}></div>
-                      )}
-                    </div>
-                  ))}
-                </div>
-                <div className="flex justify-between text-xs text-gray-500">
-                  {steps.map(s => (
-                    <span key={s.number} className={`transition-colors duration-300 ${
-                      step >= s.number ? 'text-gray-900 font-semibold' : ''
-                    }`}>{s.title}</span>
-                  ))}
-                </div>
-              </CardHeader>
-
-              <CardContent className="space-y-6">
-                {/* Step 1: Personal Info */}
-                {step === 1 && (
-                  <div className="space-y-5">
-                    <div className="relative">
-                      <Label className="flex items-center text-sm font-semibold text-gray-700 mb-2">
-                        <User className="w-4 h-4 mr-2 text-indigo-500" />
-                        Full Name
-                      </Label>
-                      <div className="relative">
-                        <Input
-                          placeholder="John Doe"
-                          value={form.name}
-                          onChange={(e) => setForm({ ...form, name: e.target.value })}
-                          className="w-full pl-12 pr-4 py-3.5 text-lg border-2 border-gray-200 focus:border-indigo-500 rounded-xl focus:ring-2 focus:ring-indigo-200 transition-all duration-300"
-                        />
-                        <User className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400" />
-                      </div>
-                    </div>
-
-                    <div className="relative">
-                      <Label className="flex items-center text-sm font-semibold text-gray-700 mb-2">
-                        <Mail className="w-4 h-4 mr-2 text-indigo-500" />
-                        Email Address
-                      </Label>
-                      <div className="relative">
-                        <Input
-                          type="email"
-                          placeholder="john@example.com"
-                          value={form.email}
-                          onChange={(e) => setForm({ ...form, email: e.target.value })}
-                          className="w-full pl-12 pr-4 py-3.5 text-lg border-2 border-gray-200 focus:border-indigo-500 rounded-xl focus:ring-2 focus:ring-indigo-200 transition-all duration-300"
-                        />
-                        <Mail className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400" />
-                      </div>
-                    </div>
-
-                    <div className="relative">
-                      <Label className="flex items-center text-sm font-semibold text-gray-700 mb-2">
-                        <Phone className="w-4 h-4 mr-2 text-indigo-500" />
-                        Phone Number
-                      </Label>
-                      <div className="relative">
-                        <Input
-                          placeholder="0300 123 4567"
-                          value={form.phone}
-                          onChange={(e) => setForm({ ...form, phone: e.target.value })}
-                          className="w-full pl-12 pr-4 py-3.5 text-lg border-2 border-gray-200 focus:border-indigo-500 rounded-xl focus:ring-2 focus:ring-indigo-200 transition-all duration-300"
-                        />
-                        <Phone className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400" />
-                      </div>
-                    </div>
-                  </div>
-                )}
-
-                {/* Step 2: Security */}
-                {step === 2 && (
-                  <div className="space-y-5">
-                    <div className="relative">
-                      <Label className="flex items-center text-sm font-semibold text-gray-700 mb-2">
-                        <Lock className="w-4 h-4 mr-2 text-indigo-500" />
-                        Password
-                      </Label>
-                      <div className="relative">
-                        <Input
-                          type={showPassword ? "text" : "password"}
-                          placeholder="Create a strong password"
-                          value={form.password}
-                          onChange={(e) => setForm({ ...form, password: e.target.value })}
-                          className="w-full pl-12 pr-12 py-3.5 text-lg border-2 border-gray-200 focus:border-indigo-500 rounded-xl focus:ring-2 focus:ring-indigo-200 transition-all duration-300"
-                        />
-                        <Lock className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400" />
-                        <button
-                          type="button"
-                          onClick={() => setShowPassword(!showPassword)}
-                          className="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
-                        >
-                          {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
-                        </button>
-                      </div>
-                      <div className="mt-3">
-                        <div className="text-sm font-semibold text-gray-700 mb-2">Password Strength</div>
-                        <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
-                          <div className={`h-full transition-all duration-500 ${
-                            form.password.length >= 8 ? 
-                            'bg-gradient-to-r from-green-500 to-emerald-500 w-3/4' : 
-                            form.password.length >= 4 ? 
-                            'bg-gradient-to-r from-amber-500 to-orange-500 w-1/2' : 
-                            'bg-gradient-to-r from-red-500 to-pink-500 w-1/4'
-                          }`}></div>
-                        </div>
-                        <div className="mt-2 text-xs text-gray-500 space-y-1">
-                          <div className="flex items-center">
-                            <div className={`w-2 h-2 rounded-full mr-2 ${
-                              form.password.length >= 8 ? 'bg-green-500' : 'bg-gray-300'
-                            }`}></div>
-                            At least 8 characters
-                          </div>
-                          <div className="flex items-center">
-                            <div className={`w-2 h-2 rounded-full mr-2 ${
-                              /[A-Z]/.test(form.password) && /[a-z]/.test(form.password) ? 'bg-green-500' : 'bg-gray-300'
-                            }`}></div>
-                            Upper & lowercase letters
-                          </div>
-                          <div className="flex items-center">
-                            <div className={`w-2 h-2 rounded-full mr-2 ${
-                              /\d/.test(form.password) ? 'bg-green-500' : 'bg-gray-300'
-                            }`}></div>
-                            At least one number
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className="relative">
-                      <Label className="flex items-center text-sm font-semibold text-gray-700 mb-2">
-                        <Shield className="w-4 h-4 mr-2 text-indigo-500" />
-                        Confirm Password
-                      </Label>
-                      <div className="relative">
-                        <Input
-                          type={showConfirmPassword ? "text" : "password"}
-                          placeholder="Re-enter your password"
-                          value={form.confirmPassword}
-                          onChange={(e) => setForm({ ...form, confirmPassword: e.target.value })}
-                          className="w-full pl-12 pr-12 py-3.5 text-lg border-2 border-gray-200 focus:border-indigo-500 rounded-xl focus:ring-2 focus:ring-indigo-200 transition-all duration-300"
-                        />
-                        <Shield className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400" />
-                        <button
-                          type="button"
-                          onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                          className="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
-                        >
-                          {showConfirmPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
-                        </button>
-                      </div>
-                      {form.confirmPassword && form.password !== form.confirmPassword && (
-                        <p className="mt-2 text-sm text-red-600 flex items-center">
-                          <AlertCircle className="w-4 h-4 mr-2" />
-                          Passwords do not match
-                        </p>
-                      )}
-                    </div>
-                  </div>
-                )}
-
-                {/* Step 3: Account Type & Terms */}
-                {step === 3 && (
-                  <div className="space-y-6">
-                    <div>
-                      <Label className="flex items-center text-sm font-semibold text-gray-700 mb-4">
-                        <Award className="w-4 h-4 mr-2 text-indigo-500" />
-                        Select Account Type
-                      </Label>
-                      <div className="grid grid-cols-2 gap-4">
-                        <button
-                          type="button"
-                          onClick={() => setForm({ ...form, role: "user" })}
-                          className={`p-6 rounded-xl border-2 transition-all duration-300 ${
-                            form.role === "user"
-                              ? "border-indigo-500 bg-gradient-to-r from-indigo-50 to-purple-50"
-                              : "border-gray-200 hover:border-gray-300 hover:bg-gray-50"
-                          }`}
-                        >
-                          <div className="text-center">
-                            <div className={`w-12 h-12 mx-auto mb-3 rounded-full flex items-center justify-center ${
-                              form.role === "user"
-                                ? "bg-gradient-to-r from-indigo-500 to-purple-500"
-                                : "bg-gray-100"
-                            }`}>
-                              <User className={`w-6 h-6 ${form.role === "user" ? "text-white" : "text-gray-400"}`} />
-                            </div>
-                            <div className="font-bold text-gray-900">Regular User</div>
-                            <div className="text-sm text-gray-500 mt-2">Read, comment, and interact</div>
-                          </div>
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => setForm({ ...form, role: "admin" })}
-                          className={`p-6 rounded-xl border-2 transition-all duration-300 ${
-                            form.role === "admin"
-                              ? "border-amber-500 bg-gradient-to-r from-amber-50 to-orange-50"
-                              : "border-gray-200 hover:border-gray-300 hover:bg-gray-50"
-                          }`}
-                        >
-                          <div className="text-center">
-                            <div className={`w-12 h-12 mx-auto mb-3 rounded-full flex items-center justify-center ${
-                              form.role === "admin"
-                                ? "bg-gradient-to-r from-amber-500 to-orange-500"
-                                : "bg-gray-100"
-                            }`}>
-                              <Shield className={`w-6 h-6 ${form.role === "admin" ? "text-white" : "text-gray-400"}`} />
-                            </div>
-                            <div className="font-bold text-gray-900">Administrator</div>
-                            <div className="text-sm text-gray-500 mt-2">Manage content & users</div>
-                          </div>
-                        </button>
-                      </div>
-                    </div>
-
-                    <div className="space-y-4">
-                      <div className="flex items-start space-x-3 p-4 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl">
-                        <Checkbox
-                          checked={form.agree}
-                          onCheckedChange={(checked) => setForm({ ...form, agree: checked })}
-                          className="mt-1"
-                        />
-                        <div>
-                          <Label className="font-semibold text-gray-900">Terms & Conditions</Label>
-                          <p className="text-sm text-gray-600 mt-1">
-                            I agree to the{" "}
-                            <Link href="/terms" className="text-indigo-600 hover:underline font-medium">
-                              Terms of Service
-                            </Link>{" "}
-                            and{" "}
-                            <Link href="/privacy" className="text-indigo-600 hover:underline font-medium">
-                              Privacy Policy
-                            </Link>
-                            . I understand that my data will be processed securely.
-                          </p>
-                        </div>
-                      </div>
-
-                      <div className="flex items-center space-x-3 p-4 bg-gradient-to-r from-green-50 to-emerald-50 rounded-xl">
-                        <CheckCircle2 className="w-5 h-5 text-green-500 flex-shrink-0" />
-                        <div className="text-sm text-gray-700">
-                         <span className="font-semibold">Email verification required.</span>{" "}
-You&apos;ll receive a confirmation email after signup.
-
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                )}
-
-                {/* Step 4: Social Links (Optional) */}
-                {step === 4 && (
-                  <div className="space-y-5">
-                    <div className="text-center mb-6">
-                      <h3 className="text-lg font-semibold text-gray-900 mb-2">Add Your Social Links</h3>
-                      <p className="text-sm text-gray-600">Connect your social media accounts (optional)</p>
-                    </div>
-
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div>
-                        <Label className="flex items-center text-sm font-semibold text-gray-700 mb-2">
-                          <Twitter className="w-4 h-4 mr-2 text-blue-400" />
-                          Twitter
-                        </Label>
-                        <Input
-                          type="text"
-                          placeholder="@username or full URL"
-                          value={form.socialLinks.twitter}
-                          onChange={(e) => setForm({
-                            ...form,
-                            socialLinks: { ...form.socialLinks, twitter: e.target.value }
-                          })}
-                          className="w-full pl-4 pr-4 py-3 border-2 border-gray-200 focus:border-indigo-500 rounded-xl focus:ring-2 focus:ring-indigo-200 transition-all duration-300"
-                        />
-                      </div>
-                      <div>
-                        <Label className="flex items-center text-sm font-semibold text-gray-700 mb-2">
-                          <Github className="w-4 h-4 mr-2 text-gray-800" />
-                          GitHub
-                        </Label>
-                        <Input
-                          type="text"
-                          placeholder="username or full URL"
-                          value={form.socialLinks.github}
-                          onChange={(e) => setForm({
-                            ...form,
-                            socialLinks: { ...form.socialLinks, github: e.target.value }
-                          })}
-                          className="w-full pl-4 pr-4 py-3 border-2 border-gray-200 focus:border-indigo-500 rounded-xl focus:ring-2 focus:ring-indigo-200 transition-all duration-300"
-                        />
-                      </div>
-                      <div>
-                        <Label className="flex items-center text-sm font-semibold text-gray-700 mb-2">
-                          <Globe className="w-4 h-4 mr-2 text-green-500" />
-                          Website
-                        </Label>
-                        <Input
-                          type="url"
-                          placeholder="https://yourwebsite.com"
-                          value={form.socialLinks.website}
-                          onChange={(e) => setForm({
-                            ...form,
-                            socialLinks: { ...form.socialLinks, website: e.target.value }
-                          })}
-                          className="w-full pl-4 pr-4 py-3 border-2 border-gray-200 focus:border-indigo-500 rounded-xl focus:ring-2 focus:ring-indigo-200 transition-all duration-300"
-                        />
-                      </div>
-                      <div>
-                        <Label className="flex items-center text-sm font-semibold text-gray-700 mb-2">
-                          <WhatsApp className="w-4 h-4 mr-2 text-green-500" />
-                          WhatsApp
-                        </Label>
-                        <Input
-                          type="text"
-                          placeholder="phone number or full URL"
-                          value={form.socialLinks.whatsapp}
-                          onChange={(e) => setForm({
-                            ...form,
-                            socialLinks: { ...form.socialLinks, whatsapp: e.target.value }
-                          })}
-                          className="w-full pl-4 pr-4 py-3 border-2 border-gray-200 focus:border-indigo-500 rounded-xl focus:ring-2 focus:ring-indigo-200 transition-all duration-300"
-                        />
-                      </div>
-                    </div>
-
-                    <div className="bg-gradient-to-r from-blue-50 to-indigo-50 p-4 rounded-xl">
-                      <p className="text-sm text-gray-700">
-                        <Sparkles className="w-4 h-4 inline mr-2 text-indigo-500" />
-                        <strong>Optional:</strong> Add your social links to help others connect with you. You can always add or update these later in your settings.
-                      </p>
-                    </div>
-                  </div>
-                )}
-
-                {/* Navigation Buttons */}
-                <div className="flex justify-between pt-6">
-                  {step > 1 ? (
-                    <Button
-                      type="button"
-                      variant="outline"
-                      onClick={handlePrevStep}
-                      className="px-6 py-3 rounded-xl"
-                    >
-                      Back
-                    </Button>
-                  ) : (
-                    <div></div>
-                  )}
-
-                  {step < 3 ? (
-                    <Button
-                      type="button"
-                      onClick={handleNextStep}
-                      className="px-6 py-3 bg-gradient-to-r from-indigo-600 to-purple-600 hover:shadow-lg rounded-xl"
-                    >
-                      Continue
-                      <ArrowRight className="w-4 h-4 ml-2" />
-                    </Button>
-                  ) : (
-                    <Button
-                      type="button"
-                      onClick={handleSignup}
-                      disabled={loading}
-                      className="px-8 py-3 bg-gradient-to-r from-green-500 to-emerald-500 hover:shadow-lg rounded-xl"
-                    >
-                      {loading ? (
-                        <div className="flex items-center">
-                          <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin mr-3"></div>
-                          Creating Account...
-                        </div>
-                      ) : (
-                        <div className="flex items-center">
-                          <Sparkles className="w-5 h-5 mr-2" />
-                          Complete Signup
-                        </div>
-                      )}
-                    </Button>
-                  )}
-                </div>
-
-                <div className="pt-6 border-t border-gray-100 text-center">
-                  <p className="text-gray-600">
-                    Already have an account?{" "}
-                    <button
-                      onClick={() => router.push("/login")}
-                      className="text-indigo-600 font-semibold hover:text-indigo-800 hover:underline transition-colors duration-300"
-                    >
-                      Sign in here
-                    </button>
+                {errors.name && (
+                  <p className="mt-2 text-sm text-red-600 flex items-center">
+                    <AlertCircle className="w-4 h-4 mr-1" />
+                    {errors.name}
                   </p>
+                )}
+              </div>
+
+              {/* Email Field */}
+              <div>
+                <Label className="text-sm font-semibold text-gray-900 mb-2 flex items-center">
+                  <Mail className="w-4 h-4 mr-2 text-indigo-600" />
+                  Email Address
+                </Label>
+                <div className="relative">
+                  <Input
+                    type="email"
+                    placeholder="john@example.com"
+                    value={form.email}
+                    onChange={(e) => {
+                      setForm({ ...form, email: e.target.value });
+                      if (errors.email) setErrors({ ...errors, email: "" });
+                    }}
+                    className={`pl-4 py-6 text-base ${errors.email ? 'border-red-300' : ''}`}
+                  />
                 </div>
-              </CardContent>
-            </Card>
+                {errors.email && (
+                  <p className="mt-2 text-sm text-red-600 flex items-center">
+                    <AlertCircle className="w-4 h-4 mr-1" />
+                    {errors.email}
+                  </p>
+                )}
+              </div>
+
+              {/* Password Field */}
+              <div>
+                <Label className="text-sm font-semibold text-gray-900 mb-2 flex items-center">
+                  <Lock className="w-4 h-4 mr-2 text-indigo-600" />
+                  Password
+                </Label>
+                <div className="relative">
+                  <Input
+                    type={showPassword ? "text" : "password"}
+                    placeholder="Create a strong password"
+                    value={form.password}
+                    onChange={(e) => {
+                      setForm({ ...form, password: e.target.value });
+                      if (errors.password) setErrors({ ...errors, password: "" });
+                    }}
+                    className={`pl-4 pr-12 py-6 text-base ${errors.password ? 'border-red-300' : ''}`}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                  >
+                    {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                  </button>
+                </div>
+                
+                {/* Password Strength */}
+                {form.password && (
+                  <div className="mt-3">
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="text-xs font-medium text-gray-700">Password Strength</span>
+                      <span className={`text-xs font-semibold ${
+                        passwordStrength.label === 'Strong' ? 'text-green-600' :
+                        passwordStrength.label === 'Medium' ? 'text-amber-600' :
+                        'text-red-600'
+                      }`}>
+                        {passwordStrength.label}
+                      </span>
+                    </div>
+                    <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
+                      <div
+                        className={`h-full transition-all duration-300 ${passwordStrength.color}`}
+                        style={{ width: `${passwordStrength.strength}%` }}
+                      />
+                    </div>
+                  </div>
+                )}
+                
+                {errors.password && (
+                  <p className="mt-2 text-sm text-red-600 flex items-center">
+                    <AlertCircle className="w-4 h-4 mr-1" />
+                    {errors.password}
+                  </p>
+                )}
+              </div>
+
+              {/* Confirm Password Field */}
+              <div>
+                <Label className="text-sm font-semibold text-gray-900 mb-2 flex items-center">
+                  <Shield className="w-4 h-4 mr-2 text-indigo-600" />
+                  Confirm Password
+                </Label>
+                <div className="relative">
+                  <Input
+                    type={showConfirmPassword ? "text" : "password"}
+                    placeholder="Re-enter your password"
+                    value={form.confirmPassword}
+                    onChange={(e) => {
+                      setForm({ ...form, confirmPassword: e.target.value });
+                      if (errors.confirmPassword) setErrors({ ...errors, confirmPassword: "" });
+                    }}
+                    className={`pl-4 pr-12 py-6 text-base ${errors.confirmPassword ? 'border-red-300' : ''}`}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                    className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                  >
+                    {showConfirmPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                  </button>
+                </div>
+                {errors.confirmPassword && (
+                  <p className="mt-2 text-sm text-red-600 flex items-center">
+                    <AlertCircle className="w-4 h-4 mr-1" />
+                    {errors.confirmPassword}
+                  </p>
+                )}
+              </div>
+
+              {/* Terms Checkbox */}
+              <div className="flex items-start space-x-3">
+                <Checkbox
+                  checked={form.agreeToTerms}
+                  onCheckedChange={(checked) => {
+                    setForm({ ...form, agreeToTerms: checked });
+                    if (errors.agreeToTerms) setErrors({ ...errors, agreeToTerms: "" });
+                  }}
+                  className="mt-1"
+                />
+                <div className="flex-1">
+                  <Label className="text-sm text-gray-700">
+                    I agree to the{" "}
+                    <Link href="/terms" className="text-indigo-600 hover:underline font-medium">
+                      Terms of Service
+                    </Link>{" "}
+                    and{" "}
+                    <Link href="/privacy" className="text-indigo-600 hover:underline font-medium">
+                      Privacy Policy
+                    </Link>
+                  </Label>
+                  {errors.agreeToTerms && (
+                    <p className="mt-1 text-sm text-red-600 flex items-center">
+                      <AlertCircle className="w-4 h-4 mr-1" />
+                      {errors.agreeToTerms}
+                    </p>
+                  )}
+                </div>
+              </div>
+
+              {/* Submit Button */}
+              <Button
+                type="submit"
+                disabled={loading}
+                className="w-full py-6 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white font-semibold text-lg rounded-xl transition-all duration-300 hover:shadow-xl"
+              >
+                {loading ? (
+                  <span className="flex items-center justify-center">
+                    <Loader2 className="w-5 h-5 mr-2 animate-spin" />
+                    Creating Account...
+                  </span>
+                ) : (
+                  <span className="flex items-center justify-center">
+                    <Sparkles className="w-5 h-5 mr-2" />
+                    Create Account
+                  </span>
+                )}
+              </Button>
+
+              {/* Sign In Link */}
+              <div className="text-center pt-4">
+                <p className="text-gray-600">
+                  Already have an account?{" "}
+                  <Link
+                    href="/login"
+                    className="text-indigo-600 font-semibold hover:text-indigo-700 hover:underline transition-colors"
+                  >
+                    Sign in
+                  </Link>
+                </p>
+              </div>
+            </form>
           </div>
         </div>
       </div>
 
-      <Toaster richColors position="top-right" />
+      <style jsx global>{`
+        @keyframes blob {
+          0% { transform: translate(0px, 0px) scale(1); }
+          33% { transform: translate(30px, -50px) scale(1.1); }
+          66% { transform: translate(-20px, 20px) scale(0.9); }
+          100% { transform: translate(0px, 0px) scale(1); }
+        }
+        .animate-blob {
+          animation: blob 7s infinite;
+        }
+        .animation-delay-2000 {
+          animation-delay: 2s;
+        }
+      `}</style>
     </div>
   );
 }
