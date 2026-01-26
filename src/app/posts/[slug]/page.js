@@ -57,6 +57,8 @@ export default function SinglePost() {
   const [readingProgress, setReadingProgress] = useState(0);
   const [relatedPosts, setRelatedPosts] = useState([]);
   const [showShareMenu, setShowShareMenu] = useState(false);
+  const [showComments, setShowComments] = useState(false);
+
 
   useEffect(() => {
     const fetchPost = async () => {
@@ -452,13 +454,21 @@ export default function SinglePost() {
                         )}
                       </div>
 
-                      <div className="flex items-center space-x-2 text-gray-500">
-                        <MessageCircle className="w-5 h-5" />
-                        <span className="font-semibold">comments</span>
-                      </div>
+                     <button
+  onClick={() => setShowComments(prev => !prev)}
+  className="flex items-center space-x-2 text-gray-500 hover:text-indigo-600 transition"
+>
+  <MessageCircle className="w-5 h-5" />
+  <span className="font-semibold">Comments</span>
+</button>
+
                     </div>
                   </div>
-                  <Comments slug={post.slug} user={post.author} />
+                 {showComments && (
+  <div className="p-6 border-t border-gray-100 animate-fade-in">
+    <Comments slug={post.slug} user={post.author} />
+  </div>
+)}
 
                 </div>
 
