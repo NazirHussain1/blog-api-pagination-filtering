@@ -121,8 +121,7 @@ export default function SinglePost() {
   useEffect(() => {
     if (!post) return;
 
-    // Views are already incremented by the GET request to fetch the post
-    // No need for additional view increment call
+  
   }, [post]);
 
   const handleReaction = async (reaction = null) => {
@@ -459,6 +458,8 @@ export default function SinglePost() {
                       </div>
                     </div>
                   </div>
+                  <Comments slug={post.slug} user={post.author} />
+
                 </div>
 
               </div>
@@ -510,37 +511,8 @@ export default function SinglePost() {
             {/* Sidebar */}
             <div className="lg:col-span-1">
               <div className="sticky top-24 space-y-8">
-                {/* Related Articles */}
-                <div className="bg-white rounded-2xl shadow-xl border border-gray-100 p-6">
-                  <h3 className="text-lg font-bold text-gray-900 mb-6 flex items-center">
-                    <TrendingUp className="w-5 h-5 mr-2 text-amber-500" />
-                    Related Articles
-                  </h3>
-                  <div className="space-y-4">
-                    <div className="grid gap-4">
-                      {relatedPosts.map((related) => (
-                        <div
-                          key={related.id}
-                          className="transform transition-all duration-300 hover:-translate-y-2"
-                        >
-                          <PostCard post={{
-                            ...related,
-                            // provide minimal fields PostCard expects
-                            author: post.author || { name: "Unknown" },
-                            createdAt: related.createdAt || post.createdAt,
-                            image: related.image || null,
-                            likes: related.likes || 0,
-                            views: related.views || 0,
-                            commentsCount: related.commentsCount || 0,
-                          }} />
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-
-                {/* Comments Section */}
-                <Comments slug={post.slug} user={post.author} />
+               
+              
 
                 {/* Table of Contents */}
                 <div className="bg-gradient-to-br from-purple-50 to-pink-50 rounded-2xl border border-purple-100 p-6">
