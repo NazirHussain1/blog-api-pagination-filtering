@@ -9,6 +9,7 @@ import {
   Filter, 
   Grid, 
   List, 
+  Calendar, 
   TrendingUp, 
   Clock,
   ChevronDown,
@@ -17,14 +18,7 @@ import {
   Tag,
   Users,
   Eye,
-  BookOpen,
-  Star,
-  Bookmark,
-  Share2,
-  ArrowRight,
-  Zap,
-  Award,
-  Calendar
+  BookOpen
 } from "lucide-react";
 
 export default function AllPostsPage() {
@@ -43,22 +37,7 @@ export default function AllPostsPage() {
     dispatch(fetchPosts({ page: currentPage, limit: postsPerPage, sort: sortBy }));
   }, [dispatch, currentPage, sortBy]);
 
-  const categories = [
-    'All', 
-    'Technology', 
-    'Web Development', 
-    'Mobile Development',
-    'AI & Machine Learning',
-    'Design', 
-    'Business', 
-    'Startup',
-    'Career',
-    'Productivity',
-    'Tutorials',
-    'Open Source',
-    'DevOps',
-    'Data Science'
-  ];
+  const categories = ['All', 'Technology', 'Design', 'Business', 'Lifestyle', 'Health', 'Science', 'Tutorials'];
   
   const filteredPosts = posts.filter(post => {
     const matchesSearch = post.title?.toLowerCase().includes(searchQuery.toLowerCase()) || 
@@ -73,7 +52,7 @@ export default function AllPostsPage() {
     totalPosts: posts.length,
     totalViews: posts.reduce((sum, post) => sum + (post.views || 0), 0),
     totalAuthors: new Set(posts.map(p => p.author?.name)).size,
-    avgReadTime: Math.ceil(posts.reduce((sum, post) => sum + (post.readTime || 5), 0) / posts.length) || 5
+    avgReadTime: '5 min'
   };
 
   return (

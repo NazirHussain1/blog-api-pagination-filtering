@@ -1,0 +1,18 @@
+{
+  "quick_2026-01-28T17-40-16": {
+    "timestamp": "2026-01-28T17-40-16",
+    "description": "Quick checkpoint",
+    "fileCount": 2493,
+    "isIncremental": false,
+    "totalSize": 333479705,
+    "incrementalSize": 333479705
+  },
+  "quick_2026-01-28T17-47-37": {
+    "timestamp": "2026-01-28T17-47-37",
+    "description": "Quick checkpoint",
+    "fileCount": 2493,
+    "isIncremental": false,
+    "totalSize": 333479705,
+    "incrementalSize": 333479705
+  }
+}

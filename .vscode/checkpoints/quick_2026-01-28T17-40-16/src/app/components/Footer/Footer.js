@@ -16,23 +16,11 @@ import {
   FaHeart,
   FaArrowRight,
   FaEnvelope,
-  FaRegCopyright,
-  FaWhatsapp,
-  FaDiscord,
-  FaTelegram,
-  FaBookOpen,
-  FaUsers,
-  FaShieldAlt,
-  FaQuestionCircle,
-  FaLightbulb,
-  FaTags,
-  FaChartLine,
-  FaAward,
-  FaGlobe
+  FaRegCopyright
 } from "react-icons/fa";
-import { FiSend, FiMail, FiTrendingUp, FiBookmark } from "react-icons/fi";
-import { HiOutlineSparkles, HiOutlineBadgeCheck } from "react-icons/hi";
-import { MdVerified, MdTrendingUp, MdRssFeed } from "react-icons/md";
+import { FiSend, FiMail } from "react-icons/fi";
+import { HiOutlineSparkles } from "react-icons/hi";
+import { FaWhatsapp } from "react-icons/fa";
 
 export default function Footer() {
   const user = useSelector((state) => state.auth.user);
@@ -41,20 +29,13 @@ export default function Footer() {
 
   const handleSubscribe = async (e) => {
     e.preventDefault();
-    if (!email.trim()) return toast.error("Please enter a valid email address");
-    
-    // Basic email validation
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(email)) {
-      return toast.error("Please enter a valid email format");
-    }
+    if (!email.trim()) return toast.error("Please enter your email");
     
     setIsSubscribing(true);
     
-    // Simulate API call
     setTimeout(() => {
-      toast.success("🎉 Welcome to InsightHub!", {
-        description: "You'll receive our weekly newsletter with exclusive content and insights."
+      toast.success("Welcome to InsightHub!", {
+        description: "You'll receive our weekly newsletter with exclusive content."
       });
       setEmail("");
       setIsSubscribing(false);
@@ -66,12 +47,11 @@ export default function Footer() {
           confetti.default({
             particleCount: 100,
             spread: 70,
-            origin: { y: 0.6 },
-            colors: ['#06b6d4', '#3b82f6', '#8b5cf6', '#f59e0b']
+            origin: { y: 0.6 }
           });
         });
       }
-    }, 1200);
+    }, 800);
   };
 
   const currentYear = new Date().getFullYear();
@@ -136,33 +116,6 @@ export default function Footer() {
       });
     }
 
-    if (user.socialLinks.youtube) {
-      links.push({
-        icon: FaYoutube,
-        href: user.socialLinks.youtube.startsWith('http') ? user.socialLinks.youtube : `https://youtube.com/@${user.socialLinks.youtube}`,
-        color: "hover:text-red-500",
-        bg: "hover:bg-red-500/20"
-      });
-    }
-
-    if (user.socialLinks.discord) {
-      links.push({
-        icon: FaDiscord,
-        href: user.socialLinks.discord,
-        color: "hover:text-indigo-400",
-        bg: "hover:bg-indigo-500/20"
-      });
-    }
-
-    if (user.socialLinks.telegram) {
-      links.push({
-        icon: FaTelegram,
-        href: user.socialLinks.telegram.startsWith('http') ? user.socialLinks.telegram : `https://t.me/${user.socialLinks.telegram}`,
-        color: "hover:text-blue-400",
-        bg: "hover:bg-blue-500/20"
-      });
-    }
-
     return links;
   };
 
@@ -213,18 +166,15 @@ export default function Footer() {
               )) : (
                 // Default social links if user has no social links set
                 [
-                  { icon: FaTwitter, href: "https://twitter.com/insighthub", color: "hover:text-blue-400", bg: "hover:bg-blue-500/20", label: "Follow us on Twitter" },
-                  { icon: FaLinkedin, href: "https://linkedin.com/company/insighthub", color: "hover:text-blue-500", bg: "hover:bg-blue-600/20", label: "Connect on LinkedIn" },
-                  { icon: FaInstagram, href: "https://instagram.com/insighthub", color: "hover:text-pink-400", bg: "hover:bg-pink-500/20", label: "Follow on Instagram" },
-                  { icon: FaGithub, href: "https://github.com/insighthub", color: "hover:text-gray-300", bg: "hover:bg-gray-500/20", label: "View our GitHub" },
-                  { icon: FaYoutube, href: "https://youtube.com/@insighthub", color: "hover:text-red-500", bg: "hover:bg-red-500/20", label: "Subscribe on YouTube" }
+                  { icon: FaTwitter, color: "hover:text-blue-400", bg: "hover:bg-blue-500/20" },
+                  { icon: FaLinkedin, color: "hover:text-blue-500", bg: "hover:bg-blue-600/20" },
+                  { icon: FaInstagram, color: "hover:text-pink-400", bg: "hover:bg-pink-500/20" },
+                  { icon: FaGithub, color: "hover:text-gray-300", bg: "hover:bg-gray-500/20" }
                 ].map((social, idx) => (
                   <a
                     key={idx}
-                    href={social.href}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    aria-label={social.label}
+                    href="#"
+                    aria-label={social.icon.name}
                     className={`w-12 h-12 rounded-xl bg-white/5 backdrop-blur-sm flex items-center justify-center text-gray-300 ${social.color} ${social.bg} transition-all duration-300 transform hover:-translate-y-1 hover:shadow-lg`}
                   >
                     <social.icon className="text-xl" />
@@ -242,19 +192,19 @@ export default function Footer() {
             </h3>
             <ul className="space-y-4">
               {[
-                { label: "Home", href: "/", icon: FaGlobe },
-                { label: "All Articles", href: "/posts", icon: FaBookOpen },
-                { label: "Create Post", href: "/posts/create", icon: FaLightbulb },
-                { label: "My Posts", href: "/my-posts", icon: FiBookmark },
-                { label: "Trending", href: "/trending", icon: FiTrendingUp },
-                { label: "Categories", href: "/categories", icon: FaTags }
+                { label: "Home", href: "/" },
+                { label: "All Articles", href: "/posts" },
+                { label: "Create Post", href: "/posts/create" },
+                { label: "Categories", href: "/categories" },
+                { label: "Trending", href: "/trending" },
+                { label: "Bookmarks", href: "/bookmarks" }
               ].map((link, idx) => (
                 <li key={idx}>
                   <Link 
                     href={link.href} 
                     className="text-gray-300 hover:text-white group flex items-center transition-all duration-300"
                   >
-                    <link.icon className="mr-3 text-amber-400 opacity-0 group-hover:opacity-100 transform -translate-x-2 group-hover:translate-x-0 transition-all duration-300" />
+                    <FaArrowRight className="opacity-0 group-hover:opacity-100 mr-2 text-amber-400 transform -translate-x-2 group-hover:translate-x-0 transition-all duration-300" />
                     {link.label}
                   </Link>
                 </li>
@@ -270,20 +220,20 @@ export default function Footer() {
             </h3>
             <ul className="space-y-4">
               {[
-                { label: "Help Center", href: "/help", icon: FaQuestionCircle },
-                { label: "Writing Guidelines", href: "/guidelines", icon: FaBookOpen },
-                { label: "Community Rules", href: "/community", icon: FaUsers },
-                { label: "Privacy Policy", href: "/privacy", icon: FaShieldAlt },
-                { label: "Terms of Service", href: "/terms", icon: FaRegCopyright },
-                { label: "API Documentation", href: "/api-docs", icon: MdRssFeed }
+                { label: "Documentation", href: "/docs" },
+                { label: "Blog Guidelines", href: "/guidelines" },
+                { label: "Code of Conduct", href: "/conduct" },
+                { label: "Privacy Policy", href: "/privacy" },
+                { label: "Terms of Service", href: "/terms" },
+                { label: "Community Forum", href: "/forum" }
               ].map((link, idx) => (
                 <li key={idx}>
                   <Link 
                     href={link.href} 
                     className="text-gray-300 hover:text-white group flex items-center transition-all duration-300"
                   >
-                    <link.icon className="mr-3 text-purple-400 opacity-0 group-hover:opacity-100 transition-all duration-300" />
-                    <span className="group-hover:translate-x-1 transition-transform duration-300">{link.label}</span>
+                    <div className="w-1.5 h-1.5 bg-gradient-to-r from-purple-400 to-pink-400 rounded-full mr-3 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                    {link.label}
                   </Link>
                 </li>
               ))}
@@ -302,38 +252,29 @@ export default function Footer() {
             
             <div className="bg-gradient-to-br from-white/5 to-white/10 backdrop-blur-sm border border-white/10 rounded-2xl p-6 mb-8">
               <div className="flex items-center mb-4">
-                <div className="p-2 bg-gradient-to-r from-cyan-500 to-blue-500 rounded-lg mr-3">
-                  <FiMail className="text-xl text-white" />
-                </div>
-                <div>
-                  <h4 className="text-lg font-semibold text-white flex items-center">
-                    Weekly Digest
-                    <HiOutlineBadgeCheck className="ml-2 text-cyan-400" />
-                  </h4>
-                  <p className="text-xs text-cyan-200">Premium content • No spam</p>
-                </div>
+                <FiMail className="text-2xl text-cyan-300 mr-3" />
+                <h4 className="text-lg font-semibold text-white">Weekly Digest</h4>
               </div>
-              <p className="text-gray-300 text-sm mb-6 leading-relaxed">
-                Join <span className="font-semibold text-white">2,500+</span> developers and creators getting curated articles, 
-                exclusive tutorials, and industry insights every Friday.
+              <p className="text-gray-300 text-sm mb-6">
+                Get curated articles, exclusive insights, and community highlights delivered every Friday.
               </p>
               
               <form onSubmit={handleSubscribe} className="space-y-4">
                 <div className="relative">
-                  <FaEnvelope className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 z-10" />
+                  <FaEnvelope className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400" />
                   <input
                     type="email"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    placeholder="Enter your email address"
+                    placeholder="your@email.com"
                     required
-                    className="w-full pl-12 pr-4 py-3.5 bg-white/5 border border-white/10 rounded-xl text-white placeholder-gray-400 focus:outline-none focus:border-cyan-400 focus:ring-2 focus:ring-cyan-400/30 transition-all duration-300 hover:bg-white/10"
+                    className="w-full pl-12 pr-4 py-3.5 bg-white/5 border border-white/10 rounded-xl text-white placeholder-gray-400 focus:outline-none focus:border-cyan-400 focus:ring-2 focus:ring-cyan-400/30 transition-all duration-300"
                   />
                 </div>
                 <Button
                   type="submit"
                   disabled={isSubscribing}
-                  className="w-full bg-gradient-to-r from-cyan-500 to-blue-500 hover:from-cyan-600 hover:to-blue-600 text-white font-bold py-3.5 rounded-xl transition-all duration-300 hover:shadow-lg hover:shadow-cyan-500/25 disabled:opacity-50 disabled:cursor-not-allowed transform hover:scale-[1.02] active:scale-[0.98]"
+                  className="w-full bg-gradient-to-r from-cyan-500 to-blue-500 hover:from-cyan-600 hover:to-blue-600 text-white font-bold py-3.5 rounded-xl transition-all duration-300 hover:shadow-lg hover:shadow-cyan-500/25 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {isSubscribing ? (
                     <span className="flex items-center justify-center">
@@ -343,33 +284,17 @@ export default function Footer() {
                   ) : (
                     <span className="flex items-center justify-center">
                       <FiSend className="mr-3" />
-                      Join 2,500+ Subscribers
+                      Join Newsletter
                     </span>
                   )}
                 </Button>
               </form>
               
-              <div className="grid grid-cols-2 gap-4 mt-6 pt-6 border-t border-white/10">
-                <div className="flex items-center">
-                  <MdVerified className="text-green-400 mr-2" />
-                  <span className="text-xs text-gray-300">Verified Content</span>
-                </div>
-                <div className="flex items-center">
-                  <FaAward className="text-amber-400 mr-2" />
-                  <span className="text-xs text-gray-300">Award Winning</span>
-                </div>
-              </div>
-            </div>
-
-            {/* Additional Stats */}
-            <div className="grid grid-cols-2 gap-4 text-center">
-              <div className="bg-white/5 rounded-xl p-4 border border-white/10">
-                <div className="text-2xl font-bold text-white">50K+</div>
-                <div className="text-xs text-gray-400">Monthly Readers</div>
-              </div>
-              <div className="bg-white/5 rounded-xl p-4 border border-white/10">
-                <div className="text-2xl font-bold text-white">1.2K+</div>
-                <div className="text-xs text-gray-400">Published Articles</div>
+              <div className="flex items-center mt-6 pt-6 border-t border-white/10">
+                <FaRss className="text-amber-400 mr-3" />
+                <span className="text-sm text-gray-300">
+                  <span className="font-semibold text-white">2,500+</span> subscribers
+                </span>
               </div>
             </div>
           </div>
@@ -379,36 +304,30 @@ export default function Footer() {
         <div className="my-12 h-px bg-gradient-to-r from-transparent via-gray-600 to-transparent"></div>
 
         {/* Bottom bar */}
-        <div className="flex flex-col lg:flex-row justify-between items-center space-y-6 lg:space-y-0">
+        <div className="flex flex-col md:flex-row justify-between items-center space-y-6 md:space-y-0">
           <div className="text-gray-400 text-sm">
-            <div className="flex flex-col sm:flex-row items-center space-y-2 sm:space-y-0">
-              <div className="flex items-center">
-                <FaRegCopyright className="mr-2" />
-                <span>{currentYear} InsightHub. All rights reserved.</span>
-              </div>
-              <span className="hidden sm:inline mx-3">•</span>
-              <div className="flex items-center">
-                <span>Crafted with</span>
-                <FaHeart className="mx-2 text-red-400 animate-pulse" />
-                <span>by developers, for developers</span>
-              </div>
+            <div className="flex items-center">
+              <FaRegCopyright className="mr-2" />
+              <span>{currentYear} InsightHub. All rights reserved.</span>
+              <span className="mx-2">•</span>
+              <span>Built with</span>
+              <FaHeart className="mx-2 text-red-400 animate-pulse" />
+              <span>by our community</span>
             </div>
           </div>
           
           <div className="flex flex-wrap justify-center gap-6 text-sm">
-            <Link href="/sitemap" className="text-gray-400 hover:text-white transition-colors hover:underline">
+            <Link href="/sitemap" className="text-gray-400 hover:text-white transition-colors">
               Sitemap
             </Link>
-            <Link href="/rss" className="text-gray-400 hover:text-white transition-colors hover:underline flex items-center">
-              <FaRss className="mr-1" />
-              RSS Feed
+            <Link href="/cookies" className="text-gray-400 hover:text-white transition-colors">
+              Cookie Policy
             </Link>
-            <Link href="/status" className="text-gray-400 hover:text-white transition-colors hover:underline flex items-center">
-              <div className="w-2 h-2 bg-green-400 rounded-full mr-2 animate-pulse"></div>
-              Status
+            <Link href="/accessibility" className="text-gray-400 hover:text-white transition-colors">
+              Accessibility
             </Link>
-            <Link href="/contact" className="text-gray-400 hover:text-white transition-colors hover:underline">
-              Contact
+            <Link href="/contact" className="text-gray-400 hover:text-white transition-colors">
+              Contact Us
             </Link>
           </div>
         </div>
@@ -416,10 +335,10 @@ export default function Footer() {
         {/* Back to top */}
         <button
           onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
-          className="fixed bottom-8 right-8 w-14 h-14 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white rounded-full shadow-2xl hover:shadow-indigo-500/40 hover:scale-110 transition-all duration-300 flex items-center justify-center z-50 group"
+          className="fixed bottom-8 right-8 w-14 h-14 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-full shadow-2xl hover:shadow-indigo-500/40 hover:scale-110 transition-all duration-300 flex items-center justify-center z-50"
           aria-label="Back to top"
         >
-          <svg className="w-6 h-6 transform group-hover:-translate-y-0.5 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 10l7-7m0 0l7 7m-7-7v18" />
           </svg>
         </button>
