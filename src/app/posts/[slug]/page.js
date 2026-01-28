@@ -244,7 +244,7 @@ export default function SinglePost() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-gray-50 to-white">
+    <main className="min-h-screen bg-white">
       {/* Reading Progress Bar */}
       <div className="fixed top-0 left-0 right-0 h-1 bg-gray-200 z-50">
         <div
@@ -253,13 +253,15 @@ export default function SinglePost() {
         ></div>
       </div>
 
-      {/* Article Header */}
-      <div className="relative overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-br from-indigo-900 via-purple-800 to-pink-700"></div>
-        <div className="absolute -top-40 -right-40 w-80 h-80 bg-purple-500 rounded-full mix-blend-multiply filter blur-3xl opacity-20"></div>
-        <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-blue-500 rounded-full mix-blend-multiply filter blur-3xl opacity-20"></div>
+      {/* Hero Section */}
+      <section className="relative bg-gradient-to-br from-indigo-600 via-purple-600 to-pink-600 text-white overflow-hidden">
+        {/* Background Pattern */}
+        <div className="absolute inset-0 opacity-10">
+          <div className="absolute top-0 left-0 w-96 h-96 bg-white rounded-full -translate-x-1/2 -translate-y-1/2"></div>
+          <div className="absolute bottom-0 right-0 w-96 h-96 bg-white rounded-full translate-x-1/2 translate-y-1/2"></div>
+        </div>
 
-        <div className="relative container mx-auto px-6 py-12 md:py-16">
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-12 md:py-16 relative z-10">
           <div className="max-w-4xl mx-auto">
             {/* Navigation */}
             <div className="flex items-center justify-between mb-8">
@@ -280,6 +282,7 @@ export default function SinglePost() {
                       ? "bg-white/20 text-amber-300"
                       : "text-white/80 hover:text-white hover:bg-white/10"
                   }`}
+                  title={isBookmarked ? "Remove bookmark" : "Bookmark article"}
                 >
                   <Bookmark
                     className={`w-5 h-5 ${isBookmarked ? "fill-current" : ""}`}
@@ -290,47 +293,40 @@ export default function SinglePost() {
                   <button
                     onClick={() => setShowShareMenu(!showShareMenu)}
                     className="p-2.5 rounded-xl text-white/80 hover:text-white hover:bg-white/10 transition-all duration-300"
+                    title="Share article"
                   >
                     <Share2 className="w-5 h-5" />
                   </button>
 
                   {showShareMenu && (
-                    <div className="absolute right-0 mt-2 w-48 bg-white rounded-xl shadow-2xl border border-gray-100 p-2 z-50 animate-slide-down">
+                    <div className="absolute right-0 mt-2 w-56 bg-white rounded-xl shadow-2xl border border-gray-100 p-2 z-50 animate-slide-down">
                       <button
                         onClick={() => handleShare("twitter")}
                         className="flex items-center w-full p-3 rounded-lg hover:bg-blue-50 transition-colors duration-200"
                       >
                         <Twitter className="w-5 h-5 text-blue-400 mr-3" />
-                        <span className="text-gray-700 font-medium">
-                          Share on Twitter
-                        </span>
+                        <span className="text-gray-700 font-medium">Share on Twitter</span>
                       </button>
                       <button
                         onClick={() => handleShare("facebook")}
                         className="flex items-center w-full p-3 rounded-lg hover:bg-blue-50 transition-colors duration-200"
                       >
                         <Facebook className="w-5 h-5 text-blue-600 mr-3" />
-                        <span className="text-gray-700 font-medium">
-                          Share on Facebook
-                        </span>
+                        <span className="text-gray-700 font-medium">Share on Facebook</span>
                       </button>
                       <button
                         onClick={() => handleShare("linkedin")}
                         className="flex items-center w-full p-3 rounded-lg hover:bg-blue-50 transition-colors duration-200"
                       >
                         <Linkedin className="w-5 h-5 text-blue-700 mr-3" />
-                        <span className="text-gray-700 font-medium">
-                          Share on LinkedIn
-                        </span>
+                        <span className="text-gray-700 font-medium">Share on LinkedIn</span>
                       </button>
                       <button
                         onClick={() => handleShare("copy")}
                         className="flex items-center w-full p-3 rounded-lg hover:bg-gray-50 transition-colors duration-200"
                       >
-                        <LinkIcon className="w-5 h-5 text-gray-600 mr-3" />
-                        <span className="text-gray-700 font-medium">
-                          Copy Link
-                        </span>
+                        <Copy className="w-5 h-5 text-gray-600 mr-3" />
+                        <span className="text-gray-700 font-medium">Copy Link</span>
                       </button>
                     </div>
                   )}
@@ -340,29 +336,39 @@ export default function SinglePost() {
 
             {/* Article Meta */}
             <div className="mb-8">
-              <div className="inline-flex items-center bg-white/10 backdrop-blur-sm text-white px-4 py-2 rounded-full mb-6">
-                <TrendingUp className="w-4 h-4 mr-2" />
+              <div className="inline-flex items-center bg-white/20 backdrop-blur-sm text-white px-4 py-2 rounded-full mb-6">
+                <Sparkles className="w-4 h-4 mr-2 text-amber-300" />
                 <span className="font-semibold text-sm">FEATURED ARTICLE</span>
               </div>
 
-              <h1 className="text-4xl md:text-5xl lg:text-6xl font-black text-white mb-6 leading-tight">
+              <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-white mb-6 leading-tight">
                 {post.title}
               </h1>
 
-              <div className="flex flex-wrap items-center gap-4 text-white/90">
+              <div className="flex flex-wrap items-center gap-6 text-white/90">
                 <div className="flex items-center">
                   <div className="relative mr-3">
                     <div className="absolute inset-0 bg-gradient-to-r from-blue-500 to-cyan-400 rounded-full blur opacity-75"></div>
                     <div className="relative w-12 h-12 bg-gradient-to-r from-blue-600 to-cyan-500 rounded-full flex items-center justify-center text-white font-bold">
-                      {post.author?.name?.charAt(0) || "A"}
+                      {post.author?.avatar ? (
+                        <Image
+                          src={post.author.avatar}
+                          alt={post.author.name}
+                          width={48}
+                          height={48}
+                          className="w-full h-full object-cover rounded-full"
+                        />
+                      ) : (
+                        post.author?.name?.charAt(0) || "A"
+                      )}
                     </div>
                   </div>
                   <div>
                     <div className="font-bold">
-                      {post.author?.name || "Unknown Author"}
+                      {post.author?.name || "Anonymous Author"}
                     </div>
                     <div className="text-sm text-white/70">
-                      Expert Contributor
+                      {post.author?.role === "admin" ? "Administrator" : "Content Writer"}
                     </div>
                   </div>
                 </div>
@@ -383,7 +389,12 @@ export default function SinglePost() {
 
                   <div className="flex items-center">
                     <Clock className="w-4 h-4 mr-2" />
-                    <span>8 min read</span>
+                    <span>{Math.ceil((post.body?.length || 1000) / 200)} min read</span>
+                  </div>
+
+                  <div className="flex items-center">
+                    <Eye className="w-4 h-4 mr-2" />
+                    <span>{post.views || 0} views</span>
                   </div>
                 </div>
               </div>
@@ -394,248 +405,383 @@ export default function SinglePost() {
         {/* Wave Divider */}
         <div className="absolute bottom-0 left-0 right-0">
           <svg
-            className="w-full h-12 md:h-20 text-white"
+            className="w-full h-16 md:h-24 text-white"
             viewBox="0 0 1200 120"
             preserveAspectRatio="none"
           >
             <path
-              d="M0,0V46.29c47.79,22.2,103.59,32.17,158,28,70.36-5.37,136.33-33.31,206.8-37.5C438.64,32.43,512.34,53.67,583,72.05c69.27,18,138.3,24.88,209.4,13.08,36.15-6,69.85-17.84,104.45-29.34C989.49,25,1113-14.29,1200,52.47V0Z"
-              opacity=".25"
-              fill="currentColor"
-            ></path>
-            <path
-              d="M0,0V15.81C13,36.92,27.64,56.86,47.69,72.05,99.41,111.27,165,111,224.58,91.58c31.15-10.15,60.09-26.07,89.67-39.8,40.92-19,84.73-46,130.83-49.67,36.26-2.85,70.9,9.42,98.6,31.56,31.77,25.39,62.32,62,103.63,73,40.44,10.79,81.35,6.36,117.35-5.65C939.06,29.08,1053,4,1200,0V0Z"
+              d="M321.39,56.44c58-10.79,114.16-30.13,172-41.86,82.39-16.72,168.19-17.73,250.45-.39C823.78,31,906.67,72,985.66,92.83c70.05,18.48,146.53,26.09,214.34,3V0H0V27.35A600.21,600.21,0,0,0,321.39,56.44Z"
               fill="currentColor"
             ></path>
           </svg>
         </div>
-      </div>
+      </section>
 
       {/* Main Content */}
-      <div className="container mx-auto px-6 py-12">
-        <div className="max-w-4xl mx-auto">
-          <div className="grid lg:grid-cols-3 gap-8">
-            {/* Article Content */}
-            <div className="lg:col-span-2">
-              <div className="bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden">
-                {/* Featured Image */}
-                {post.image && (
-                  <div className="relative h-64 md:h-96 overflow-hidden">
-                    <Image
-                      src={post.image}
-                      alt={post.title}
-                      width={800}
-                      height={400}
-                      className="w-full h-full object-cover"
-                      priority
-                    />
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent"></div>
-                  </div>
-                )}
-
-                {/* Article Body */}
-                <div className="p-8">
-                  <div className="prose prose-lg max-w-none">
-                    <div className="text-gray-700 leading-relaxed text-lg whitespace-pre-line mb-8">
-                      {post.body}
-                    </div>
-
-                    {/* Tags */}
-                    {post.tags?.length > 0 && (
-                      <div className="pt-8 border-t border-gray-100">
-                        <div className="flex items-center mb-4">
-                          <Tag className="w-5 h-5 text-indigo-500 mr-2" />
-                          <h3 className="font-bold text-gray-900">Tags</h3>
-                        </div>
-                        <div className="flex flex-wrap gap-3">
-                          {post.tags.map((tag) => (
-                            <Link
-                              key={tag}
-                              href={`/tag/${tag}`}
-                              className="inline-flex items-center px-4 py-2 bg-gradient-to-r from-indigo-50 to-purple-50 text-indigo-700 font-medium rounded-xl hover:from-indigo-100 hover:to-purple-100 transition-all duration-300"
-                            >
-                              #{tag}
-                              <ChevronRight className="w-4 h-4 ml-2" />
-                            </Link>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                </div>
-                {/* Article Stats */}
-                <div className="p-6 border-b border-gray-100">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center space-x-6">
-                      <div className="relative">
-                        <button
-                          onClick={() =>
-                            setShowReactionPicker(!showReactionPicker)
-                          }
-                          className={`flex items-center space-x-2 transition-all duration-300 ${
-                            userReaction
-                              ? REACTIONS[userReaction].color
-                              : "text-gray-500 hover:text-red-500"
-                          }`}
-                        >
-                          {userReaction ? (
-                            (() => {
-                              const IconComponent =
-                                REACTIONS[userReaction].icon;
-                              return (
-                                <IconComponent className="w-5 h-5 fill-current" />
-                              );
-                            })()
-                          ) : (
-                            <Heart className="w-5 h-5" />
-                          )}
-                          <span className="font-semibold">
-                            {Object.values(post.reactions || {}).reduce(
-                              (sum, count) => sum + count,
-                              0,
-                            ) || 0}
-                          </span>
-                        </button>
-
-                        {/* Reaction Picker */}
-                        {showReactionPicker && (
-                          <div className="absolute top-full left-0 mt-2 bg-white border border-gray-200 rounded-lg shadow-lg p-2 z-10">
-                            <div className="flex gap-1">
-                              {Object.entries(REACTIONS).map(
-                                ([type, { icon: Icon, label, color }]) => (
-                                  <button
-                                    key={type}
-                                    onClick={() => handleReaction(type)}
-                                    className={`p-2 rounded-full hover:bg-gray-100 transition-colors ${color} ${userReaction === type ? "bg-gray-100" : ""}`}
-                                    title={label}
-                                  >
-                                    <Icon className="w-4 h-4" />
-                                  </button>
-                                ),
-                              )}
-                              {userReaction && (
-                                <button
-                                  onClick={() => handleReaction(null)}
-                                  className="p-2 rounded-full hover:bg-red-100 transition-colors text-gray-400 hover:text-red-500"
-                                  title="Remove reaction"
-                                >
-                                  <X className="w-4 h-4" />
-                                </button>
-                              )}
-                            </div>
-                          </div>
-                        )}
-                      </div>
-
-                      <button
-                        onClick={() => setShowComments((prev) => !prev)}
-                        className="flex items-center space-x-2 text-gray-500 hover:text-indigo-600 transition"
-                      >
-                        <MessageCircle className="w-5 h-5" />
-                        <span className="font-semibold">Comments</span>
-                      </button>
-                    </div>
-                  </div>
-                  {showComments && (
-                    <div className="p-6 border-t border-gray-100 animate-fade-in">
-                      <Comments slug={post.slug} user={post.author} />
+      <section className="py-16 md:py-24">
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="max-w-4xl mx-auto">
+            <div className="grid lg:grid-cols-4 gap-12">
+              {/* Article Content */}
+              <div className="lg:col-span-3">
+                <article className="bg-white rounded-2xl border border-gray-200 overflow-hidden shadow-sm">
+                  {/* Featured Image */}
+                  {post.image && (
+                    <div className="relative h-64 md:h-96 overflow-hidden">
+                      <Image
+                        src={post.image}
+                        alt={post.title}
+                        width={800}
+                        height={400}
+                        className="w-full h-full object-cover"
+                        priority
+                      />
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent"></div>
                     </div>
                   )}
-                </div>
-              </div>
 
-              {/* Author Bio */}
-              <div className="mt-8 bg-gradient-to-br from-blue-50 to-cyan-50 rounded-2xl border border-blue-100 p-8">
-                <div className="flex items-center mb-6">
-                  <div className="relative mr-4">
-                    <div className="absolute inset-0 bg-gradient-to-r from-blue-500 to-cyan-400 rounded-full blur opacity-75"></div>
-                    <div className="relative w-16 h-16 bg-gradient-to-r from-blue-600 to-cyan-500 rounded-full flex items-center justify-center text-white font-bold text-2xl">
-                      {post.author?.avatar ? (
-                        <Image
-                          src={post.author.avatar}
-                          alt={post.author.name}
-                          width={64}
-                          height={64}
-                          className="w-full h-full object-cover rounded-full"
-                        />
-                      ) : (
-                        post.author?.name?.charAt(0) || "A"
+                  {/* Article Body */}
+                  <div className="p-8 md:p-12">
+                    <div className="prose prose-lg max-w-none">
+                      <div className="text-gray-700 leading-relaxed text-lg whitespace-pre-line mb-8">
+                        {post.body}
+                      </div>
+
+                      {/* Tags */}
+                      {post.tags?.length > 0 && (
+                        <div className="pt-8 border-t border-gray-100">
+                          <div className="flex items-center mb-4">
+                            <Tag className="w-5 h-5 text-indigo-500 mr-2" />
+                            <h3 className="font-bold text-gray-900">Related Topics</h3>
+                          </div>
+                          <div className="flex flex-wrap gap-3">
+                            {post.tags.map((tag) => (
+                              <Link
+                                key={tag}
+                                href={`/tag/${tag}`}
+                                className="inline-flex items-center px-4 py-2 bg-gradient-to-r from-indigo-50 to-purple-50 text-indigo-700 font-medium rounded-xl hover:from-indigo-100 hover:to-purple-100 transition-all duration-300 hover:shadow-sm"
+                              >
+                                #{tag}
+                                <ChevronRight className="w-4 h-4 ml-2" />
+                              </Link>
+                            ))}
+                          </div>
+                        </div>
                       )}
                     </div>
                   </div>
-                  <div>
-                    <h3 className="text-xl font-bold text-gray-900">
-                      {post.author?.name || "Unknown Author"}
-                    </h3>
-                    <p className="text-gray-600">
-                      {post.author?.role === "admin"
-                        ? "Administrator"
-                        : "Content Writer"}{" "}
-                      •
-                      {post.author?.location
-                        ? ` ${post.author.location}`
-                        : " Location not specified"}
-                    </p>
+
+                  {/* Article Engagement */}
+                  <div className="px-8 md:px-12 pb-8 border-t border-gray-100">
+                    <div className="flex items-center justify-between py-6">
+                      <div className="flex items-center space-x-6">
+                        <div className="relative">
+                          <button
+                            onClick={() => setShowReactionPicker(!showReactionPicker)}
+                            className={`flex items-center space-x-2 px-4 py-2 rounded-xl transition-all duration-300 ${
+                              userReaction
+                                ? `${REACTIONS[userReaction].color} ${REACTIONS[userReaction].bgColor}`
+                                : "text-gray-500 hover:text-red-500 hover:bg-red-50"
+                            }`}
+                          >
+                            {userReaction ? (
+                              (() => {
+                                const IconComponent = REACTIONS[userReaction].icon;
+                                return <IconComponent className="w-5 h-5 fill-current" />;
+                              })()
+                            ) : (
+                              <Heart className="w-5 h-5" />
+                            )}
+                            <span className="font-semibold">
+                              {Object.values(post.reactions || {}).reduce(
+                                (sum, count) => sum + count,
+                                0,
+                              ) || 0}
+                            </span>
+                            <span className="text-sm">
+                              {userReaction ? REACTIONS[userReaction].label : "React"}
+                            </span>
+                          </button>
+
+                          {/* Reaction Picker */}
+                          {showReactionPicker && (
+                            <div className="absolute top-full left-0 mt-2 bg-white border border-gray-200 rounded-xl shadow-lg p-3 z-10">
+                              <div className="flex gap-2">
+                                {Object.entries(REACTIONS).map(
+                                  ([type, { icon: Icon, label, color, bgColor }]) => (
+                                    <button
+                                      key={type}
+                                      onClick={() => handleReaction(type)}
+                                      className={`p-3 rounded-xl transition-all duration-200 ${
+                                        userReaction === type ? bgColor : "hover:bg-gray-100"
+                                      } ${color}`}
+                                      title={label}
+                                    >
+                                      <Icon className="w-5 h-5" />
+                                    </button>
+                                  ),
+                                )}
+                                {userReaction && (
+                                  <button
+                                    onClick={() => handleReaction(null)}
+                                    className="p-3 rounded-xl hover:bg-red-100 transition-colors text-gray-400 hover:text-red-500"
+                                    title="Remove reaction"
+                                  >
+                                    <X className="w-5 h-5" />
+                                  </button>
+                                )}
+                              </div>
+                            </div>
+                          )}
+                        </div>
+
+                        <button
+                          onClick={() => setShowComments((prev) => !prev)}
+                          className="flex items-center space-x-2 px-4 py-2 rounded-xl text-gray-500 hover:text-indigo-600 hover:bg-indigo-50 transition-all duration-300"
+                        >
+                          <MessageCircle className="w-5 h-5" />
+                          <span className="font-semibold">Comments</span>
+                        </button>
+                      </div>
+
+                      <div className="flex items-center space-x-4 text-sm text-gray-500">
+                        <span className="flex items-center">
+                          <Eye className="w-4 h-4 mr-1" />
+                          {post.views || 0}
+                        </span>
+                        <span className="flex items-center">
+                          <Clock className="w-4 h-4 mr-1" />
+                          {Math.ceil((post.body?.length || 1000) / 200)} min
+                        </span>
+                      </div>
+                    </div>
+
+                    {showComments && (
+                      <div className="pt-6 border-t border-gray-100 animate-fade-in">
+                        <Comments slug={post.slug} user={post.author} />
+                      </div>
+                    )}
+                  </div>
+                </article>
+
+                {/* Author Bio */}
+                <div className="mt-12 bg-gradient-to-br from-indigo-50 to-purple-50 rounded-2xl border border-indigo-100 p-8">
+                  <div className="flex items-start space-x-4 mb-6">
+                    <div className="relative flex-shrink-0">
+                      <div className="absolute inset-0 bg-gradient-to-r from-indigo-500 to-purple-500 rounded-full blur opacity-75"></div>
+                      <div className="relative w-16 h-16 bg-gradient-to-r from-indigo-600 to-purple-600 rounded-full flex items-center justify-center text-white font-bold text-2xl">
+                        {post.author?.avatar ? (
+                          <Image
+                            src={post.author.avatar}
+                            alt={post.author.name}
+                            width={64}
+                            height={64}
+                            className="w-full h-full object-cover rounded-full"
+                          />
+                        ) : (
+                          post.author?.name?.charAt(0) || "A"
+                        )}
+                      </div>
+                    </div>
+                    <div className="flex-1">
+                      <div className="flex items-center space-x-2 mb-2">
+                        <h3 className="text-xl font-bold text-gray-900">
+                          {post.author?.name || "Anonymous Author"}
+                        </h3>
+                        {post.author?.role === "admin" && (
+                          <div className="inline-flex items-center bg-indigo-100 text-indigo-600 px-2 py-1 rounded-full text-xs font-semibold">
+                            <Award className="w-3 h-3 mr-1" />
+                            Admin
+                          </div>
+                        )}
+                      </div>
+                      <p className="text-gray-600 mb-4">
+                        {post.author?.role === "admin" ? "Administrator" : "Content Writer"} •
+                        {post.author?.location ? ` ${post.author.location}` : " Location not specified"}
+                      </p>
+                      <p className="text-gray-700 leading-relaxed">
+                        {post.author?.about || "This author is passionate about sharing knowledge and insights with the community. Stay tuned for more great content!"}
+                      </p>
+                      <div className="flex items-center justify-between mt-4 pt-4 border-t border-indigo-200">
+                        <p className="text-sm text-gray-500">
+                          Member since{" "}
+                          {post.author?.createdAt
+                            ? new Date(post.author.createdAt).toLocaleDateString("en-US", {
+                                year: "numeric",
+                                month: "long",
+                              })
+                            : "Recently"}
+                        </p>
+                        {post.author?.phone && (
+                          <a
+                            href={`tel:${post.author.phone}`}
+                            className="text-sm text-indigo-600 hover:text-indigo-700 font-medium"
+                          >
+                            📞 Contact
+                          </a>
+                        )}
+                      </div>
+                    </div>
                   </div>
                 </div>
-                <p className="text-gray-700 mb-4">
-                  {post.author?.about || "This author hasn't added a bio yet."}
-                </p>
-                {post.author?.phone && (
-                  <p className="text-sm text-gray-600">
-                    📞 {post.author.phone}
-                  </p>
-                )}
-                <p className="text-sm text-gray-500 mt-2">
-                  Joined{" "}
-                  {post.author?.createdAt
-                    ? new Date(post.author.createdAt).toLocaleDateString(
-                        "en-US",
-                        {
-                          year: "numeric",
-                          month: "long",
-                        },
-                      )
-                    : "Recently"}
-                </p>
               </div>
-            </div>
 
-            {/* Sidebar */}
-            <div className="lg:col-span-1">
-              <div className="sticky top-24 space-y-8">
-                {/* Table of Contents */}
-                <div className="bg-gradient-to-br from-purple-50 to-pink-50 rounded-2xl border border-purple-100 p-6">
-                  <h3 className="text-lg font-bold text-gray-900 mb-6 flex items-center">
-                    <BookOpen className="w-5 h-5 mr-2 text-purple-500" />
-                    Article Contents
-                  </h3>
-                  <nav className="space-y-3">
-                    {[
-                      "Introduction",
-                      "Key Concepts",
-                      "Implementation",
-                      "Best Practices",
-                      "Conclusion",
-                    ].map((item, idx) => (
-                      <a
-                        key={idx}
-                        href={`#${item.toLowerCase().replace(" ", "-")}`}
-                        className="flex items-center justify-between p-3 rounded-xl hover:bg-white/50 transition-all duration-300"
-                      >
-                        <span className="text-gray-700 font-medium">
-                          {item}
+              {/* Sidebar */}
+              <div className="lg:col-span-1">
+                <div className="sticky top-24 space-y-8">
+                  {/* Table of Contents */}
+                  <div className="bg-gradient-to-br from-purple-50 to-pink-50 rounded-2xl border border-purple-100 p-6">
+                    <h3 className="text-lg font-bold text-gray-900 mb-6 flex items-center">
+                      <BookOpen className="w-5 h-5 mr-2 text-purple-500" />
+                      Quick Navigation
+                    </h3>
+                    <nav className="space-y-3">
+                      {[
+                        { title: "Introduction", icon: Lightbulb },
+                        { title: "Key Concepts", icon: Target },
+                        { title: "Implementation", icon: Zap },
+                        { title: "Best Practices", icon: Star },
+                        { title: "Conclusion", icon: Award },
+                      ].map((item, idx) => (
+                        <a
+                          key={idx}
+                          href={`#${item.title.toLowerCase().replace(" ", "-")}`}
+                          className="flex items-center justify-between p-3 rounded-xl hover:bg-white/50 transition-all duration-300 group"
+                        >
+                          <div className="flex items-center">
+                            <item.icon className="w-4 h-4 text-purple-400 mr-3" />
+                            <span className="text-gray-700 font-medium">{item.title}</span>
+                          </div>
+                          <ChevronRight className="w-4 h-4 text-purple-400 group-hover:translate-x-1 transition-transform" />
+                        </a>
+                      ))}
+                    </nav>
+                  </div>
+
+                  {/* Article Stats */}
+                  <div className="bg-gradient-to-br from-blue-50 to-cyan-50 rounded-2xl border border-blue-100 p-6">
+                    <h3 className="text-lg font-bold text-gray-900 mb-6 flex items-center">
+                      <TrendingUp className="w-5 h-5 mr-2 text-blue-500" />
+                      Article Stats
+                    </h3>
+                    <div className="space-y-4">
+                      <div className="flex items-center justify-between">
+                        <span className="text-gray-600">Views</span>
+                        <span className="font-semibold text-gray-900">{post.views || 0}</span>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <span className="text-gray-600">Reactions</span>
+                        <span className="font-semibold text-gray-900">
+                          {Object.values(post.reactions || {}).reduce((sum, count) => sum + count, 0) || 0}
                         </span>
-                        <ChevronRight className="w-4 h-4 text-purple-400" />
-                      </a>
-                    ))}
-                  </nav>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <span className="text-gray-600">Reading Time</span>
+                        <span className="font-semibold text-gray-900">
+                          {Math.ceil((post.body?.length || 1000) / 200)} min
+                        </span>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <span className="text-gray-600">Published</span>
+                        <span className="font-semibold text-gray-900">
+                          {new Date(post.createdAt).toLocaleDateString()}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Related Articles */}
+                  {relatedPosts.length > 0 && (
+                    <div className="bg-gradient-to-br from-green-50 to-emerald-50 rounded-2xl border border-green-100 p-6">
+                      <h3 className="text-lg font-bold text-gray-900 mb-6 flex items-center">
+                        <Sparkles className="w-5 h-5 mr-2 text-green-500" />
+                        Related Articles
+                      </h3>
+                      <div className="space-y-4">
+                        {relatedPosts.slice(0, 3).map((relatedPost, idx) => (
+                          <Link
+                            key={idx}
+                            href={`/posts/${relatedPost.slug}`}
+                            className="block p-3 rounded-xl hover:bg-white/50 transition-all duration-300 group"
+                          >
+                            <h4 className="font-semibold text-gray-900 group-hover:text-green-600 transition-colors mb-1">
+                              {relatedPost.title}
+                            </h4>
+                            <p className="text-sm text-gray-600">{relatedPost.category}</p>
+                          </Link>
+                        ))}
+                      </div>
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
           </div>
         </div>
-      </div>
-    </div>
+      </section>
+
+      {/* Styles */}
+      <style jsx global>{`
+        @keyframes fade-in {
+          from {
+            opacity: 0;
+            transform: translateY(10px);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0);
+          }
+        }
+        
+        @keyframes slide-down {
+          from {
+            opacity: 0;
+            transform: translateY(-10px);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0);
+          }
+        }
+        
+        .animate-fade-in {
+          animation: fade-in 0.3s ease-out;
+        }
+        
+        .animate-slide-down {
+          animation: slide-down 0.2s ease-out;
+        }
+        
+        .prose {
+          max-width: none;
+        }
+        
+        .prose p {
+          margin-bottom: 1.5rem;
+          line-height: 1.8;
+        }
+        
+        .prose h1, .prose h2, .prose h3 {
+          margin-top: 2rem;
+          margin-bottom: 1rem;
+          font-weight: 700;
+        }
+        
+        .prose ul, .prose ol {
+          margin: 1.5rem 0;
+          padding-left: 1.5rem;
+        }
+        
+        .prose blockquote {
+          border-left: 4px solid #6366f1;
+          padding-left: 1rem;
+          margin: 1.5rem 0;
+          font-style: italic;
+          background: #f8fafc;
+          padding: 1rem;
+          border-radius: 0.5rem;
+        }
+      `}</style>
+    </main>
   );
 }
