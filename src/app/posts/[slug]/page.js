@@ -31,17 +31,27 @@ import {
   Angry,
   Meh,
   X,
+  Star,
+  Award,
+  Users,
+  Feather,
+  ThumbsUp,
+  Copy,
+  ExternalLink,
+  Zap,
+  Target,
+  Lightbulb,
 } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
 
 const REACTIONS = {
-  like: { icon: Heart, label: "Like", color: "text-red-500" },
-  love: { icon: Heart, label: "Love", color: "text-red-500" },
-  laugh: { icon: Laugh, label: "Laugh", color: "text-yellow-500" },
-  wow: { icon: Meh, label: "Wow", color: "text-purple-500" },
-  sad: { icon: Frown, label: "Sad", color: "text-blue-400" },
-  angry: { icon: Angry, label: "Angry", color: "text-red-600" },
+  like: { icon: Heart, label: "Like", color: "text-red-500", bgColor: "bg-red-50 hover:bg-red-100" },
+  love: { icon: Heart, label: "Love", color: "text-red-500", bgColor: "bg-red-50 hover:bg-red-100" },
+  laugh: { icon: Laugh, label: "Laugh", color: "text-yellow-500", bgColor: "bg-yellow-50 hover:bg-yellow-100" },
+  wow: { icon: Sparkles, label: "Wow", color: "text-purple-500", bgColor: "bg-purple-50 hover:bg-purple-100" },
+  sad: { icon: Frown, label: "Sad", color: "text-blue-400", bgColor: "bg-blue-50 hover:bg-blue-100" },
+  angry: { icon: Angry, label: "Angry", color: "text-red-600", bgColor: "bg-red-50 hover:bg-red-100" },
 };
 
 export default function SinglePost() {
@@ -117,7 +127,7 @@ export default function SinglePost() {
   const handleShare = (platform) => {
     const url = window.location.href;
     const title = post?.title || "";
-    const text = `Check out this article: ${title}`;
+    const text = `Check out this insightful article: ${title}`;
 
     const shareUrls = {
       twitter: `https://twitter.com/intent/tweet?url=${encodeURIComponent(url)}&text=${encodeURIComponent(text)}`,
@@ -126,8 +136,15 @@ export default function SinglePost() {
     };
 
     if (platform === "copy") {
-      navigator.clipboard.writeText(url);
-      alert("Link copied to clipboard!");
+      navigator.clipboard.writeText(url).then(() => {
+        // Show success toast or notification
+        const toast = document.createElement('div');
+        toast.className = 'fixed top-4 right-4 bg-green-500 text-white px-4 py-2 rounded-lg shadow-lg z-50';
+        toast.textContent = 'Link copied to clipboard!';
+        document.body.appendChild(toast);
+        setTimeout(() => document.body.removeChild(toast), 3000);
+      });
+      setShowShareMenu(false);
       return;
     }
 
@@ -163,15 +180,15 @@ export default function SinglePost() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-b from-gray-50 to-white">
-        <div className="container mx-auto px-6 py-12">
+      <div className="min-h-screen bg-white">
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-12">
           <div className="flex items-center justify-center min-h-[60vh]">
             <div className="text-center">
               <div className="inline-flex items-center justify-center w-20 h-20 mb-6">
                 <div className="relative">
                   <div className="absolute inset-0 bg-gradient-to-r from-indigo-500 to-purple-500 rounded-full blur opacity-75 animate-pulse"></div>
                   <div className="relative bg-gradient-to-r from-indigo-600 to-purple-600 p-4 rounded-full">
-                    <BookOpen className="w-8 h-8 text-white" />
+                    <BookOpen className="w-8 h-8 text-white animate-pulse" />
                   </div>
                 </div>
               </div>
@@ -179,8 +196,9 @@ export default function SinglePost() {
                 Loading Article
               </h3>
               <div className="w-64 h-2 bg-gray-200 rounded-full overflow-hidden mx-auto">
-                <div className="h-full bg-gradient-to-r from-indigo-500 to-purple-500 animate-loading-bar"></div>
+                <div className="h-full bg-gradient-to-r from-indigo-500 to-purple-500 rounded-full animate-pulse"></div>
               </div>
+              <p className="text-gray-600 mt-4">Please wait while we fetch the content...</p>
             </div>
           </div>
         </div>
@@ -190,11 +208,11 @@ export default function SinglePost() {
 
   if (error || !post) {
     return (
-      <div className="min-h-screen bg-gradient-to-b from-gray-50 to-white flex items-center justify-center">
-        <div className="container mx-auto px-6 py-12">
+      <div className="min-h-screen bg-white flex items-center justify-center">
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-12">
           <div className="max-w-md mx-auto text-center">
             <div className="inline-flex items-center justify-center w-20 h-20 bg-gradient-to-r from-red-100 to-pink-100 rounded-2xl mb-6">
-              <Sparkles className="w-10 h-10 text-red-500" />
+              <BookOpen className="w-10 h-10 text-red-500" />
             </div>
             <h1 className="text-3xl font-bold text-gray-900 mb-4">
               Article Not Found
@@ -205,7 +223,7 @@ export default function SinglePost() {
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Button
                 onClick={() => router.push("/")}
-                className="inline-flex items-center bg-gradient-to-r from-indigo-600 to-purple-600 text-white hover:shadow-lg"
+                className="inline-flex items-center bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white font-semibold py-3 px-6 rounded-xl transition-all duration-300"
               >
                 <Home className="w-4 h-4 mr-2" />
                 Back to Home
@@ -213,7 +231,7 @@ export default function SinglePost() {
               <Button
                 variant="outline"
                 onClick={() => router.push("/posts")}
-                className="inline-flex items-center"
+                className="inline-flex items-center border-2 border-gray-200 hover:border-indigo-300 hover:bg-indigo-50 py-3 px-6 rounded-xl transition-all duration-300"
               >
                 <BookOpen className="w-4 h-4 mr-2" />
                 Browse Articles

@@ -79,44 +79,106 @@ export default function AllPostsPage() {
   return (
     <div className="min-h-screen bg-gradient-to-b from-gray-50 to-white">
       {/* Hero Section */}
-      <div className="relative bg-gradient-to-br from-indigo-900 via-purple-800 to-pink-700 text-white overflow-hidden">
-        <div className="absolute inset-0 bg-black opacity-30"></div>
-        <div className="absolute -top-40 -right-40 w-80 h-80 bg-purple-500 rounded-full mix-blend-multiply filter blur-3xl opacity-20"></div>
-        <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-blue-500 rounded-full mix-blend-multiply filter blur-3xl opacity-20"></div>
+      <div className="relative bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 text-white overflow-hidden">
+        {/* Animated background */}
+        <div className="absolute inset-0">
+          <div className="absolute top-0 -left-4 w-72 h-72 bg-purple-500 rounded-full mix-blend-multiply filter blur-xl opacity-20 animate-blob"></div>
+          <div className="absolute top-0 -right-4 w-72 h-72 bg-yellow-500 rounded-full mix-blend-multiply filter blur-xl opacity-20 animate-blob animation-delay-2000"></div>
+          <div className="absolute -bottom-8 left-20 w-72 h-72 bg-pink-500 rounded-full mix-blend-multiply filter blur-xl opacity-20 animate-blob animation-delay-4000"></div>
+        </div>
         
-        <div className="relative container mx-auto px-6 py-16 md:py-24">
+        <div className="relative container mx-auto px-6 py-20 md:py-28">
           <div className="max-w-4xl mx-auto text-center">
             <div className="inline-flex items-center justify-center p-4 bg-gradient-to-r from-amber-500 to-orange-500 rounded-2xl shadow-2xl mb-8 animate-float">
               <BookOpen className="w-8 h-8" />
             </div>
-            <h1 className="text-4xl md:text-5xl lg:text-6xl font-black mb-6 leading-tight">
-              Explore <span className="bg-gradient-to-r from-amber-300 to-pink-300 bg-clip-text text-transparent">All Articles</span>
+            <h1 className="text-5xl md:text-6xl lg:text-7xl font-black mb-6 leading-tight">
+              Discover 
+              <span className="bg-gradient-to-r from-amber-300 via-orange-300 to-pink-300 bg-clip-text text-transparent"> Amazing</span>
+              <br />
+              <span className="bg-gradient-to-r from-cyan-300 to-blue-300 bg-clip-text text-transparent">Content</span>
             </h1>
-            <p className="text-xl text-blue-100 mb-12 max-w-3xl mx-auto">
-              Dive into our complete collection of insights, tutorials, and thought-provoking content from expert creators.
+            <p className="text-xl md:text-2xl text-slate-300 mb-8 max-w-3xl mx-auto leading-relaxed">
+              Explore our curated collection of insights, tutorials, and stories from the world's most innovative creators and thought leaders.
             </p>
+            
+            {/* Quick stats in hero */}
+            <div className="flex flex-wrap justify-center gap-8 mb-12">
+              <div className="flex items-center space-x-2 bg-white/10 backdrop-blur-sm rounded-full px-4 py-2">
+                <BookOpen className="w-5 h-5 text-amber-400" />
+                <span className="font-semibold">{stats.totalPosts}+ Articles</span>
+              </div>
+              <div className="flex items-center space-x-2 bg-white/10 backdrop-blur-sm rounded-full px-4 py-2">
+                <Users className="w-5 h-5 text-blue-400" />
+                <span className="font-semibold">{stats.totalAuthors}+ Authors</span>
+              </div>
+              <div className="flex items-center space-x-2 bg-white/10 backdrop-blur-sm rounded-full px-4 py-2">
+                <Eye className="w-5 h-5 text-green-400" />
+                <span className="font-semibold">{stats.totalViews.toLocaleString()} Views</span>
+              </div>
+            </div>
+
+            {/* CTA Buttons */}
+            <div className="flex flex-col sm:flex-row gap-4 justify-center">
+              <button className="inline-flex items-center px-8 py-4 bg-gradient-to-r from-amber-500 to-orange-500 text-white font-bold rounded-2xl hover:shadow-2xl hover:shadow-amber-500/25 transition-all duration-300 transform hover:-translate-y-1">
+                <Zap className="w-5 h-5 mr-2" />
+                Start Reading
+                <ArrowRight className="w-5 h-5 ml-2" />
+              </button>
+              <button className="inline-flex items-center px-8 py-4 bg-white/10 backdrop-blur-sm border border-white/20 text-white font-semibold rounded-2xl hover:bg-white/20 transition-all duration-300">
+                <Star className="w-5 h-5 mr-2" />
+                Featured Posts
+              </button>
+            </div>
           </div>
         </div>
       </div>
 
-      {/* Stats Bar */}
-      <div className="relative -mt-8 z-10">
+      {/* Enhanced Stats Bar */}
+      <div className="relative -mt-12 z-10">
         <div className="container mx-auto px-6">
-          <div className="bg-white rounded-2xl shadow-xl border border-gray-100 p-6 grid grid-cols-2 md:grid-cols-4 gap-6">
-            {[
-              { icon: BookOpen, label: 'Total Articles', value: stats.totalPosts, color: 'from-blue-500 to-cyan-500' },
-              { icon: Eye, label: 'Total Views', value: stats.totalViews.toLocaleString(), color: 'from-purple-500 to-pink-500' },
-              { icon: Users, label: 'Authors', value: stats.totalAuthors, color: 'from-green-500 to-emerald-500' },
-              { icon: Clock, label: 'Avg. Read Time', value: stats.avgReadTime, color: 'from-amber-500 to-orange-500' }
-            ].map((stat, idx) => (
-              <div key={idx} className="text-center p-4">
-                <div className={`inline-flex items-center justify-center w-16 h-16 mb-4 bg-gradient-to-r ${stat.color} rounded-2xl shadow-lg`}>
-                  <stat.icon className="w-8 h-8 text-white" />
+          <div className="bg-white rounded-3xl shadow-2xl border border-gray-100 p-8 backdrop-blur-sm">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
+              {[
+                { 
+                  icon: BookOpen, 
+                  label: 'Published Articles', 
+                  value: stats.totalPosts, 
+                  color: 'from-blue-500 to-cyan-500',
+                  description: 'Quality content'
+                },
+                { 
+                  icon: Eye, 
+                  label: 'Total Reads', 
+                  value: stats.totalViews.toLocaleString(), 
+                  color: 'from-purple-500 to-pink-500',
+                  description: 'Community engagement'
+                },
+                { 
+                  icon: Users, 
+                  label: 'Expert Authors', 
+                  value: stats.totalAuthors, 
+                  color: 'from-green-500 to-emerald-500',
+                  description: 'Diverse perspectives'
+                },
+                { 
+                  icon: Clock, 
+                  label: 'Avg. Read Time', 
+                  value: `${stats.avgReadTime} min`, 
+                  color: 'from-amber-500 to-orange-500',
+                  description: 'Quick insights'
+                }
+              ].map((stat, idx) => (
+                <div key={idx} className="text-center group hover:scale-105 transition-transform duration-300">
+                  <div className={`inline-flex items-center justify-center w-20 h-20 mb-4 bg-gradient-to-r ${stat.color} rounded-3xl shadow-lg group-hover:shadow-xl transition-shadow duration-300`}>
+                    <stat.icon className="w-10 h-10 text-white" />
+                  </div>
+                  <div className="text-3xl md:text-4xl font-black text-gray-900 mb-1">{stat.value}</div>
+                  <div className="text-gray-800 font-semibold mb-1">{stat.label}</div>
+                  <div className="text-sm text-gray-500">{stat.description}</div>
                 </div>
-                <div className="text-3xl font-black text-gray-900">{stat.value}</div>
-                <div className="text-gray-600">{stat.label}</div>
-              </div>
-            ))}
+              ))}
+            </div>
           </div>
         </div>
       </div>
@@ -124,47 +186,65 @@ export default function AllPostsPage() {
       
       <div className="container mx-auto px-6 py-12">
     
+        {/* Enhanced Search and Controls */}
         <div className="mb-12">
           <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-6 mb-8">
-            {/* Search */}
+            {/* Enhanced Search */}
             <div className="relative flex-1 max-w-2xl">
-              <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400" />
+              <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                <Search className="h-5 w-5 text-gray-400" />
+              </div>
               <input
                 type="text"
-                placeholder="Search articles, topics, or authors..."
+                placeholder="Search articles, topics, authors, or tags..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-12 pr-4 py-3.5 bg-white border-2 border-gray-200 rounded-xl focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 transition-all duration-300"
+                className="block w-full pl-12 pr-12 py-4 text-lg bg-white border-2 border-gray-200 rounded-2xl focus:border-indigo-500 focus:ring-4 focus:ring-indigo-100 transition-all duration-300 shadow-sm hover:shadow-md"
               />
+              {searchQuery && (
+                <button
+                  onClick={() => setSearchQuery('')}
+                  className="absolute inset-y-0 right-0 pr-4 flex items-center text-gray-400 hover:text-gray-600"
+                >
+                  <X className="h-5 w-5" />
+                </button>
+              )}
             </div>
 
-            {/* Controls Right */}
+            {/* Enhanced Controls */}
             <div className="flex items-center space-x-4">
               {/* View Toggle */}
-              <div className="hidden md:flex items-center bg-gray-100 rounded-xl p-1">
+              <div className="hidden md:flex items-center bg-gray-100 rounded-2xl p-1.5 shadow-inner">
                 <button
                   onClick={() => setViewMode('grid')}
-                  className={`p-2 rounded-lg transition-all duration-300 ${viewMode === 'grid' ? 'bg-white shadow text-indigo-600' : 'text-gray-500'}`}
+                  className={`p-3 rounded-xl transition-all duration-300 ${viewMode === 'grid' ? 'bg-white shadow-md text-indigo-600 scale-105' : 'text-gray-500 hover:text-gray-700'}`}
+                  title="Grid View"
                 >
                   <Grid className="w-5 h-5" />
                 </button>
                 <button
                   onClick={() => setViewMode('list')}
-                  className={`p-2 rounded-lg transition-all duration-300 ${viewMode === 'list' ? 'bg-white shadow text-indigo-600' : 'text-gray-500'}`}
+                  className={`p-3 rounded-xl transition-all duration-300 ${viewMode === 'list' ? 'bg-white shadow-md text-indigo-600 scale-105' : 'text-gray-500 hover:text-gray-700'}`}
+                  title="List View"
                 >
                   <List className="w-5 h-5" />
                 </button>
               </div>
 
-              {/* Sort Dropdown */}
+              {/* Enhanced Filter Button */}
               <div className="relative">
                 <button
                   onClick={() => setShowFilters(!showFilters)}
-                  className="flex items-center space-x-2 bg-white border-2 border-gray-200 hover:border-indigo-500 px-4 py-3.5 rounded-xl transition-all duration-300"
+                  className="flex items-center space-x-3 bg-white border-2 border-gray-200 hover:border-indigo-500 hover:shadow-lg px-6 py-4 rounded-2xl transition-all duration-300 group"
                 >
-                  <Filter className="w-5 h-5 text-gray-600" />
-                  <span className="font-medium text-gray-700">Filter & Sort</span>
-                  <ChevronDown className={`w-5 h-5 text-gray-400 transition-transform duration-300 ${showFilters ? 'rotate-180' : ''}`} />
+                  <Filter className="w-5 h-5 text-gray-600 group-hover:text-indigo-600" />
+                  <span className="font-semibold text-gray-700 group-hover:text-indigo-600">Filters</span>
+                  <div className="flex items-center space-x-1">
+                    {(searchQuery || selectedCategory !== 'all') && (
+                      <div className="w-2 h-2 bg-indigo-500 rounded-full"></div>
+                    )}
+                    <ChevronDown className={`w-5 h-5 text-gray-400 transition-transform duration-300 ${showFilters ? 'rotate-180' : ''}`} />
+                  </div>
                 </button>
 
                 {showFilters && (
