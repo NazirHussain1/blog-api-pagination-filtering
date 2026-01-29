@@ -5,10 +5,16 @@ import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 export const fetchPosts = createAsyncThunk(
   "posts/fetchPosts",
   async ({ page = 1, limit = 5, author = "", tag = "", sort = "newest" }) => {
-    let url = `/api/posts?limit=${limit}&page=${page}&sort=${sort}`;
+    let url = `/api/posts?limit=${limit}&page=${page}&sort=${sort}&_t=${Date.now()}`;
     if (author) url += `&author=${author}`;
     if (tag) url += `&tag=${tag}`;
-    const res = await fetch(url);
+    const res = await fetch(url, {
+      cache: 'no-store',
+      headers: {
+        'Cache-Control': 'no-cache',
+        'Pragma': 'no-cache'
+      }
+    });
     if (!res.ok) throw new Error("Failed to fetch posts");
     return await res.json();
   }
@@ -18,7 +24,14 @@ export const fetchUserPosts = createAsyncThunk(
   "posts/fetchUserPosts",
   async (_, { rejectWithValue }) => {
     try {
-      const res = await fetch("/api/posts/myposts", { credentials: "include" });
+      const res = await fetch(`/api/posts/myposts?_t=${Date.now()}`, { 
+        credentials: "include",
+        cache: 'no-store',
+        headers: {
+          'Cache-Control': 'no-cache',
+          'Pragma': 'no-cache'
+        }
+      });
       if (!res.ok) throw new Error("Failed to fetch your posts");
       const data = await res.json();
       return data;
@@ -81,7 +94,13 @@ export const fetchSinglePost = createAsyncThunk(
   "posts/fetchSinglePost",
   async (slug, { rejectWithValue }) => {
     try {
-      const res = await fetch(`/api/posts/${slug}`);
+      const res = await fetch(`/api/posts/${slug}?_t=${Date.now()}`, {
+        cache: 'no-store',
+        headers: {
+          'Cache-Control': 'no-cache',
+          'Pragma': 'no-cache'
+        }
+      });
       if (!res.ok) throw new Error("Post not found");
       const data = await res.json();
       return data;

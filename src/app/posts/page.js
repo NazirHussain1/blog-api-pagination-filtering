@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, Suspense } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { useSearchParams } from "next/navigation";
 import { fetchPosts } from "@/redux/features/posts/postSlice";
@@ -24,7 +24,7 @@ import {
   Zap
 } from "lucide-react";
 
-export default function AllPostsPage() {
+function PostsPageContent() {
   const dispatch = useDispatch();
   const { list: posts, loading, error } = useSelector((state) => state.posts);
   const searchParams = useSearchParams();
@@ -441,6 +441,29 @@ export default function AllPostsPage() {
         )}
       </div>
     </div>
+  );
+}
+
+// Loading component for Suspense fallback
+function PostsPageLoading() {
+  return (
+    <div className="min-h-screen bg-gradient-to-b from-gray-50 to-white">
+      <div className="flex justify-center items-center py-20">
+        <div className="text-center">
+          <Loader2 className="w-12 h-12 text-indigo-600 animate-spin mx-auto mb-4" />
+          <p className="text-gray-600">Loading articles...</p>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// Main component with Suspense boundary
+export default function AllPostsPage() {
+  return (
+    <Suspense fallback={<PostsPageLoading />}>
+      <PostsPageContent />
+    </Suspense>
   );
 }
 

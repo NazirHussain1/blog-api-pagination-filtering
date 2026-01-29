@@ -4,9 +4,17 @@ export const connectDB = async () => {
   if (mongoose.connection.readyState === 1) return;
 
   try {
-    await mongoose.connect(process.env.MONGO_URI);
-    // MongoDB Connected
+    const options = {
+      bufferCommands: false,
+      maxPoolSize: 10,
+      serverSelectionTimeoutMS: 5000,
+      socketTimeoutMS: 45000,
+    };
+    
+    await mongoose.connect(process.env.MONGO_URI, options);
+    // MongoDB Connected successfully
   } catch (error) {
-    // DB Error: ${error.message}
+    // DB Connection Error
+    throw new Error(`Database connection failed: ${error.message}`);
   }
 };
