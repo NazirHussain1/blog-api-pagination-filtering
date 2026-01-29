@@ -19,7 +19,7 @@ import {
   Home,
   TrendingUp,
   ChevronRight,
-  Heart,
+  ThumbsUp,
   BookOpen,
   Sparkles,
   Twitter,
@@ -35,23 +35,26 @@ import {
   Award,
   Users,
   Feather,
-  ThumbsUp,
+  ThumbsDown,
   Copy,
   ExternalLink,
   Zap,
   Target,
   Lightbulb,
+  Heart,
+  Smile,
+  AlertCircle,
 } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
 
 const REACTIONS = {
-  like: { icon: Heart, label: "Like", color: "text-red-500", bgColor: "bg-red-50 hover:bg-red-100" },
-  love: { icon: Heart, label: "Love", color: "text-red-500", bgColor: "bg-red-50 hover:bg-red-100" },
-  laugh: { icon: Laugh, label: "Laugh", color: "text-yellow-500", bgColor: "bg-yellow-50 hover:bg-yellow-100" },
-  wow: { icon: Sparkles, label: "Wow", color: "text-purple-500", bgColor: "bg-purple-50 hover:bg-purple-100" },
-  sad: { icon: Frown, label: "Sad", color: "text-blue-400", bgColor: "bg-blue-50 hover:bg-blue-100" },
-  angry: { icon: Angry, label: "Angry", color: "text-red-600", bgColor: "bg-red-50 hover:bg-red-100" },
+  like: { icon: ThumbsUp, label: "Like", color: "text-blue-500", bgColor: "bg-blue-50 hover:bg-blue-100", activeBg: "bg-blue-100" },
+  love: { icon: Heart, label: "Love", color: "text-red-500", bgColor: "bg-red-50 hover:bg-red-100", activeBg: "bg-red-100" },
+  laugh: { icon: Laugh, label: "Laugh", color: "text-yellow-500", bgColor: "bg-yellow-50 hover:bg-yellow-100", activeBg: "bg-yellow-100" },
+  wow: { icon: Sparkles, label: "Wow", color: "text-purple-500", bgColor: "bg-purple-50 hover:bg-purple-100", activeBg: "bg-purple-100" },
+  sad: { icon: Frown, label: "Sad", color: "text-blue-400", bgColor: "bg-blue-50 hover:bg-blue-100", activeBg: "bg-blue-100" },
+  angry: { icon: Angry, label: "Angry", color: "text-red-600", bgColor: "bg-red-50 hover:bg-red-100", activeBg: "bg-red-100" },
 };
 
 export default function SinglePost() {
@@ -346,10 +349,13 @@ export default function SinglePost() {
               </h1>
 
               <div className="flex flex-wrap items-center gap-6 text-white/90">
-                <div className="flex items-center">
+                <Link 
+                  href={`/profile/${post.author?.name || 'unknown'}`}
+                  className="flex items-center group hover:bg-white/10 rounded-xl p-2 -m-2 transition-all duration-300"
+                >
                   <div className="relative mr-3">
-                    <div className="absolute inset-0 bg-gradient-to-r from-blue-500 to-cyan-400 rounded-full blur opacity-75"></div>
-                    <div className="relative w-12 h-12 bg-gradient-to-r from-blue-600 to-cyan-500 rounded-full flex items-center justify-center text-white font-bold">
+                    <div className="absolute inset-0 bg-gradient-to-r from-blue-500 to-cyan-400 rounded-full blur opacity-75 group-hover:opacity-100 transition-opacity duration-300"></div>
+                    <div className="relative w-12 h-12 bg-gradient-to-r from-blue-600 to-cyan-500 rounded-full flex items-center justify-center text-white font-bold group-hover:scale-105 transition-transform duration-300">
                       {post.author?.avatar ? (
                         <Image
                           src={post.author.avatar}
@@ -364,14 +370,14 @@ export default function SinglePost() {
                     </div>
                   </div>
                   <div>
-                    <div className="font-bold">
+                    <div className="font-bold group-hover:text-white transition-colors duration-300">
                       {post.author?.name || "Anonymous Author"}
                     </div>
-                    <div className="text-sm text-white/70">
+                    <div className="text-sm text-white/70 group-hover:text-white/90 transition-colors duration-300">
                       {post.author?.role === "admin" ? "Administrator" : "Content Writer"}
                     </div>
                   </div>
-                </div>
+                </Link>
 
                 <div className="h-4 w-px bg-white/30"></div>
 
@@ -474,14 +480,15 @@ export default function SinglePost() {
                   {/* Article Engagement */}
                   <div className="px-8 md:px-12 pb-8 border-t border-gray-100">
                     <div className="flex items-center justify-between py-6">
-                      <div className="flex items-center space-x-6">
+                      <div className="flex items-center space-x-4">
+                        {/* Like/Reaction Button */}
                         <div className="relative">
                           <button
                             onClick={() => setShowReactionPicker(!showReactionPicker)}
-                            className={`flex items-center space-x-2 px-4 py-2 rounded-xl transition-all duration-300 ${
+                            className={`flex items-center space-x-3 px-6 py-3 rounded-xl font-semibold transition-all duration-300 transform hover:scale-105 ${
                               userReaction
-                                ? `${REACTIONS[userReaction].color} ${REACTIONS[userReaction].bgColor}`
-                                : "text-gray-500 hover:text-red-500 hover:bg-red-50"
+                                ? `${REACTIONS[userReaction].color} ${REACTIONS[userReaction].activeBg} shadow-sm`
+                                : "text-gray-600 hover:text-blue-600 bg-gray-50 hover:bg-blue-50"
                             }`}
                           >
                             {userReaction ? (
@@ -490,44 +497,56 @@ export default function SinglePost() {
                                 return <IconComponent className="w-5 h-5 fill-current" />;
                               })()
                             ) : (
-                              <Heart className="w-5 h-5" />
+                              <ThumbsUp className="w-5 h-5" />
                             )}
-                            <span className="font-semibold">
-                              {Object.values(post.reactions || {}).reduce(
-                                (sum, count) => sum + count,
-                                0,
-                              ) || 0}
-                            </span>
-                            <span className="text-sm">
-                              {userReaction ? REACTIONS[userReaction].label : "React"}
-                            </span>
+                            <div className="flex flex-col items-start">
+                              <span className="text-lg font-bold">
+                                {Object.values(post.reactions || {}).reduce(
+                                  (sum, count) => sum + count,
+                                  0,
+                                ) || 0}
+                              </span>
+                              <span className="text-sm">
+                                {userReaction ? REACTIONS[userReaction].label : "Like"}
+                              </span>
+                            </div>
                           </button>
 
-                          {/* Reaction Picker */}
+                          {/* Enhanced Reaction Picker */}
                           {showReactionPicker && (
-                            <div className="absolute top-full left-0 mt-2 bg-white border border-gray-200 rounded-xl shadow-lg p-3 z-10">
+                            <div className="absolute top-full left-0 mt-3 bg-white border border-gray-200 rounded-2xl shadow-2xl p-4 z-20 min-w-max">
+                              <div className="text-sm font-semibold text-gray-700 mb-3 px-2">
+                                How do you feel about this article?
+                              </div>
                               <div className="flex gap-2">
                                 {Object.entries(REACTIONS).map(
-                                  ([type, { icon: Icon, label, color, bgColor }]) => (
+                                  ([type, { icon: Icon, label, color, bgColor, activeBg }]) => (
                                     <button
                                       key={type}
                                       onClick={() => handleReaction(type)}
-                                      className={`p-3 rounded-xl transition-all duration-200 ${
-                                        userReaction === type ? bgColor : "hover:bg-gray-100"
-                                      } ${color}`}
+                                      className={`group flex flex-col items-center p-3 rounded-xl transition-all duration-200 hover:scale-110 ${
+                                        userReaction === type ? `${color} ${activeBg}` : `${bgColor} text-gray-600`
+                                      }`}
                                       title={label}
                                     >
-                                      <Icon className="w-5 h-5" />
+                                      <Icon className="w-6 h-6 mb-1" />
+                                      <span className="text-xs font-medium">{label}</span>
+                                      {post.reactions?.[type] > 0 && (
+                                        <span className="text-xs text-gray-500 mt-1">
+                                          {post.reactions[type]}
+                                        </span>
+                                      )}
                                     </button>
                                   ),
                                 )}
                                 {userReaction && (
                                   <button
                                     onClick={() => handleReaction(null)}
-                                    className="p-3 rounded-xl hover:bg-red-100 transition-colors text-gray-400 hover:text-red-500"
+                                    className="group flex flex-col items-center p-3 rounded-xl hover:bg-red-100 transition-all duration-200 text-gray-400 hover:text-red-500"
                                     title="Remove reaction"
                                   >
-                                    <X className="w-5 h-5" />
+                                    <X className="w-6 h-6 mb-1" />
+                                    <span className="text-xs font-medium">Remove</span>
                                   </button>
                                 )}
                               </div>
@@ -535,30 +554,48 @@ export default function SinglePost() {
                           )}
                         </div>
 
+                        {/* Comment Button */}
                         <button
                           onClick={() => setShowComments((prev) => !prev)}
-                          className="flex items-center space-x-2 px-4 py-2 rounded-xl text-gray-500 hover:text-indigo-600 hover:bg-indigo-50 transition-all duration-300"
+                          className={`flex items-center space-x-3 px-6 py-3 rounded-xl font-semibold transition-all duration-300 transform hover:scale-105 ${
+                            showComments
+                              ? "text-indigo-600 bg-indigo-100 shadow-sm"
+                              : "text-gray-600 hover:text-indigo-600 bg-gray-50 hover:bg-indigo-50"
+                          }`}
                         >
                           <MessageCircle className="w-5 h-5" />
-                          <span className="font-semibold">Comments</span>
+                          <div className="flex flex-col items-start">
+                            <span className="text-lg font-bold">
+                              {post.commentsCount || 0}
+                            </span>
+                            <span className="text-sm">
+                              {showComments ? "Hide Comments" : "Comments"}
+                            </span>
+                          </div>
                         </button>
                       </div>
 
-                      <div className="flex items-center space-x-4 text-sm text-gray-500">
-                        <span className="flex items-center">
-                          <Eye className="w-4 h-4 mr-1" />
-                          {post.views || 0}
-                        </span>
-                        <span className="flex items-center">
-                          <Clock className="w-4 h-4 mr-1" />
-                          {Math.ceil((post.body?.length || 1000) / 200)} min
-                        </span>
+                      {/* Article Stats */}
+                      <div className="flex items-center space-x-6 text-sm text-gray-500">
+                        <div className="flex items-center space-x-2">
+                          <Eye className="w-4 h-4" />
+                          <span className="font-medium">{post.views || 0} views</span>
+                        </div>
+                        <div className="flex items-center space-x-2">
+                          <Clock className="w-4 h-4" />
+                          <span className="font-medium">
+                            {Math.ceil((post.body?.length || 1000) / 200)} min read
+                          </span>
+                        </div>
                       </div>
                     </div>
 
+                    {/* Comments Section */}
                     {showComments && (
                       <div className="pt-6 border-t border-gray-100 animate-fade-in">
-                        <Comments slug={post.slug} user={post.author} />
+                        <div className="bg-gray-50 rounded-2xl p-6">
+                          <Comments slug={post.slug} user={post.author} />
+                        </div>
                       </div>
                     )}
                   </div>
@@ -567,9 +604,12 @@ export default function SinglePost() {
                 {/* Author Bio */}
                 <div className="mt-12 bg-gradient-to-br from-indigo-50 to-purple-50 rounded-2xl border border-indigo-100 p-8">
                   <div className="flex items-start space-x-4 mb-6">
-                    <div className="relative flex-shrink-0">
-                      <div className="absolute inset-0 bg-gradient-to-r from-indigo-500 to-purple-500 rounded-full blur opacity-75"></div>
-                      <div className="relative w-16 h-16 bg-gradient-to-r from-indigo-600 to-purple-600 rounded-full flex items-center justify-center text-white font-bold text-2xl">
+                    <Link 
+                      href={`/profile/${post.author?.name || 'unknown'}`}
+                      className="relative flex-shrink-0 group"
+                    >
+                      <div className="absolute inset-0 bg-gradient-to-r from-indigo-500 to-purple-500 rounded-full blur opacity-75 group-hover:opacity-100 transition-opacity duration-300"></div>
+                      <div className="relative w-16 h-16 bg-gradient-to-r from-indigo-600 to-purple-600 rounded-full flex items-center justify-center text-white font-bold text-2xl hover:scale-105 transition-transform duration-300">
                         {post.author?.avatar ? (
                           <Image
                             src={post.author.avatar}
@@ -582,15 +622,18 @@ export default function SinglePost() {
                           post.author?.name?.charAt(0) || "A"
                         )}
                       </div>
-                    </div>
+                    </Link>
                     <div className="flex-1">
-                      <div className="flex items-center space-x-2 mb-2">
-                        <h3 className="text-xl font-bold text-gray-900">
+                      <div className="flex items-center space-x-3 mb-2">
+                        <Link 
+                          href={`/profile/${post.author?.name || 'unknown'}`}
+                          className="text-xl font-bold text-gray-900 hover:text-indigo-600 transition-colors duration-300"
+                        >
                           {post.author?.name || "Anonymous Author"}
-                        </h3>
+                        </Link>
                         {post.author?.role === "admin" && (
-                          <div className="inline-flex items-center bg-indigo-100 text-indigo-600 px-2 py-1 rounded-full text-xs font-semibold">
-                            <Award className="w-3 h-3 mr-1" />
+                          <div className="inline-flex items-center bg-indigo-100 text-indigo-600 px-3 py-1 rounded-full text-sm font-semibold">
+                            <Award className="w-4 h-4 mr-1" />
                             Admin
                           </div>
                         )}
@@ -599,27 +642,50 @@ export default function SinglePost() {
                         {post.author?.role === "admin" ? "Administrator" : "Content Writer"} •
                         {post.author?.location ? ` ${post.author.location}` : " Location not specified"}
                       </p>
-                      <p className="text-gray-700 leading-relaxed">
+                      <p className="text-gray-700 leading-relaxed mb-4">
                         {post.author?.about || "This author is passionate about sharing knowledge and insights with the community. Stay tuned for more great content!"}
                       </p>
-                      <div className="flex items-center justify-between mt-4 pt-4 border-t border-indigo-200">
-                        <p className="text-sm text-gray-500">
-                          Member since{" "}
-                          {post.author?.createdAt
-                            ? new Date(post.author.createdAt).toLocaleDateString("en-US", {
-                                year: "numeric",
-                                month: "long",
-                              })
-                            : "Recently"}
-                        </p>
-                        {post.author?.phone && (
-                          <a
-                            href={`tel:${post.author.phone}`}
-                            className="text-sm text-indigo-600 hover:text-indigo-700 font-medium"
+                      
+                      {/* Contact Actions */}
+                      <div className="flex items-center justify-between pt-4 border-t border-indigo-200">
+                        <div className="flex items-center space-x-4">
+                          <p className="text-sm text-gray-500">
+                            Member since{" "}
+                            {post.author?.createdAt
+                              ? new Date(post.author.createdAt).toLocaleDateString("en-US", {
+                                  year: "numeric",
+                                  month: "long",
+                                })
+                              : "Recently"}
+                          </p>
+                        </div>
+                        
+                        <div className="flex items-center space-x-3">
+                          {/* WhatsApp Contact */}
+                          {post.author?.phone && (
+                            <a
+                              href={`https://wa.me/${post.author.phone.replace(/[^0-9]/g, '')}?text=Hi! I read your article "${post.title}" on InsightHub and wanted to connect.`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="inline-flex items-center px-4 py-2 bg-green-500 hover:bg-green-600 text-white rounded-xl font-semibold transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-xl"
+                              title="Contact via WhatsApp"
+                            >
+                              <svg className="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 24 24">
+                                <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893A11.821 11.821 0 0020.885 3.488"/>
+                              </svg>
+                              WhatsApp
+                            </a>
+                          )}
+                          
+                          {/* View Profile Button */}
+                          <Link
+                            href={`/profile/${post.author?.name || 'unknown'}`}
+                            className="inline-flex items-center px-4 py-2 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white rounded-xl font-semibold transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-xl"
                           >
-                            📞 Contact
-                          </a>
-                        )}
+                            <User className="w-4 h-4 mr-2" />
+                            View Profile
+                          </Link>
+                        </div>
                       </div>
                     </div>
                   </div>
