@@ -61,9 +61,8 @@ export default function CategoriesPage() {
         const categoryMap = new Map();
         
         postsData.forEach(post => {
-          // Extract category from post (assuming posts have a category field)
+          // Use the actual category field from the post
           const category = post.category || 'General';
-          const tags = post.tags || [];
           
           if (!categoryMap.has(category)) {
             categoryMap.set(category, {
@@ -105,8 +104,8 @@ export default function CategoriesPage() {
         // Fallback to default categories if API fails
         setCategories(getDefaultCategories());
       }
-    } catch (error) {
-      console.error('Error fetching categories:', error);
+    } catch (err) {
+      // Error fetching categories
       setCategories(getDefaultCategories());
     } finally {
       setLoading(false);

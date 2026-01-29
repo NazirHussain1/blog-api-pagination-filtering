@@ -52,7 +52,7 @@ export default function PostCard({ post, user }) {
       setUserReaction(data.userReaction);
       setShowReactionPicker(false);
     } catch (err) {
-      console.error("Reaction Error:", err);
+      // Reaction error
     }
   };
 

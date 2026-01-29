@@ -14,10 +14,12 @@ export async function GET(req) {
     const page = parseInt(searchParams.get("page")) || 1;
     const limit = parseInt(searchParams.get("limit")) || 5;
     const tag = searchParams.get("tag");
+    const category = searchParams.get("category");
     const sort = searchParams.get("sort") === "oldest" ? 1 : -1;
 
     let filter = {};
     if (tag) filter.tags = { $regex: tag, $options: "i" };
+    if (category && category !== "all") filter.category = { $regex: category, $options: "i" };
 
     const posts = await Post.find(filter)
       .populate("author", "name email avatar")
@@ -52,7 +54,7 @@ export async function POST(req) {
 
   try {
     const bodyData = await req.json();
-    const { title, body, tags, image } = bodyData;
+    const { title, body, tags, image, category } = bodyData;
 
     const token = req.cookies.get("token")?.value;
     if (!token)
@@ -74,6 +76,7 @@ export async function POST(req) {
       slug,
       tags: tags || [],
       image: image || "",
+      category: category || "General",
       author: authorId
     });
 

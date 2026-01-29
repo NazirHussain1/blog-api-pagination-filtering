@@ -222,18 +222,9 @@ export default function SettingsPage() {
   };
 
   const handleDeleteAccount = async () => {
-    // TODO: Implement deleteAccount action in authSlice
+    // Account deletion feature coming soon
     toast.error("Account deletion is not yet implemented. Please contact support.");
     setShowDeleteModal(false);
-    
-    // When you implement the deleteAccount action in authSlice, uncomment:
-    // try {
-    //   await dispatch(deleteAccount()).unwrap();
-    //   toast.success("Account deleted successfully");
-    //   router.push("/");
-    // } catch (err) {
-    //   toast.error("Failed to delete account");
-    // }
   };
 
   const tabs = [

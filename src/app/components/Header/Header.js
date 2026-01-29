@@ -51,6 +51,20 @@ export default function Header() {
   }, []);
 
   useEffect(() => {
+    // Handle body scroll lock for mobile menu
+    if (mobileMenu) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = 'unset';
+    }
+
+    // Cleanup on unmount
+    return () => {
+      document.body.style.overflow = 'unset';
+    };
+  }, [mobileMenu]);
+
+  useEffect(() => {
     const handleClickOutside = (e) => {
       if (menuRef.current && !menuRef.current.contains(e.target)) {
         setOpenMenu(false);
@@ -118,6 +132,12 @@ export default function Header() {
                 className="px-3 py-2 text-sm font-medium text-gray-700 hover:text-gray-900 hover:bg-gray-50 rounded-lg transition-colors"
               >
                 Articles
+              </Link>
+              <Link
+                href="/categories"
+                className="px-3 py-2 text-sm font-medium text-gray-700 hover:text-gray-900 hover:bg-gray-50 rounded-lg transition-colors"
+              >
+                Categories
               </Link>
               <Link
                 href="/trending"
@@ -309,28 +329,44 @@ export default function Header() {
             </div>
           </div>
         </div>
-
-        {/* Mobile Search */}
-        <div className="lg:hidden border-t border-gray-100 px-4 py-3">
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-            <input
-              type="search"
-              placeholder="Search..."
-              className="w-full pl-10 pr-4 py-2 text-sm bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-            />
-          </div>
-        </div>
       </header>
 
       {/* Mobile Menu */}
       {mobileMenu && (
-        <div className="lg:hidden fixed inset-0 z-40 pt-16">
+        <div className="lg:hidden fixed inset-0 z-50">
           <div
             className="absolute inset-0 bg-black/20 backdrop-blur-sm"
             onClick={() => setMobileMenu(false)}
           />
-          <div className="absolute right-0 top-16 bottom-0 w-full max-w-sm bg-white shadow-xl overflow-y-auto animate-slide-left">
+          <div className="absolute right-0 top-0 bottom-0 w-full max-w-sm bg-white shadow-xl overflow-y-auto animate-slide-left">
+            {/* Mobile Header */}
+            <div className="flex items-center justify-between p-4 border-b border-gray-100 bg-white sticky top-0 z-10">
+              <div className="flex items-center space-x-2">
+                <div className="w-8 h-8 bg-gradient-to-br from-indigo-600 to-purple-600 rounded-lg flex items-center justify-center">
+                  <BookOpen className="w-4 h-4 text-white" />
+                </div>
+                <span className="text-lg font-bold text-gray-900">InsightHub</span>
+              </div>
+              <button
+                onClick={() => setMobileMenu(false)}
+                className="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Mobile Search in Menu */}
+            <div className="p-4 border-b border-gray-100 bg-gray-50">
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                <input
+                  type="search"
+                  placeholder="Search articles..."
+                  className="w-full pl-10 pr-4 py-2.5 text-sm bg-white border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                />
+              </div>
+            </div>
+
             <div className="p-4">
               {/* User Section */}
               {user ? (
@@ -392,6 +428,14 @@ export default function Header() {
                 >
                   <FileText className="w-5 h-5" />
                   <span className="font-medium">Articles</span>
+                </Link>
+                <Link
+                  href="/categories"
+                  onClick={() => setMobileMenu(false)}
+                  className="flex items-center space-x-3 px-4 py-3 text-gray-700 hover:bg-gray-50 rounded-lg transition-colors"
+                >
+                  <BookOpen className="w-5 h-5" />
+                  <span className="font-medium">Categories</span>
                 </Link>
                 <Link
                   href="/trending"

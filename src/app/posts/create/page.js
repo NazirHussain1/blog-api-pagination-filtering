@@ -49,6 +49,7 @@ export default function CreatePostPage() {
     content: "",
     description: "",
     tags: "",
+    category: "General",
   });
 
   const [imageFile, setImageFile] = useState(null);
@@ -159,10 +160,11 @@ export default function CreatePostPage() {
       
       const postData = {
         title: form.title.trim(),
-        content: form.content.trim(),
+        body: form.content.trim(),
         description: form.description.trim() || form.content.substring(0, 150).trim() + "...",
         tags: form.tags.split(",").map(t => t.trim()).filter(Boolean),
         image: imageUrl,
+        category: form.category,
         author: user?._id,
         status: isDraft ? "draft" : "published",
       };
@@ -393,6 +395,44 @@ export default function CreatePostPage() {
                           </div>
                         </div>
 
+                        {/* Category */}
+                        <div>
+                          <label className="flex items-center text-lg font-bold text-gray-900 mb-4">
+                            <Tag className="w-5 h-5 mr-3 text-indigo-600" />
+                            Category
+                            <span className="text-red-500 ml-2">*</span>
+                          </label>
+                          <select
+                            value={form.category}
+                            onChange={(e) => setForm({ ...form, category: e.target.value })}
+                            className="w-full text-lg border-2 border-gray-200 focus:border-indigo-500 py-4 px-6 rounded-xl transition-all duration-300 bg-white"
+                          >
+                            <option value="General">General</option>
+                            <option value="Technology">Technology</option>
+                            <option value="Web Development">Web Development</option>
+                            <option value="Mobile Development">Mobile Development</option>
+                            <option value="AI & Machine Learning">AI & Machine Learning</option>
+                            <option value="Design">Design</option>
+                            <option value="Business">Business</option>
+                            <option value="Startup">Startup</option>
+                            <option value="Career">Career</option>
+                            <option value="Productivity">Productivity</option>
+                            <option value="Tutorials">Tutorials</option>
+                            <option value="Open Source">Open Source</option>
+                            <option value="DevOps">DevOps</option>
+                            <option value="Data Science">Data Science</option>
+                            <option value="Programming">Programming</option>
+                            <option value="Software Engineering">Software Engineering</option>
+                            <option value="Frontend">Frontend</option>
+                            <option value="Backend">Backend</option>
+                            <option value="Full Stack">Full Stack</option>
+                            <option value="Cloud Computing">Cloud Computing</option>
+                          </select>
+                          <p className="mt-3 text-sm text-gray-500">
+                            Choose the most relevant category for your article to help readers discover it
+                          </p>
+                        </div>
+
                         {/* Content */}
                         <div>
                           <label className="flex items-center text-lg font-bold text-gray-900 mb-4">
@@ -489,6 +529,9 @@ export default function CreatePostPage() {
                           <p className="text-xl text-gray-600 mb-8 leading-relaxed">{form.description}</p>
                         )}
                         <div className="flex flex-wrap gap-3 mb-8">
+                          <span className="px-4 py-2 bg-gradient-to-r from-blue-100 to-indigo-100 text-blue-700 rounded-xl text-sm font-semibold border border-blue-200">
+                            📂 {form.category}
+                          </span>
                           {form.tags && form.tags.split(",").map((tag, i) => (
                             tag.trim() && (
                               <span

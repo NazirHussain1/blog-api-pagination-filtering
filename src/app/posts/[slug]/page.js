@@ -177,7 +177,7 @@ export default function SinglePost() {
       setUserReaction(data.userReaction);
       setShowReactionPicker(false);
     } catch (err) {
-      console.error(err);
+      // Error updating reaction
     }
   };
 

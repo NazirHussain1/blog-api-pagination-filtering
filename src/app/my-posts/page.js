@@ -195,7 +195,7 @@ export default function MyPostsPage() {
       } : p));
       setShowReactionPicker(null);
     } catch (err) {
-      console.error(err);
+      // Error updating reaction
       toast.error("Could not update reaction", { icon: <AlertCircle className="text-red-500" /> });
     }
   };
