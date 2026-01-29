@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
+import { useSearchParams } from "next/navigation";
 import { fetchPosts } from "@/redux/features/posts/postSlice";
 import PostCard from "@/app/components/PostCard/PostCard";
 import { 
@@ -19,17 +20,14 @@ import {
   Eye,
   BookOpen,
   Star,
-  Bookmark,
-  Share2,
   ArrowRight,
-  Zap,
-  Award,
-  Calendar
+  Zap
 } from "lucide-react";
 
 export default function AllPostsPage() {
   const dispatch = useDispatch();
   const { list: posts, loading, error } = useSelector((state) => state.posts);
+  const searchParams = useSearchParams();
   
   const [viewMode, setViewMode] = useState('grid');
   const [searchQuery, setSearchQuery] = useState('');
@@ -38,6 +36,14 @@ export default function AllPostsPage() {
   const [showFilters, setShowFilters] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const postsPerPage = 12;
+
+  useEffect(() => {
+    // Read category from URL parameters
+    const categoryParam = searchParams.get('category');
+    if (categoryParam) {
+      setSelectedCategory(categoryParam);
+    }
+  }, [searchParams]);
 
   useEffect(() => {
     dispatch(fetchPosts({ page: currentPage, limit: postsPerPage, sort: sortBy }));

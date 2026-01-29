@@ -1,9 +1,6 @@
 "use client";
 
 import Link from "next/link";
-import { Button } from "@/components/ui/button";
-import { toast } from "sonner";
-import { useState } from "react";
 import { useSelector } from "react-redux";
 import { 
   FaTwitter, 
@@ -14,8 +11,6 @@ import {
   FaNewspaper,
   FaRss,
   FaHeart,
-  FaArrowRight,
-  FaEnvelope,
   FaRegCopyright,
   FaWhatsapp,
   FaDiscord,
@@ -26,54 +21,14 @@ import {
   FaQuestionCircle,
   FaLightbulb,
   FaTags,
-  FaChartLine,
   FaAward,
   FaGlobe
 } from "react-icons/fa";
-import { FiSend, FiMail, FiTrendingUp, FiBookmark } from "react-icons/fi";
-import { HiOutlineSparkles, HiOutlineBadgeCheck } from "react-icons/hi";
-import { MdVerified, MdTrendingUp, MdRssFeed } from "react-icons/md";
+import { FiTrendingUp, FiBookmark } from "react-icons/fi";
+import { MdVerified, MdRssFeed } from "react-icons/md";
 
 export default function Footer() {
   const user = useSelector((state) => state.auth.user);
-  const [email, setEmail] = useState("");
-  const [isSubscribing, setIsSubscribing] = useState(false);
-
-  const handleSubscribe = async (e) => {
-    e.preventDefault();
-    if (!email.trim()) return toast.error("Please enter a valid email address");
-    
-    // Basic email validation
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(email)) {
-      return toast.error("Please enter a valid email format");
-    }
-    
-    setIsSubscribing(true);
-    
-    // Simulate API call
-    setTimeout(() => {
-      toast.success("🎉 Welcome to InsightHub!", {
-        description: "You'll receive our weekly newsletter with exclusive content and insights."
-      });
-      setEmail("");
-      setIsSubscribing(false);
-      
-      // Confetti effect
-      if (typeof window !== 'undefined') {
-        const confetti = import('canvas-confetti');
-        confetti.then((confetti) => {
-          confetti.default({
-            particleCount: 100,
-            spread: 70,
-            origin: { y: 0.6 },
-            colors: ['#06b6d4', '#3b82f6', '#8b5cf6', '#f59e0b']
-          });
-        });
-      }
-    }, 1200);
-  };
-
   const currentYear = new Date().getFullYear();
 
   // Dynamic social links based on user profile
@@ -181,7 +136,7 @@ export default function Footer() {
 
       {/* Main footer content */}
       <div className="relative z-10 container mx-auto px-4 py-16 md:py-20">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12 md:gap-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-12 md:gap-8">
           
           {/* Brand Section */}
           <div className="lg:col-span-1">
@@ -290,89 +245,7 @@ export default function Footer() {
             </ul>
           </div>
 
-          {/* Newsletter */}
-          <div className="lg:col-span-1">
-            <h3 className="text-xl font-bold text-white mb-8 flex items-center">
-              <div className="w-2 h-8 bg-gradient-to-b from-cyan-500 to-blue-500 rounded-full mr-3"></div>
-              <div className="flex items-center">
-                Stay Updated
-                <HiOutlineSparkles className="ml-2 text-amber-300 animate-pulse" />
-              </div>
-            </h3>
-            
-            <div className="bg-gradient-to-br from-white/5 to-white/10 backdrop-blur-sm border border-white/10 rounded-2xl p-6 mb-8">
-              <div className="flex items-center mb-4">
-                <div className="p-2 bg-gradient-to-r from-cyan-500 to-blue-500 rounded-lg mr-3">
-                  <FiMail className="text-xl text-white" />
-                </div>
-                <div>
-                  <h4 className="text-lg font-semibold text-white flex items-center">
-                    Weekly Digest
-                    <HiOutlineBadgeCheck className="ml-2 text-cyan-400" />
-                  </h4>
-                  <p className="text-xs text-cyan-200">Premium content • No spam</p>
-                </div>
-              </div>
-              <p className="text-gray-300 text-sm mb-6 leading-relaxed">
-                Join <span className="font-semibold text-white">2,500+</span> developers and creators getting curated articles, 
-                exclusive tutorials, and industry insights every Friday.
-              </p>
-              
-              <form onSubmit={handleSubscribe} className="space-y-4">
-                <div className="relative">
-                  <FaEnvelope className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 z-10" />
-                  <input
-                    type="email"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    placeholder="Enter your email address"
-                    required
-                    className="w-full pl-12 pr-4 py-3.5 bg-white/5 border border-white/10 rounded-xl text-white placeholder-gray-400 focus:outline-none focus:border-cyan-400 focus:ring-2 focus:ring-cyan-400/30 transition-all duration-300 hover:bg-white/10"
-                  />
-                </div>
-                <Button
-                  type="submit"
-                  disabled={isSubscribing}
-                  className="w-full bg-gradient-to-r from-cyan-500 to-blue-500 hover:from-cyan-600 hover:to-blue-600 text-white font-bold py-3.5 rounded-xl transition-all duration-300 hover:shadow-lg hover:shadow-cyan-500/25 disabled:opacity-50 disabled:cursor-not-allowed transform hover:scale-[1.02] active:scale-[0.98]"
-                >
-                  {isSubscribing ? (
-                    <span className="flex items-center justify-center">
-                      <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin mr-3"></div>
-                      Subscribing...
-                    </span>
-                  ) : (
-                    <span className="flex items-center justify-center">
-                      <FiSend className="mr-3" />
-                      Join 2,500+ Subscribers
-                    </span>
-                  )}
-                </Button>
-              </form>
-              
-              <div className="grid grid-cols-2 gap-4 mt-6 pt-6 border-t border-white/10">
-                <div className="flex items-center">
-                  <MdVerified className="text-green-400 mr-2" />
-                  <span className="text-xs text-gray-300">Verified Content</span>
-                </div>
-                <div className="flex items-center">
-                  <FaAward className="text-amber-400 mr-2" />
-                  <span className="text-xs text-gray-300">Award Winning</span>
-                </div>
-              </div>
-            </div>
-
-            {/* Additional Stats */}
-            <div className="grid grid-cols-2 gap-4 text-center">
-              <div className="bg-white/5 rounded-xl p-4 border border-white/10">
-                <div className="text-2xl font-bold text-white">50K+</div>
-                <div className="text-xs text-gray-400">Monthly Readers</div>
-              </div>
-              <div className="bg-white/5 rounded-xl p-4 border border-white/10">
-                <div className="text-2xl font-bold text-white">1.2K+</div>
-                <div className="text-xs text-gray-400">Published Articles</div>
-              </div>
-            </div>
-          </div>
+          
         </div>
 
         {/* Divider */}
