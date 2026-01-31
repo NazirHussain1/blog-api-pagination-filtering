@@ -21,6 +21,7 @@ import {
   Sparkles,
   Shield,
   Loader2,
+  Phone,
 } from "lucide-react";
 import Link from "next/link";
 
@@ -32,8 +33,10 @@ export default function SignupPage() {
   const [form, setForm] = useState({
     name: "",
     email: "",
+    phone: "",
     password: "",
     confirmPassword: "",
+    role: "user",
     agreeToTerms: false,
   });
 
@@ -56,6 +59,13 @@ export default function SignupPage() {
       newErrors.email = "Email is required";
     } else if (!/^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i.test(form.email)) {
       newErrors.email = "Invalid email address";
+    }
+
+    // Phone validation
+    if (!form.phone) {
+      newErrors.phone = "Phone number is required";
+    } else if (!/^[0-9]{10,15}$/.test(form.phone)) {
+      newErrors.phone = "Phone number must be 10-15 digits";
     }
 
     // Password validation
@@ -111,7 +121,9 @@ export default function SignupPage() {
       await dispatch(signupUser({
         name: form.name.trim(),
         email: form.email.trim().toLowerCase(),
+        phone: form.phone.trim(),
         password: form.password,
+        role: form.role,
       })).unwrap();
 
       toast.success("Account created successfully!", {
@@ -265,6 +277,32 @@ export default function SignupPage() {
                   <p className="mt-2 text-sm text-red-600 flex items-center">
                     <AlertCircle className="w-4 h-4 mr-1" />
                     {errors.email}
+                  </p>
+                )}
+              </div>
+
+              {/* Phone Field */}
+              <div>
+                <Label className="text-sm font-semibold text-gray-900 mb-2 flex items-center">
+                  <Phone className="w-4 h-4 mr-2 text-indigo-600" />
+                  Phone Number
+                </Label>
+                <div className="relative">
+                  <Input
+                    type="tel"
+                    placeholder="1234567890"
+                    value={form.phone}
+                    onChange={(e) => {
+                      setForm({ ...form, phone: e.target.value });
+                      if (errors.phone) setErrors({ ...errors, phone: "" });
+                    }}
+                    className={`pl-4 py-6 text-base ${errors.phone ? 'border-red-300' : ''}`}
+                  />
+                </div>
+                {errors.phone && (
+                  <p className="mt-2 text-sm text-red-600 flex items-center">
+                    <AlertCircle className="w-4 h-4 mr-1" />
+                    {errors.phone}
                   </p>
                 )}
               </div>

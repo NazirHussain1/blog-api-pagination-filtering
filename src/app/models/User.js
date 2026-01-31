@@ -4,7 +4,7 @@ const userSchema = new mongoose.Schema(
   {
     name: { type: String, required: true },        // Full name, will be used in profile URL
     email: { type: String, required: true, unique: true },
-    phone: { type: String },
+    phone: { type: String, required: true },
     location: { type: String },
     about: { type: String },
     avatar: { type: String },     

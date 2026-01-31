@@ -35,15 +35,32 @@ export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
 
   const handleLogin = async () => {
-    if (!form.email || !form.password) {
+    // Trim and validate inputs
+    const trimmedEmail = form.email.trim();
+    const trimmedPassword = form.password.trim();
+
+    if (!trimmedEmail || !trimmedPassword) {
       toast.error("Please enter email & password", {
         icon: <AlertCircle className="text-red-500" />
       });
       return;
     }
 
+    // Basic email validation
+    const emailRegex = /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i;
+    if (!emailRegex.test(trimmedEmail)) {
+      toast.error("Please enter a valid email address", {
+        icon: <AlertCircle className="text-red-500" />
+      });
+      return;
+    }
+
     try {
-      await dispatch(loginUser({ ...form, remember })).unwrap();
+      await dispatch(loginUser({ 
+        email: trimmedEmail, 
+        password: trimmedPassword, 
+        remember 
+      })).unwrap();
 
       toast.success("Login Successful", {
         icon: <CheckCircle2 className="text-green-500" />

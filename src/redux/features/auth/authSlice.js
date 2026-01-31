@@ -7,6 +7,7 @@ export const signupUser = createAsyncThunk(
       const res = await fetch("/api/auth/signup", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
+        credentials: "include",
         body: JSON.stringify(userData),
       });
       const data = await res.json();
@@ -25,6 +26,7 @@ export const loginUser = createAsyncThunk(
       const res = await fetch("/api/auth/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
+        credentials: "include",
         body: JSON.stringify(credentials),
       });
       const data = await res.json();
@@ -54,7 +56,10 @@ export const logoutUser = createAsyncThunk(
   "auth/logoutUser",
   async (_, { rejectWithValue }) => {
     try {
-      const res = await fetch("/api/auth/logout", { method: "POST" });
+      const res = await fetch("/api/auth/logout", { 
+        method: "POST",
+        credentials: "include"
+      });
       if (!res.ok) throw new Error("Logout failed");
       return true;
     } catch (err) {
@@ -90,6 +95,7 @@ export const updateUserProfile = createAsyncThunk(
     try {
       const res = await fetch("/api/users/profile", {
         method: "PUT",
+        credentials: "include",
         body: formData,
       });
       const data = await res.json();
