@@ -70,7 +70,14 @@ export async function PUT(req) {
       body = await req.json();
     }
 
-    const { name, email, phone, location, about, avatar, socialLinks, currentPassword, newPassword } = body;
+    const { name, email, phone, location, about, avatar, coverImage, socialLinks, currentPassword, newPassword } = body;
+
+    console.log("Profile update request:", { 
+      name, email, phone, location, about, 
+      avatar: !!avatar, 
+      coverImage: !!coverImage,
+      socialLinks: !!socialLinks 
+    });
 
     // Handle password change
     if (currentPassword && newPassword) {
@@ -86,6 +93,8 @@ export async function PUT(req) {
 
     // Update user
     const updateData = { name, email, phone, location, about };
+    if (avatar) updateData.avatar = avatar;
+    if (coverImage) updateData.coverImage = coverImage;
     if (socialLinks) updateData.socialLinks = socialLinks;
     if (body.password) updateData.password = body.password;
 
@@ -93,8 +102,9 @@ export async function PUT(req) {
       userId,
       updateData,
       { new: true, runValidators: true }
-    ).select("name email phone location about avatar socialLinks role createdAt");
+    ).select("name email phone location about avatar coverImage socialLinks role createdAt");
 
+    console.log("User updated successfully, avatar:", updatedUser.avatar, "coverImage:", updatedUser.coverImage);
     return NextResponse.json(updatedUser);
   } catch (error) {
     return NextResponse.json(

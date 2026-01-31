@@ -7,12 +7,14 @@ const userSchema = new mongoose.Schema(
     phone: { type: String, required: true },
     location: { type: String },
     about: { type: String },
-    avatar: { type: String },     
+    avatar: { type: String },
+    coverImage: { type: String },     
     socialLinks: {
       twitter: { type: String },
       linkedin: { type: String },
       github: { type: String },
       instagram: { type: String },
+      facebook: { type: String },
       website: { type: String },
       whatsapp: { type: String }
     },

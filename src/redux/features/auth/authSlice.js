@@ -150,11 +150,11 @@ const authSlice = createSlice({
         state.user = null;
       })
       .addCase(toggleFollowUser.pending, (state) => {
-        state.loading = true;
+        // Don't set loading for follow actions to avoid UI blocking
         state.error = null;
       })
       .addCase(toggleFollowUser.fulfilled, (state, action) => {
-        state.loading = false;
+        // Don't set loading false since we didn't set it true
         const targetUserId = action.payload;
         if (!state.user.following) state.user.following = [];
         if (state.user.following.includes(targetUserId)) {
@@ -164,7 +164,7 @@ const authSlice = createSlice({
         }
       })
       .addCase(toggleFollowUser.rejected, (state, action) => {
-        state.loading = false;
+        // Don't set loading false since we didn't set it true
         state.error = action.payload;
       })
       .addCase(updateUserProfile.pending, (state) => {

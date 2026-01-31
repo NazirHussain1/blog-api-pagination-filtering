@@ -173,53 +173,59 @@ export default function PostCard({ post, user }) {
                   <span>{post.commentsCount ?? 0} comments</span>
                 </div>
                 <div className="flex items-center gap-1 relative">
-                  <button
-                    onClick={() => setShowReactionPicker(!showReactionPicker)}
-                    className={`flex items-center gap-1 transition hover:scale-110 ${
-                      userReaction ? REACTIONS[userReaction].color : ""
-                    }`}
+                  <div
+                    className="relative"
+                    onMouseEnter={() => setShowReactionPicker(true)}
+                    onMouseLeave={() => setShowReactionPicker(false)}
                   >
-                    {userReaction ? (
-                      (() => {
-                        const IconComponent = REACTIONS[userReaction].icon;
-                        return <IconComponent size={12} />;
-                      })()
-                    ) : (
-                      <Heart size={12} />
-                    )}
-                  </button>
-                  <span>
-                    {Object.values(reactions).reduce((sum, count) => sum + count, 0) || 0}
-                  </span>
-                  
-                  {/* Reaction Picker */}
-                  {showReactionPicker && (
-                    <div className="absolute bottom-full left-0 mb-2 bg-white border border-gray-200 rounded-lg shadow-lg p-2 z-10">
-                      <div className="flex gap-1">
-                        <>
+                    <button
+                      onClick={() => handleReaction(userReaction ? null : 'like')}
+                      className={`flex items-center gap-1 transition hover:scale-110 ${
+                        userReaction ? REACTIONS[userReaction].color : "hover:text-red-500"
+                      }`}
+                    >
+                      {userReaction ? (
+                        (() => {
+                          const IconComponent = REACTIONS[userReaction].icon;
+                          return <IconComponent size={12} />;
+                        })()
+                      ) : (
+                        <Heart size={12} />
+                      )}
+                    </button>
+                    
+                    {/* Reaction Picker - Shows on Hover */}
+                    {showReactionPicker && (
+                      <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 bg-white border border-gray-200 rounded-lg shadow-lg p-2 z-20">
+                        <div className="flex gap-1">
                           {Object.entries(REACTIONS).map(([type, { icon: Icon, label, color }]) => (
                             <button
                               key={type}
                               onClick={() => handleReaction(type)}
-                              className={`p-1 rounded hover:bg-gray-100 transition-colors ${color} ${userReaction === type ? 'bg-gray-100' : ''}`}
+                              className={`p-2 rounded-full hover:bg-gray-100 transition-all duration-200 hover:scale-125 ${color} ${userReaction === type ? 'bg-gray-100 scale-110' : ''}`}
                               title={label}
                             >
-                              <Icon size={14} />
+                              <Icon size={16} />
                             </button>
                           ))}
                           {userReaction && (
                             <button
                               onClick={() => handleReaction(null)}
-                              className="p-1 rounded hover:bg-red-100 transition-colors text-gray-400 hover:text-red-500"
+                              className="p-2 rounded-full hover:bg-red-100 transition-all duration-200 hover:scale-125 text-gray-400 hover:text-red-500"
                               title="Remove reaction"
                             >
-                              <X size={14} />
+                              <X size={16} />
                             </button>
                           )}
-                        </>
+                        </div>
+                        {/* Arrow pointer */}
+                        <div className="absolute top-full left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-white"></div>
                       </div>
-                    </div>
-                  )}
+                    )}
+                  </div>
+                  <span>
+                    {Object.values(reactions).reduce((sum, count) => sum + count, 0) || 0}
+                  </span>
                 </div>
               </div>
             </div>

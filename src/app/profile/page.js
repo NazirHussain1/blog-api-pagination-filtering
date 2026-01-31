@@ -64,17 +64,30 @@ export default function MyProfilePage() {
     about: "",
     website: "",
     avatar: "",
+    coverImage: "",
+    socialLinks: {
+      twitter: "",
+      linkedin: "",
+      github: "",
+      instagram: "",
+      facebook: "",
+      website: "",
+      whatsapp: ""
+    }
   });
   
   const [originalProfile, setOriginalProfile] = useState(null);
   const [editing, setEditing] = useState(false);
   const [newAvatar, setNewAvatar] = useState(null);
+  const [newCoverImage, setNewCoverImage] = useState(null);
   const [preview, setPreview] = useState(null);
+  const [coverPreview, setCoverPreview] = useState(null);
   const [updating, setUpdating] = useState(false);
   const [activeTab, setActiveTab] = useState("overview");
   const [isDragging, setIsDragging] = useState(false);
 
   const fileInputRef = useRef(null);
+  const coverInputRef = useRef(null);
 
   // Redirect if not authenticated
   useEffect(() => {
@@ -101,6 +114,13 @@ export default function MyProfilePage() {
   // Initialize profile data
   useEffect(() => {
     if (user) {
+      console.log("User data received:", { 
+        name: user.name, 
+        avatar: user.avatar,
+        coverImage: user.coverImage,
+        hasAvatar: !!user.avatar 
+      });
+      
       const userData = {
         name: user.name || "",
         email: user.email || "",
@@ -109,10 +129,23 @@ export default function MyProfilePage() {
         about: user.about || user.bio || "",
         website: user.website || "",
         avatar: user.avatar || "",
+        coverImage: user.coverImage || "",
+        socialLinks: {
+          twitter: user.socialLinks?.twitter || "",
+          linkedin: user.socialLinks?.linkedin || "",
+          github: user.socialLinks?.github || "",
+          instagram: user.socialLinks?.instagram || "",
+          facebook: user.socialLinks?.facebook || "",
+          website: user.socialLinks?.website || "",
+          whatsapp: user.socialLinks?.whatsapp || ""
+        }
       };
       setProfile(userData);
       setOriginalProfile(userData);
       setPreview(user.avatar || null);
+      setCoverPreview(user.coverImage || null);
+      
+      console.log("Preview set to:", user.avatar || null);
     }
   }, [user]);
 
@@ -166,6 +199,27 @@ export default function MyProfilePage() {
     }
   };
 
+  const handleCoverImageChange = (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // Validate file size (10MB max for cover)
+    if (file.size > 10 * 1024 * 1024) {
+      toast.error("Cover image size should be less than 10MB");
+      return;
+    }
+
+    // Validate file type
+    if (!file.type.startsWith('image/')) {
+      toast.error("Please upload an image file");
+      return;
+    }
+
+    setNewCoverImage(file);
+    setCoverPreview(URL.createObjectURL(file));
+    toast.success("New cover image selected! Click Save to update.");
+  };
+
   const uploadAvatar = async () => {
     if (!newAvatar) return profile.avatar;
 
@@ -188,6 +242,32 @@ export default function MyProfilePage() {
       return data.url || data.avatar;
     } catch (error) {
       console.error("Avatar upload error:", error);
+      throw error;
+    }
+  };
+
+  const uploadCoverImage = async () => {
+    if (!newCoverImage) return profile.coverImage;
+
+    const formData = new FormData();
+    formData.append("cover", newCoverImage);
+
+    try {
+      const res = await fetch("/api/users/upload-cover", {
+        method: "POST",
+        body: formData,
+        credentials: "include",
+      });
+
+      if (!res.ok) {
+        const error = await res.json();
+        throw new Error(error.message || "Cover image upload failed");
+      }
+
+      const data = await res.json();
+      return data.url || data.cover;
+    } catch (error) {
+      console.error("Cover image upload error:", error);
       throw error;
     }
   };
@@ -217,12 +297,18 @@ export default function MyProfilePage() {
     setUpdating(true);
     try {
       const avatarUrl = newAvatar ? await uploadAvatar() : profile.avatar;
+      const coverImageUrl = newCoverImage ? await uploadCoverImage() : profile.coverImage;
       
       const res = await fetch("/api/users/profile", {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
-        body: JSON.stringify({ ...profile, avatar: avatarUrl }),
+        body: JSON.stringify({ 
+          ...profile, 
+          avatar: avatarUrl,
+          coverImage: coverImageUrl,
+          socialLinks: profile.socialLinks
+        }),
       });
 
       if (!res.ok) {
@@ -234,8 +320,10 @@ export default function MyProfilePage() {
       setProfile(updated);
       setOriginalProfile(updated);
       setPreview(updated.avatar || null);
+      setCoverPreview(updated.coverImage || null);
       setEditing(false);
       setNewAvatar(null);
+      setNewCoverImage(null);
       
       // Refresh user data
       dispatch(fetchCurrentUser());
