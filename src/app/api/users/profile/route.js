@@ -70,13 +70,17 @@ export async function PUT(req) {
       body = await req.json();
     }
 
-    const { name, email, phone, location, about, avatar, coverImage, socialLinks, currentPassword, newPassword } = body;
+    const { name, email, phone, location, about, avatar, coverImage, socialLinks, education, work, hobbies, skills, currentPassword, newPassword } = body;
 
     console.log("Profile update request:", { 
       name, email, phone, location, about, 
       avatar: !!avatar, 
       coverImage: !!coverImage,
-      socialLinks: !!socialLinks 
+      socialLinks: !!socialLinks,
+      education: !!education,
+      work: !!work,
+      hobbies: !!hobbies,
+      skills: !!skills
     });
 
     // Handle password change
@@ -96,13 +100,17 @@ export async function PUT(req) {
     if (avatar) updateData.avatar = avatar;
     if (coverImage) updateData.coverImage = coverImage;
     if (socialLinks) updateData.socialLinks = socialLinks;
+    if (education) updateData.education = education;
+    if (work) updateData.work = work;
+    if (hobbies) updateData.hobbies = hobbies;
+    if (skills) updateData.skills = skills;
     if (body.password) updateData.password = body.password;
 
     const updatedUser = await User.findByIdAndUpdate(
       userId,
       updateData,
       { new: true, runValidators: true }
-    ).select("name email phone location about avatar coverImage socialLinks role createdAt");
+    ).select("name email phone location about avatar coverImage socialLinks education work hobbies skills role createdAt");
 
     console.log("User updated successfully, avatar:", updatedUser.avatar, "coverImage:", updatedUser.coverImage);
     return NextResponse.json(updatedUser);

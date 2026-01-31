@@ -65,6 +65,21 @@ export default function MyProfilePage() {
     website: "",
     avatar: "",
     coverImage: "",
+    education: {
+      school: "",
+      degree: "",
+      fieldOfStudy: "",
+      graduationYear: ""
+    },
+    work: {
+      company: "",
+      position: "",
+      startYear: "",
+      endYear: "",
+      current: false
+    },
+    hobbies: [],
+    skills: [],
     socialLinks: {
       twitter: "",
       linkedin: "",
@@ -130,6 +145,21 @@ export default function MyProfilePage() {
         website: user.website || "",
         avatar: user.avatar || "",
         coverImage: user.coverImage || "",
+        education: {
+          school: user.education?.school || "",
+          degree: user.education?.degree || "",
+          fieldOfStudy: user.education?.fieldOfStudy || "",
+          graduationYear: user.education?.graduationYear || ""
+        },
+        work: {
+          company: user.work?.company || "",
+          position: user.work?.position || "",
+          startYear: user.work?.startYear || "",
+          endYear: user.work?.endYear || "",
+          current: user.work?.current || false
+        },
+        hobbies: user.hobbies || [],
+        skills: user.skills || [],
         socialLinks: {
           twitter: user.socialLinks?.twitter || "",
           linkedin: user.socialLinks?.linkedin || "",
@@ -307,7 +337,11 @@ export default function MyProfilePage() {
           ...profile, 
           avatar: avatarUrl,
           coverImage: coverImageUrl,
-          socialLinks: profile.socialLinks
+          socialLinks: profile.socialLinks,
+          education: profile.education,
+          work: profile.work,
+          hobbies: profile.hobbies,
+          skills: profile.skills
         }),
       });
 
